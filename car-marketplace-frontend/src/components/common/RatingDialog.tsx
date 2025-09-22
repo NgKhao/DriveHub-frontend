@@ -9,8 +9,11 @@ import {
   Typography,
   Box,
   Alert,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import StarRating from './StarRating';
+import ReportDialog from './ReportDialog';
 import { useRatingStore } from '../../store/ratingStore';
 import { useAuthStore } from '../../store/authStore';
 
@@ -40,6 +43,8 @@ const RatingDialog: React.FC<RatingDialogProps> = ({
   const [review, setReview] = useState(existingRating?.review || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [wantToReport, setWantToReport] = useState(false);
 
   const handleSubmit = async () => {
     if (!user) {
@@ -68,7 +73,13 @@ const RatingDialog: React.FC<RatingDialogProps> = ({
         await rateSeller(sellerId, rating, review);
       }
 
-      handleClose();
+      // If user wants to report after rating, show report dialog
+      if (wantToReport && rating <= 2) {
+        handleClose();
+        setShowReportDialog(true);
+      } else {
+        handleClose();
+      }
     } catch (err) {
       setError('Có lỗi xảy ra khi gửi đánh giá');
       console.error('Rating error:', err);
@@ -80,70 +91,111 @@ const RatingDialog: React.FC<RatingDialogProps> = ({
   const handleClose = () => {
     setRating(existingRating?.rating || 0);
     setReview(existingRating?.review || '');
+    setWantToReport(false);
     setError(null);
     onClose();
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth='sm' fullWidth>
-      <DialogTitle>
-        {existingRating ? 'Chỉnh sửa đánh giá' : 'Đánh giá người bán'}
-      </DialogTitle>
+    <>
+      <Dialog open={open} onClose={handleClose} maxWidth='sm' fullWidth>
+        <DialogTitle>
+          {existingRating ? 'Chỉnh sửa đánh giá' : 'Đánh giá người bán'}
+        </DialogTitle>
 
-      <DialogContent>
-        <Box sx={{ py: 2 }}>
-          <Typography variant='body1' gutterBottom>
-            Đánh giá cho: <strong>{sellerName}</strong>
-          </Typography>
-
-          <Box sx={{ my: 3 }}>
-            <Typography variant='body2' color='text.secondary' gutterBottom>
-              Đánh giá của bạn:
+        <DialogContent>
+          <Box sx={{ py: 2 }}>
+            <Typography variant='body1' gutterBottom>
+              Đánh giá cho: <strong>{sellerName}</strong>
             </Typography>
-            <StarRating
-              value={rating}
-              onChange={setRating}
-              size='large'
-              showLabel
+
+            <Box sx={{ my: 3 }}>
+              <Typography variant='body2' color='text.secondary' gutterBottom>
+                Đánh giá của bạn:
+              </Typography>
+              <StarRating
+                value={rating}
+                onChange={setRating}
+                size='large'
+                showLabel
+              />
+            </Box>
+
+            <TextField
+              label='Nhận xét (tùy chọn)'
+              multiline
+              rows={4}
+              fullWidth
+              value={review}
+              onChange={(e) => setReview(e.target.value)}
+              placeholder='Chia sẻ trải nghiệm của bạn với người bán này...'
+              sx={{ mt: 2 }}
             />
+
+            {/* Report Seller Option - Only for buyers with low ratings */}
+            {user?.role === 'buyer' && rating <= 2 && (
+              <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={wantToReport}
+                      onChange={(e) => setWantToReport(e.target.checked)}
+                      color='warning'
+                    />
+                  }
+                  label={
+                    <Typography variant='body2'>
+                      Tôi muốn báo cáo người bán này vì vi phạm quy định
+                    </Typography>
+                  }
+                />
+                {wantToReport && (
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                    sx={{ display: 'block', mt: 1 }}
+                  >
+                    Bạn sẽ có thể gửi báo cáo sau khi hoàn thành đánh giá
+                  </Typography>
+                )}
+              </Box>
+            )}
+
+            {error && (
+              <Alert severity='error' sx={{ mt: 2 }}>
+                {error}
+              </Alert>
+            )}
           </Box>
+        </DialogContent>
 
-          <TextField
-            label='Nhận xét (tùy chọn)'
-            multiline
-            rows={4}
-            fullWidth
-            value={review}
-            onChange={(e) => setReview(e.target.value)}
-            placeholder='Chia sẻ trải nghiệm của bạn với người bán này...'
-            sx={{ mt: 2 }}
-          />
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleClose} color='inherit'>
+            Hủy
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            variant='contained'
+            disabled={isSubmitting || rating === 0}
+          >
+            {isSubmitting
+              ? 'Đang gửi...'
+              : existingRating
+              ? 'Cập nhật'
+              : 'Gửi đánh giá'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-          {error && (
-            <Alert severity='error' sx={{ mt: 2 }}>
-              {error}
-            </Alert>
-          )}
-        </Box>
-      </DialogContent>
-
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={handleClose} color='inherit'>
-          Hủy
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          variant='contained'
-          disabled={isSubmitting || rating === 0}
-        >
-          {isSubmitting
-            ? 'Đang gửi...'
-            : existingRating
-            ? 'Cập nhật'
-            : 'Gửi đánh giá'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+      {/* Report Dialog */}
+      <ReportDialog
+        open={showReportDialog}
+        onClose={() => setShowReportDialog(false)}
+        reportedId={sellerId}
+        reportedName={sellerName}
+        reportedType='seller'
+      />
+    </>
   );
 };
 

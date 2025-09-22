@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Favorite, Car } from '../types';
+import type { Favorite } from '../types';
 
 interface FavoriteState {
   favorites: Favorite[];

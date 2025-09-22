@@ -134,8 +134,8 @@ const Header: React.FC = () => {
                     Yêu thích
                   </MenuItem>
                 )}
-                {/* Chỉ hiển thị Báo cáo cho buyer */}
-                {user?.role === 'buyer' && (
+                {/* Hiển thị Báo cáo cho cả buyer và seller */}
+                {(user?.role === 'buyer' || user?.role === 'seller') && (
                   <MenuItem
                     onClick={() => {
                       handleClose();

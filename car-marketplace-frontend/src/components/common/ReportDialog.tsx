@@ -39,6 +39,11 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
 
   const [selectedReason, setSelectedReason] = useState('');
   const [description, setDescription] = useState('');
+  const [buyerInfo, setBuyerInfo] = useState({
+    name: '',
+    phone: '',
+    email: '',
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -51,10 +56,27 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
       return;
     }
 
-    // Chỉ cho phép buyer báo cáo
-    if (user.role !== 'buyer') {
-      setError('Chỉ người mua mới có thể gửi báo cáo');
+    // Kiểm tra quyền báo cáo
+    if (reportedType === 'seller' && user.role !== 'buyer') {
+      setError('Chỉ người mua mới có thể báo cáo người bán');
       return;
+    }
+
+    if (reportedType === 'buyer' && user.role !== 'seller') {
+      setError('Chỉ người bán mới có thể báo cáo người mua');
+      return;
+    }
+
+    // Kiểm tra thông tin người bị báo cáo cho trường hợp manual input
+    if (reportedType === 'buyer' && !reportedId) {
+      if (!buyerInfo.name.trim()) {
+        setError('Vui lòng nhập tên người mua');
+        return;
+      }
+      if (!buyerInfo.phone.trim()) {
+        setError('Vui lòng nhập số điện thoại người mua');
+        return;
+      }
     }
 
     if (!selectedReason) {
@@ -71,11 +93,20 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
     setError(null);
 
     try {
+      // For manual buyer reporting, use buyer info as reported data
+      const finalReportedId = reportedId || `buyer_${Date.now()}`;
+      const finalReportedName = reportedName || buyerInfo.name;
+
       await submitReport(
-        reportedId,
+        finalReportedId,
         reportedType,
         selectedReason,
-        description.trim()
+        description.trim() +
+          (reportedType === 'buyer' && !reportedId
+            ? `\n\nThông tin người mua:\nTên: ${buyerInfo.name}\nSĐT: ${
+                buyerInfo.phone
+              }${buyerInfo.email ? `\nEmail: ${buyerInfo.email}` : ''}`
+            : '')
       );
       setSuccess(true);
 
@@ -94,6 +125,7 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
   const handleClose = () => {
     setSelectedReason('');
     setDescription('');
+    setBuyerInfo({ name: '', phone: '', email: '' });
     setError(null);
     setSuccess(false);
     onClose();
@@ -120,9 +152,55 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
           </Box>
         ) : (
           <Box sx={{ py: 1 }}>
-            <Typography variant='body1' gutterBottom>
-              Báo cáo cho: <strong>{reportedName}</strong>
-            </Typography>
+            {reportedName ? (
+              <Typography variant='body1' gutterBottom>
+                Báo cáo cho: <strong>{reportedName}</strong>
+              </Typography>
+            ) : reportedType === 'buyer' ? (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant='body1' gutterBottom>
+                  Thông tin người mua cần báo cáo:
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <TextField
+                    label='Tên người mua *'
+                    value={buyerInfo.name}
+                    onChange={(e) =>
+                      setBuyerInfo((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    fullWidth
+                    size='small'
+                  />
+                  <TextField
+                    label='Số điện thoại *'
+                    value={buyerInfo.phone}
+                    onChange={(e) =>
+                      setBuyerInfo((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
+                    fullWidth
+                    size='small'
+                  />
+                  <TextField
+                    label='Email (tùy chọn)'
+                    value={buyerInfo.email}
+                    onChange={(e) =>
+                      setBuyerInfo((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
+                    fullWidth
+                    size='small'
+                  />
+                </Box>
+              </Box>
+            ) : null}
 
             <Alert severity='info' sx={{ my: 2 }}>
               Vui lòng chỉ báo cáo khi có vấn đề thực sự. Báo cáo sai sự thật có

@@ -6,8 +6,6 @@ import {
   Card,
   CardContent,
   Chip,
-  Tab,
-  Tabs,
   List,
   ListItem,
   ListItemText,
@@ -20,51 +18,21 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import {
-  Report,
-  Warning,
-  CheckCircle,
-  Cancel,
-  Visibility,
-  Person,
-} from '@mui/icons-material';
+import { Report, Visibility, Person, Info } from '@mui/icons-material';
 import { useReportStore } from '../store/reportStore';
 import { useAuthStore } from '../store/authStore';
+import ReportDialog from '../components/common/ReportDialog';
 import type { Report as ReportType } from '../types';
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role='tabpanel'
-      hidden={value !== index}
-      id={`reports-tabpanel-${index}`}
-      aria-labelledby={`reports-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-}
 
 const ReportsPage: React.FC = () => {
   const { user } = useAuthStore();
-  const { getUserReports, getReportsAgainstUser, getReportReasons } =
-    useReportStore();
-
-  const [tabValue, setTabValue] = useState(0);
-  const [selectedReport, setSelectedReport] = useState<ReportType | null>(null);
+  const { getUserReports, getReportReasons } = useReportStore();
   const [reportDetailOpen, setReportDetailOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<ReportType | null>(null);
 
+  // Get reports based on user role
   const userReports = user ? getUserReports(user.id) : [];
-  const reportsAgainstUser = user ? getReportsAgainstUser(user.id) : [];
   const reportReasons = getReportReasons();
 
   const getStatusColor = (status: ReportType['status']) => {
@@ -76,24 +44,9 @@ const ReportsPage: React.FC = () => {
       case 'resolved':
         return 'success';
       case 'dismissed':
-        return 'default';
+        return 'error';
       default:
         return 'default';
-    }
-  };
-
-  const getStatusIcon = (status: ReportType['status']) => {
-    switch (status) {
-      case 'pending':
-        return <Warning />;
-      case 'investigating':
-        return <Visibility />;
-      case 'resolved':
-        return <CheckCircle />;
-      case 'dismissed':
-        return <Cancel />;
-      default:
-        return <Warning />;
     }
   };
 
@@ -132,253 +85,275 @@ const ReportsPage: React.FC = () => {
     setReportDetailOpen(true);
   };
 
-  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
   if (!user) {
     return (
       <Container maxWidth='lg' sx={{ py: 4 }}>
-        <Alert severity='warning'>Bạn cần đăng nhập để xem báo cáo.</Alert>
+        <Alert severity='warning'>
+          Bạn cần đăng nhập để truy cập trang này.
+        </Alert>
       </Container>
     );
   }
 
+  // Logic riêng biệt cho từng role
+  if (user.role === 'buyer') {
+    // BUYER: Chỉ có thể tạo báo cáo mới, không xem được báo cáo đã gửi
+    return (
+      <Container maxWidth='lg' sx={{ py: 4 }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant='h4' gutterBottom>
+            Báo cáo người bán
+          </Typography>
+          <Typography variant='body1' color='text.secondary'>
+            Bạn có thể báo cáo người bán khi gặp vấn đề trong quá trình giao
+            dịch
+          </Typography>
+        </Box>
+
+        <Card>
+          <CardContent sx={{ textAlign: 'center', py: 6 }}>
+            <Report sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+            <Typography variant='h6' gutterBottom>
+              Báo cáo từ chi tiết xe
+            </Typography>
+            <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+              Để báo cáo người bán, vui lòng truy cập trang chi tiết xe và sử
+              dụng nút "Báo cáo người bán"
+            </Typography>
+            <Alert severity='info' sx={{ mt: 2 }}>
+              <Typography variant='body2'>
+                💡 <strong>Hướng dẫn:</strong> Truy cập danh sách xe → Chọn xe
+                muốn xem → Tìm nút "Báo cáo người bán" ở phần thông tin liên hệ
+              </Typography>
+            </Alert>
+          </CardContent>
+        </Card>
+      </Container>
+    );
+  }
+
+  if (user.role === 'seller') {
+    // SELLER: Xem được báo cáo đã gửi và trạng thái xử lý, không xem được báo cáo nhận
+    return (
+      <Container maxWidth='lg' sx={{ py: 4 }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant='h4' gutterBottom>
+            Báo cáo đã gửi
+          </Typography>
+          <Typography variant='body1' color='text.secondary'>
+            Theo dõi trạng thái xử lý các báo cáo bạn đã gửi
+          </Typography>
+        </Box>
+
+        {/* Report Buyer Section */}
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 2,
+              }}
+            >
+              <Typography variant='h6'>Báo cáo người mua</Typography>
+              <Button
+                variant='contained'
+                color='warning'
+                startIcon={<Report />}
+                onClick={() => setReportDialogOpen(true)}
+              >
+                Báo cáo người mua
+              </Button>
+            </Box>
+            <Typography variant='body2' color='text.secondary'>
+              Nếu bạn gặp vấn đề với người mua (không liên lạc được, hủy hẹn,
+              v.v.), bạn có thể báo cáo để chúng tôi xử lý.
+            </Typography>
+          </CardContent>
+        </Card>
+
+        {userReports.length === 0 ? (
+          <Card>
+            <CardContent sx={{ textAlign: 'center', py: 6 }}>
+              <Info sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+              <Typography variant='h6' gutterBottom>
+                Chưa có báo cáo nào
+              </Typography>
+              <Typography variant='body2' color='text.secondary'>
+                Bạn chưa gửi báo cáo nào. Báo cáo sẽ hiển thị tại đây sau khi
+                bạn báo cáo người mua.
+              </Typography>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent>
+              <Typography variant='h6' gutterBottom>
+                Danh sách báo cáo đã gửi ({userReports.length})
+              </Typography>
+              <List>
+                {userReports.map((report, index) => (
+                  <React.Fragment key={report.id}>
+                    <ListItem
+                      sx={{
+                        cursor: 'pointer',
+                        '&:hover': { backgroundColor: 'grey.50' },
+                      }}
+                      onClick={() => handleViewReport(report)}
+                    >
+                      <ListItemIcon>
+                        <Person />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
+                          >
+                            <Typography variant='subtitle2'>
+                              Báo cáo{' '}
+                              {report.reportedType === 'buyer'
+                                ? 'người mua'
+                                : 'người bán'}
+                            </Typography>
+                            <Chip
+                              label={getStatusText(report.status)}
+                              color={getStatusColor(report.status)}
+                              size='small'
+                            />
+                          </Box>
+                        }
+                        secondary={
+                          <Box>
+                            <Typography variant='body2' color='text.secondary'>
+                              Lý do: {getReasonLabel(report.reason)}
+                            </Typography>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              {formatDate(report.createdAt)}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                      <Visibility color='action' />
+                    </ListItem>
+                    {index < userReports.length - 1 && <Divider />}
+                  </React.Fragment>
+                ))}
+              </List>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Report Detail Dialog for Seller */}
+        <Dialog
+          open={reportDetailOpen}
+          onClose={() => setReportDetailOpen(false)}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>Chi tiết báo cáo</DialogTitle>
+          <DialogContent>
+            {selectedReport && (
+              <Box sx={{ py: 2 }}>
+                <Card variant='outlined' sx={{ mb: 2 }}>
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        mb: 2,
+                      }}
+                    >
+                      <Typography variant='h6'>
+                        Báo cáo{' '}
+                        {selectedReport.reportedType === 'buyer'
+                          ? 'người mua'
+                          : 'người bán'}
+                      </Typography>
+                      <Chip
+                        label={getStatusText(selectedReport.status)}
+                        color={getStatusColor(selectedReport.status)}
+                        size='small'
+                      />
+                    </Box>
+
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                      gutterBottom
+                    >
+                      <strong>Lý do:</strong>{' '}
+                      {getReasonLabel(selectedReport.reason)}
+                    </Typography>
+
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                      gutterBottom
+                    >
+                      <strong>Thời gian:</strong>{' '}
+                      {formatDate(selectedReport.createdAt)}
+                    </Typography>
+
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                      gutterBottom
+                    >
+                      <strong>Mô tả:</strong>
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      sx={{ mt: 1, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}
+                    >
+                      {selectedReport.description}
+                    </Typography>
+
+                    {selectedReport.status === 'resolved' && (
+                      <Alert severity='success' sx={{ mt: 2 }}>
+                        Báo cáo đã được xử lý và giải quyết thành công.
+                      </Alert>
+                    )}
+
+                    {selectedReport.status === 'dismissed' && (
+                      <Alert severity='info' sx={{ mt: 2 }}>
+                        Báo cáo đã được xem xét nhưng không có vi phạm.
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setReportDetailOpen(false)}>Đóng</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Report Buyer Dialog */}
+        <ReportDialog
+          open={reportDialogOpen}
+          onClose={() => setReportDialogOpen(false)}
+          reportedId=''
+          reportedName=''
+          reportedType='buyer'
+        />
+      </Container>
+    );
+  }
+
+  // Default fallback
   return (
     <Container maxWidth='lg' sx={{ py: 4 }}>
-      <Typography variant='h4' gutterBottom>
-        Quản lý báo cáo
-      </Typography>
-
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tabValue} onChange={handleTabChange}>
-          <Tab
-            label={`Báo cáo đã gửi (${userReports.length})`}
-            icon={<Report />}
-            iconPosition='start'
-          />
-          <Tab
-            label={`Báo cáo nhận được (${reportsAgainstUser.length})`}
-            icon={<Person />}
-            iconPosition='start'
-          />
-        </Tabs>
-      </Box>
-
-      {/* Reports Submitted by User */}
-      <TabPanel value={tabValue} index={0}>
-        {userReports.length > 0 ? (
-          <List>
-            {userReports.map((report, index) => (
-              <React.Fragment key={report.id}>
-                <ListItem
-                  sx={{
-                    px: 0,
-                    '&:hover': { bgcolor: 'action.hover' },
-                    cursor: 'pointer',
-                    borderRadius: 1,
-                  }}
-                  onClick={() => handleViewReport(report)}
-                >
-                  <ListItemIcon>{getStatusIcon(report.status)}</ListItemIcon>
-                  <ListItemText
-                    primary={
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          mb: 1,
-                        }}
-                      >
-                        <Typography variant='subtitle1'>
-                          Báo cáo{' '}
-                          {report.reportedType === 'seller'
-                            ? 'người bán'
-                            : 'người mua'}
-                        </Typography>
-                        <Chip
-                          label={getStatusText(report.status)}
-                          color={getStatusColor(report.status)}
-                          size='small'
-                        />
-                      </Box>
-                    }
-                    secondary={
-                      <Box>
-                        <Typography variant='body2' color='text.secondary'>
-                          Lý do: {getReasonLabel(report.reason)}
-                        </Typography>
-                        <Typography variant='caption' color='text.secondary'>
-                          {formatDate(report.createdAt)}
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                </ListItem>
-                {index < userReports.length - 1 && <Divider />}
-              </React.Fragment>
-            ))}
-          </List>
-        ) : (
-          <Box sx={{ textAlign: 'center', py: 6 }}>
-            <Report sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-            <Typography variant='h6' color='text.secondary' gutterBottom>
-              Chưa có báo cáo nào
-            </Typography>
-            <Typography variant='body2' color='text.secondary'>
-              Bạn chưa gửi báo cáo nào về người bán hoặc người mua.
-            </Typography>
-          </Box>
-        )}
-      </TabPanel>
-
-      {/* Reports Against User */}
-      <TabPanel value={tabValue} index={1}>
-        {reportsAgainstUser.length > 0 ? (
-          <Box>
-            <Alert severity='info' sx={{ mb: 3 }}>
-              Đây là các báo cáo mà người khác đã gửi về bạn. Vui lòng xem xét
-              và cải thiện dịch vụ của mình.
-            </Alert>
-
-            <List>
-              {reportsAgainstUser.map((report, index) => (
-                <React.Fragment key={report.id}>
-                  <ListItem
-                    sx={{
-                      px: 0,
-                      '&:hover': { bgcolor: 'action.hover' },
-                      cursor: 'pointer',
-                      borderRadius: 1,
-                    }}
-                    onClick={() => handleViewReport(report)}
-                  >
-                    <ListItemIcon>{getStatusIcon(report.status)}</ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            mb: 1,
-                          }}
-                        >
-                          <Typography variant='subtitle1'>
-                            Báo cáo từ khách hàng
-                          </Typography>
-                          <Chip
-                            label={getStatusText(report.status)}
-                            color={getStatusColor(report.status)}
-                            size='small'
-                          />
-                        </Box>
-                      }
-                      secondary={
-                        <Box>
-                          <Typography variant='body2' color='text.secondary'>
-                            Lý do: {getReasonLabel(report.reason)}
-                          </Typography>
-                          <Typography variant='caption' color='text.secondary'>
-                            {formatDate(report.createdAt)}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                  {index < reportsAgainstUser.length - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </List>
-          </Box>
-        ) : (
-          <Box sx={{ textAlign: 'center', py: 6 }}>
-            <CheckCircle sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
-            <Typography variant='h6' color='text.secondary' gutterBottom>
-              Chưa có báo cáo nào
-            </Typography>
-            <Typography variant='body2' color='text.secondary'>
-              Tuyệt vời! Chưa có ai báo cáo về bạn.
-            </Typography>
-          </Box>
-        )}
-      </TabPanel>
-
-      {/* Report Detail Dialog */}
-      <Dialog
-        open={reportDetailOpen}
-        onClose={() => setReportDetailOpen(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>Chi tiết báo cáo</DialogTitle>
-        <DialogContent>
-          {selectedReport && (
-            <Box>
-              <Card variant='outlined' sx={{ mb: 2 }}>
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <Typography variant='h6'>
-                      Báo cáo{' '}
-                      {selectedReport.reportedType === 'seller'
-                        ? 'người bán'
-                        : 'người mua'}
-                    </Typography>
-                    <Chip
-                      label={getStatusText(selectedReport.status)}
-                      color={getStatusColor(selectedReport.status)}
-                      size='small'
-                    />
-                  </Box>
-
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                    gutterBottom
-                  >
-                    <strong>Lý do:</strong>{' '}
-                    {getReasonLabel(selectedReport.reason)}
-                  </Typography>
-
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                    gutterBottom
-                  >
-                    <strong>Thời gian:</strong>{' '}
-                    {formatDate(selectedReport.createdAt)}
-                  </Typography>
-
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                    gutterBottom
-                  >
-                    <strong>Mô tả:</strong>
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ mt: 1, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}
-                  >
-                    {selectedReport.description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setReportDetailOpen(false)}>Đóng</Button>
-        </DialogActions>
-      </Dialog>
+      <Alert severity='error'>Bạn không có quyền truy cập trang này.</Alert>
     </Container>
   );
 };
