@@ -10,7 +10,7 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material';
-import { People, DirectionsCar } from '@mui/icons-material';
+import { People, DirectionsCar, Report } from '@mui/icons-material';
 
 interface MenuItem {
   id: string;
@@ -39,6 +39,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       id: 'cars',
       label: 'Quản lý bài đăng',
       icon: <DirectionsCar />,
+    },
+    {
+      id: 'reports', // Add this menu item
+      label: 'Quản lý báo cáo',
+      icon: <Report />,
     },
   ];
 
