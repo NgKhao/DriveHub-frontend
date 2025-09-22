@@ -9,8 +9,6 @@ import {
   Typography,
   Box,
   Alert,
-  FormControlLabel,
-  Checkbox,
 } from '@mui/material';
 import StarRating from './StarRating';
 import ReportDialog from './ReportDialog';
@@ -131,35 +129,6 @@ const RatingDialog: React.FC<RatingDialogProps> = ({
               placeholder='Chia sẻ trải nghiệm của bạn với người bán này...'
               sx={{ mt: 2 }}
             />
-
-            {/* Report Seller Option - Only for buyers with low ratings */}
-            {user?.role === 'buyer' && rating <= 2 && (
-              <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={wantToReport}
-                      onChange={(e) => setWantToReport(e.target.checked)}
-                      color='warning'
-                    />
-                  }
-                  label={
-                    <Typography variant='body2'>
-                      Tôi muốn báo cáo người bán này vì vi phạm quy định
-                    </Typography>
-                  }
-                />
-                {wantToReport && (
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                    sx={{ display: 'block', mt: 1 }}
-                  >
-                    Bạn sẽ có thể gửi báo cáo sau khi hoàn thành đánh giá
-                  </Typography>
-                )}
-              </Box>
-            )}
 
             {error && (
               <Alert severity='error' sx={{ mt: 2 }}>

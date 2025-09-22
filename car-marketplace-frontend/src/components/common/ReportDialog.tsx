@@ -95,7 +95,6 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
     try {
       // For manual buyer reporting, use buyer info as reported data
       const finalReportedId = reportedId || `buyer_${Date.now()}`;
-      const finalReportedName = reportedName || buyerInfo.name;
 
       await submitReport(
         finalReportedId,

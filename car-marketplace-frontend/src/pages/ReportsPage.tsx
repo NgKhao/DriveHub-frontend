@@ -97,24 +97,23 @@ const ReportsPage: React.FC = () => {
 
   // Logic riêng biệt cho từng role
   if (user.role === 'buyer') {
-    // BUYER: Chỉ có thể tạo báo cáo mới, không xem được báo cáo đã gửi
+    // BUYER: Không được phép xem trang báo cáo, chuyển hướng về trang chủ
     return (
       <Container maxWidth='lg' sx={{ py: 4 }}>
-        <Box sx={{ mb: 4 }}>
-          <Typography variant='h4' gutterBottom>
-            Báo cáo người bán
+        <Alert severity='warning' sx={{ mb: 3 }}>
+          <Typography variant='h6' gutterBottom>
+            Bạn không có quyền truy cập trang này
           </Typography>
-          <Typography variant='body1' color='text.secondary'>
-            Bạn có thể báo cáo người bán khi gặp vấn đề trong quá trình giao
-            dịch
+          <Typography variant='body2'>
+            Để báo cáo người bán, vui lòng truy cập trang chi tiết xe và sử dụng nút "Báo cáo người bán"
           </Typography>
-        </Box>
-
+        </Alert>
+        
         <Card>
           <CardContent sx={{ textAlign: 'center', py: 6 }}>
             <Report sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
             <Typography variant='h6' gutterBottom>
-              Báo cáo từ chi tiết xe
+              Cách báo cáo người bán
             </Typography>
             <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
               Để báo cáo người bán, vui lòng truy cập trang chi tiết xe và sử
@@ -126,6 +125,13 @@ const ReportsPage: React.FC = () => {
                 muốn xem → Tìm nút "Báo cáo người bán" ở phần thông tin liên hệ
               </Typography>
             </Alert>
+            <Button 
+              variant='contained' 
+              sx={{ mt: 2 }}
+              onClick={() => window.location.href = '/cars'}
+            >
+              Xem danh sách xe
+            </Button>
           </CardContent>
         </Card>
       </Container>
