@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -38,7 +38,7 @@ import {
   Cancel,
   CloudUpload,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import { validateCarForm } from '../utils/validation';
@@ -138,6 +138,7 @@ const mockListings: Car[] = [
 
 const SellerDashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuthStore();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -147,6 +148,21 @@ const SellerDashboardPage: React.FC = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [editErrors, setEditErrors] = useState<ValidationError[]>([]);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+
+  // Check for payment success from VNPay redirect
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    if (paymentStatus === 'success') {
+      setSnackbarMessage(
+        'Thanh toán thành công! Bài đăng của bạn đang chờ quản trị viên duyệt.'
+      );
+      setSnackbarOpen(true);
+
+      // Clean up URL parameters
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [searchParams]);
 
   // Form states for editing
   const [editForm, setEditForm] = useState({
@@ -335,7 +351,28 @@ const SellerDashboardPage: React.FC = () => {
 
   const handlePromote = () => {
     if (selectedListing) {
-      navigate('/payment', { state: { carId: selectedListing.id } });
+      // Redirect to VNPay for promoting existing listing
+      const vnpayUrl =
+        `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?` +
+        `vnp_Version=2.1.0&` +
+        `vnp_Command=pay&` +
+        `vnp_TmnCode=YOUR_TMN_CODE&` +
+        `vnp_Amount=${100000 * 100}&` + // Promotion fee: 100,000 VND
+        `vnp_CurrCode=VND&` +
+        `vnp_TxnRef=promote_${selectedListing.id}&` +
+        `vnp_OrderInfo=Dây tin xe ${selectedListing.title}&` +
+        `vnp_OrderType=other&` +
+        `vnp_Locale=vn&` +
+        `vnp_ReturnUrl=${encodeURIComponent(
+          window.location.origin + '/seller-dashboard?payment=success'
+        )}&` +
+        `vnp_IpAddr=127.0.0.1&` +
+        `vnp_CreateDate=${new Date()
+          .toISOString()
+          .replace(/[-:]/g, '')
+          .slice(0, 14)}`;
+
+      window.location.href = vnpayUrl;
     }
     handleMenuClose();
   };

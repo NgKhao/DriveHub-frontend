@@ -211,20 +211,39 @@ const CreateListingPage: React.FC = () => {
       // TODO: Implement API call to create listing
       console.log('Creating listing:', formData);
 
-      // Simulate API call
+      // Simulate API call to create listing and get listing ID
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      setSnackbarMessage('Bài đăng đã được tạo thành công!');
-      setSnackbarOpen(true);
+      // Mock listing ID from API response
+      const newListingId = `listing_${Date.now()}`;
 
-      // Reset form and navigate
-      setTimeout(() => {
-        navigate('/seller-dashboard');
-      }, 1500);
+      // Redirect to VNPay payment gateway
+      // In real implementation, you would get the VNPay payment URL from your backend
+      const vnpayUrl =
+        `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?` +
+        `vnp_Version=2.1.0&` +
+        `vnp_Command=pay&` +
+        `vnp_TmnCode=YOUR_TMN_CODE&` +
+        `vnp_Amount=${50000 * 100}&` + // VNPay amount in VND * 100
+        `vnp_CurrCode=VND&` +
+        `vnp_TxnRef=${newListingId}&` +
+        `vnp_OrderInfo=Thanh toan dang tin xe ${formData.title}&` +
+        `vnp_OrderType=other&` +
+        `vnp_Locale=vn&` +
+        `vnp_ReturnUrl=${encodeURIComponent(
+          window.location.origin + '/seller-dashboard?payment=success'
+        )}&` +
+        `vnp_IpAddr=127.0.0.1&` +
+        `vnp_CreateDate=${new Date()
+          .toISOString()
+          .replace(/[-:]/g, '')
+          .slice(0, 14)}`;
+
+      // Redirect to VNPay
+      window.location.href = vnpayUrl;
     } catch {
       setSnackbarMessage('Có lỗi xảy ra, vui lòng thử lại');
       setSnackbarOpen(true);
-    } finally {
       setLoading(false);
     }
   };

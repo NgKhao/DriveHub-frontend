@@ -16,7 +16,6 @@ import CarDetailPage from './pages/CarDetailPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import UserProfilePage from './pages/UserProfilePage';
-import PaymentPage from './pages/PaymentPage';
 import SellerDashboardPage from './pages/SellerDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminUsersPage from './pages/AdminUsersPage';
@@ -64,7 +63,6 @@ function App() {
               <Route path='profile' element={<UserProfilePage />} />
               <Route path='favorites' element={<FavoritesPage />} />
               <Route path='reports' element={<ReportsPage />} />
-              <Route path='payment' element={<PaymentPage />} />
               <Route path='sell' element={<CreateListingPage />} />
               <Route
                 path='seller-dashboard'
