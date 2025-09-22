@@ -19,8 +19,6 @@ import {
 import { Visibility, VisibilityOff, DirectionsCar } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuthStore } from '../store/authStore';
-import { authService } from '../services/authService';
-import { validateLoginForm } from '../utils/validation';
 import type { LoginRequest } from '../types';
 
 interface LoginFormData extends LoginRequest {
@@ -29,7 +27,7 @@ interface LoginFormData extends LoginRequest {
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const login = useAuthStore((state) => state.login);
+  const { mockLogin, quickLogin } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -51,35 +49,38 @@ const LoginPage: React.FC = () => {
       setIsLoading(true);
       setError('');
 
-      // Validate form
-      const validationErrors = validateLoginForm(data.email, data.password);
-      if (validationErrors.length > 0) {
-        setError(validationErrors[0].message);
+      // Use mock authentication for development
+      const result = await mockLogin(data.email, data.password);
+
+      if (!result.success) {
+        setError(result.error || 'Đăng nhập thất bại');
         return;
       }
 
-      // Call login API
-      const response = await authService.login({
-        email: data.email,
-        password: data.password,
-      });
-
-      // Update store
-      login(response.user, response.token);
-
       // Redirect based on role
-      if (response.user.role === 'admin') {
+      if (data.email.includes('admin')) {
         navigate('/admin');
-      } else if (response.user.role === 'seller') {
+      } else if (data.email.includes('seller')) {
         navigate('/seller-dashboard');
       } else {
         navigate('/');
       }
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      setError(error.response?.data?.message || 'Đăng nhập thất bại');
+    } catch {
+      setError('Đăng nhập thất bại');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleQuickLogin = (role: 'admin' | 'seller' | 'buyer') => {
+    quickLogin(role);
+
+    if (role === 'admin') {
+      navigate('/admin');
+    } else if (role === 'seller') {
+      navigate('/seller-dashboard');
+    } else {
+      navigate('/');
     }
   };
 
@@ -216,6 +217,56 @@ const LoginPage: React.FC = () => {
                 'Đăng nhập'
               )}
             </Button>
+
+            {/* Quick Login for Testing */}
+            <Box sx={{ mt: 3, mb: 2 }}>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+                align='center'
+                sx={{ mb: 2 }}
+              >
+                Đăng nhập nhanh để test:
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Button
+                  size='small'
+                  variant='outlined'
+                  onClick={() => handleQuickLogin('admin')}
+                  disabled={isLoading}
+                  sx={{ flex: 1, minWidth: '100px' }}
+                >
+                  Admin
+                </Button>
+                <Button
+                  size='small'
+                  variant='outlined'
+                  onClick={() => handleQuickLogin('seller')}
+                  disabled={isLoading}
+                  sx={{ flex: 1, minWidth: '100px' }}
+                >
+                  Seller
+                </Button>
+                <Button
+                  size='small'
+                  variant='outlined'
+                  onClick={() => handleQuickLogin('buyer')}
+                  disabled={isLoading}
+                  sx={{ flex: 1, minWidth: '100px' }}
+                >
+                  Buyer
+                </Button>
+              </Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+                align='center'
+                sx={{ mt: 1, display: 'block' }}
+              >
+                Hoặc sử dụng: admin@test.com/admin123,
+                seller@test.com/seller123, buyer@test.com/buyer123
+              </Typography>
+            </Box>
 
             <Box textAlign='center' mt={2}>
               <Typography variant='body2' color='text.secondary'>

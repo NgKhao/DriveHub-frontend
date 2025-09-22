@@ -6,6 +6,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Layouts
 import MainLayout from './layouts/MainLayout';
 
+// Components
+import ProtectedRoute from './components/common/ProtectedRoute';
+
 // Pages
 import HomePage from './pages/HomePage';
 import CarListingsPage from './pages/CarListingsPage';
@@ -67,10 +70,38 @@ function App() {
                 path='seller-dashboard'
                 element={<SellerDashboardPage />}
               />
-              <Route path='admin' element={<AdminDashboardPage />} />
-              <Route path='admin/users' element={<AdminUsersPage />} />
-              <Route path='admin/cars' element={<AdminCarsPage />} />
-              <Route path='admin/reports' element={<AdminReportsPage />} />
+              <Route
+                path='admin'
+                element={
+                  <ProtectedRoute requiredRole='admin'>
+                    <AdminDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path='admin/users'
+                element={
+                  <ProtectedRoute requiredRole='admin'>
+                    <AdminUsersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path='admin/cars'
+                element={
+                  <ProtectedRoute requiredRole='admin'>
+                    <AdminCarsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path='admin/reports'
+                element={
+                  <ProtectedRoute requiredRole='admin'>
+                    <AdminReportsPage />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
 
             {/* Auth routes without main layout */}
