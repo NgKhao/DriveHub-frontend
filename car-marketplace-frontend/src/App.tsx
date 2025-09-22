@@ -16,6 +16,9 @@ import UserProfilePage from './pages/UserProfilePage';
 import PaymentPage from './pages/PaymentPage';
 import SellerDashboardPage from './pages/SellerDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import AdminUsersPage from './pages/AdminUsersPage';
+import AdminCarsPage from './pages/AdminCarsPage';
+import AdminReportsPage from './pages/AdminReportsPage';
 import CreateListingPage from './pages/CreateListingPage';
 import FavoritesPage from './pages/FavoritesPage';
 import ReportsPage from './pages/ReportsPage';
@@ -65,6 +68,9 @@ function App() {
                 element={<SellerDashboardPage />}
               />
               <Route path='admin' element={<AdminDashboardPage />} />
+              <Route path='admin/users' element={<AdminUsersPage />} />
+              <Route path='admin/cars' element={<AdminCarsPage />} />
+              <Route path='admin/reports' element={<AdminReportsPage />} />
             </Route>
 
             {/* Auth routes without main layout */}

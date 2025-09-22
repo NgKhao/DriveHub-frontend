@@ -42,10 +42,10 @@ const RatingDialog: React.FC<RatingDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (!user) {
-      setError('Bạn cần đăng nhập để đánh giá');
-      return;
-    }
+    // if (!user) {
+    //   setError('Bạn cần đăng nhập để đánh giá');
+    //   return;
+    // }
 
     if (rating === 0) {
       setError('Vui lòng chọn số sao');

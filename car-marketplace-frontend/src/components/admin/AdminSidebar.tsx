@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Drawer,
   List,
@@ -16,36 +17,56 @@ interface MenuItem {
   id: string;
   label: string;
   icon: React.ReactNode;
+  route: string;
 }
 
 interface AdminSidebarProps {
-  activeMenuItem: string;
-  onMenuItemClick: (itemId: string) => void;
+  activeMenuItem?: string;
   drawerWidth?: number;
 }
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({
   activeMenuItem,
-  onMenuItemClick,
   drawerWidth = 240,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Determine active menu item from URL if not provided
+  const currentActiveItem =
+    activeMenuItem ||
+    (location.pathname.includes('/admin/users')
+      ? 'users'
+      : location.pathname.includes('/admin/cars')
+      ? 'cars'
+      : location.pathname.includes('/admin/reports')
+      ? 'reports'
+      : 'users');
+
   const menuItems: MenuItem[] = [
     {
       id: 'users',
       label: 'Quản lý tài khoản',
       icon: <People />,
+      route: '/admin/users',
     },
     {
       id: 'cars',
       label: 'Quản lý bài đăng',
       icon: <DirectionsCar />,
+      route: '/admin/cars',
     },
     {
-      id: 'reports', // Add this menu item
+      id: 'reports',
       label: 'Quản lý báo cáo',
       icon: <Report />,
+      route: '/admin/reports',
     },
   ];
+
+  const handleMenuClick = (route: string) => {
+    navigate(route);
+  };
 
   return (
     <Drawer
@@ -81,8 +102,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         {menuItems.map((item) => (
           <ListItem key={item.id} disablePadding>
             <ListItemButton
-              selected={activeMenuItem === item.id}
-              onClick={() => onMenuItemClick(item.id)}
+              selected={currentActiveItem === item.id}
+              onClick={() => handleMenuClick(item.route)}
               sx={{
                 mx: 1,
                 my: 0.5,
@@ -108,7 +129,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 primary={item.label}
                 primaryTypographyProps={{
                   fontSize: '0.9rem',
-                  fontWeight: activeMenuItem === item.id ? 600 : 400,
+                  fontWeight: currentActiveItem === item.id ? 600 : 400,
                 }}
               />
             </ListItemButton>
