@@ -38,6 +38,7 @@ import { formatCurrency, formatRelativeTime } from '../utils/helpers';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import SellerRatings from '../components/common/SellerRatings';
 import ReportDialog from '../components/common/ReportDialog';
+import { useAuthStore } from '../store/authStore';
 import type { Car, ContactInfo } from '../types';
 
 // Mock car data
@@ -98,6 +99,7 @@ Liên hệ để xem xe và thương lượng giá!`,
 const CarDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   const [car, setCar] = useState<Car | null>(null);
   const [loading, setLoading] = useState(true);
@@ -199,9 +201,12 @@ const CarDetailPage: React.FC = () => {
         </Button>
 
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton onClick={() => setIsFavorite(!isFavorite)}>
-            {isFavorite ? <Favorite color='error' /> : <FavoriteBorder />}
-          </IconButton>
+          {/* Chỉ buyer mới có thể favorite */}
+          {user?.role === 'buyer' && (
+            <IconButton onClick={() => setIsFavorite(!isFavorite)}>
+              {isFavorite ? <Favorite color='error' /> : <FavoriteBorder />}
+            </IconButton>
+          )}
           <IconButton onClick={handleShare}>
             <Share />
           </IconButton>
@@ -430,16 +435,19 @@ const CarDetailPage: React.FC = () => {
                 Gửi tin nhắn
               </Button>
 
-              <Button
-                variant='text'
-                size='small'
-                startIcon={<Report />}
-                onClick={() => setReportDialogOpen(true)}
-                color='error'
-                sx={{ mt: 1 }}
-              >
-                Báo cáo người bán
-              </Button>
+              {/* Chỉ buyer mới có thể báo cáo */}
+              {user?.role === 'buyer' && (
+                <Button
+                  variant='text'
+                  size='small'
+                  startIcon={<Report />}
+                  onClick={() => setReportDialogOpen(true)}
+                  color='error'
+                  sx={{ mt: 1 }}
+                >
+                  Báo cáo người bán
+                </Button>
+              )}
             </Box>
 
             <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>

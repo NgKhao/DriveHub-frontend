@@ -42,10 +42,16 @@ const RatingDialog: React.FC<RatingDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    // if (!user) {
-    //   setError('Bạn cần đăng nhập để đánh giá');
-    //   return;
-    // }
+    if (!user) {
+      setError('Bạn cần đăng nhập để đánh giá');
+      return;
+    }
+
+    // Chỉ cho phép buyer đánh giá
+    if (user.role !== 'buyer') {
+      setError('Chỉ người mua mới có thể đánh giá người bán');
+      return;
+    }
 
     if (rating === 0) {
       setError('Vui lòng chọn số sao');

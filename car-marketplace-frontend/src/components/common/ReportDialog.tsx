@@ -51,6 +51,12 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
       return;
     }
 
+    // Chỉ cho phép buyer báo cáo
+    if (user.role !== 'buyer') {
+      setError('Chỉ người mua mới có thể gửi báo cáo');
+      return;
+    }
+
     if (!selectedReason) {
       setError('Vui lòng chọn lý do báo cáo');
       return;

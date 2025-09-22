@@ -99,16 +99,19 @@ const SellerRatings: React.FC<SellerRatingsProps> = ({
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
             <Typography variant='h6'>Đánh giá người bán</Typography>
-            {isAuthenticated && user?.id !== sellerId && (
-              <Button
-                variant='outlined'
-                size='small'
-                startIcon={<RateReview />}
-                onClick={() => setShowRatingDialog(true)}
-              >
-                {userRating ? 'Chỉnh sửa đánh giá' : 'Đánh giá'}
-              </Button>
-            )}
+            {/* Chỉ buyer mới có thể đánh giá và không phải chính seller đó */}
+            {isAuthenticated &&
+              user?.role === 'buyer' &&
+              user?.id !== sellerId && (
+                <Button
+                  variant='outlined'
+                  size='small'
+                  startIcon={<RateReview />}
+                  onClick={() => setShowRatingDialog(true)}
+                >
+                  {userRating ? 'Chỉnh sửa đánh giá' : 'Đánh giá'}
+                </Button>
+              )}
           </Box>
 
           {sellerRating ? (

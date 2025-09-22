@@ -122,24 +122,30 @@ const Header: React.FC = () => {
                   <Person sx={{ mr: 1 }} fontSize='small' />
                   Thông tin cá nhân
                 </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    handleClose();
-                    navigate('/favorites');
-                  }}
-                >
-                  <Favorite sx={{ mr: 1 }} fontSize='small' />
-                  Yêu thích
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    handleClose();
-                    navigate('/reports');
-                  }}
-                >
-                  <Report sx={{ mr: 1 }} fontSize='small' />
-                  Báo cáo
-                </MenuItem>
+                {/* Chỉ hiển thị Yêu thích cho buyer */}
+                {user?.role === 'buyer' && (
+                  <MenuItem
+                    onClick={() => {
+                      handleClose();
+                      navigate('/favorites');
+                    }}
+                  >
+                    <Favorite sx={{ mr: 1 }} fontSize='small' />
+                    Yêu thích
+                  </MenuItem>
+                )}
+                {/* Chỉ hiển thị Báo cáo cho buyer */}
+                {user?.role === 'buyer' && (
+                  <MenuItem
+                    onClick={() => {
+                      handleClose();
+                      navigate('/reports');
+                    }}
+                  >
+                    <Report sx={{ mr: 1 }} fontSize='small' />
+                    Báo cáo
+                  </MenuItem>
+                )}
                 {user?.role === 'seller' && (
                   <MenuItem
                     onClick={() => {
