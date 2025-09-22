@@ -105,10 +105,11 @@ const ReportsPage: React.FC = () => {
             Bạn không có quyền truy cập trang này
           </Typography>
           <Typography variant='body2'>
-            Để báo cáo người bán, vui lòng truy cập trang chi tiết xe và sử dụng nút "Báo cáo người bán"
+            Để báo cáo người bán, vui lòng truy cập trang chi tiết xe và sử dụng
+            nút "Báo cáo người bán"
           </Typography>
         </Alert>
-        
+
         <Card>
           <CardContent sx={{ textAlign: 'center', py: 6 }}>
             <Report sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
@@ -125,10 +126,10 @@ const ReportsPage: React.FC = () => {
                 muốn xem → Tìm nút "Báo cáo người bán" ở phần thông tin liên hệ
               </Typography>
             </Alert>
-            <Button 
-              variant='contained' 
+            <Button
+              variant='contained'
               sx={{ mt: 2 }}
-              onClick={() => window.location.href = '/cars'}
+              onClick={() => (window.location.href = '/cars')}
             >
               Xem danh sách xe
             </Button>
