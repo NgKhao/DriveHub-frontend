@@ -685,7 +685,13 @@ const ReportManagement: React.FC = () => {
               {/* Thông tin cơ bản */}
               <Card variant='outlined'>
                 <CardContent>
-                  <Typography variant='subtitle1' component='h3' fontWeight='bold' gutterBottom color='primary'>
+                  <Typography
+                    variant='subtitle1'
+                    component='h3'
+                    fontWeight='bold'
+                    gutterBottom
+                    color='primary'
+                  >
                     📋 Thông tin báo cáo
                   </Typography>
                   <Box
@@ -732,7 +738,13 @@ const ReportManagement: React.FC = () => {
               {/* Người báo cáo */}
               <Card variant='outlined'>
                 <CardContent>
-                  <Typography variant='subtitle1' component='h3' fontWeight='bold' gutterBottom color='primary'>
+                  <Typography
+                    variant='subtitle1'
+                    component='h3'
+                    fontWeight='bold'
+                    gutterBottom
+                    color='primary'
+                  >
                     👤 Người báo cáo
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -757,7 +769,13 @@ const ReportManagement: React.FC = () => {
               {/* Người bị báo cáo */}
               <Card variant='outlined'>
                 <CardContent>
-                  <Typography variant='subtitle1' component='h3' fontWeight='bold' gutterBottom color='error'>
+                  <Typography
+                    variant='subtitle1'
+                    component='h3'
+                    fontWeight='bold'
+                    gutterBottom
+                    color='error'
+                  >
                     🎯 Người bị báo cáo
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -782,7 +800,13 @@ const ReportManagement: React.FC = () => {
               {/* Mô tả chi tiết */}
               <Card variant='outlined'>
                 <CardContent>
-                  <Typography variant='subtitle1' component='h3' fontWeight='bold' gutterBottom color='primary'>
+                  <Typography
+                    variant='subtitle1'
+                    component='h3'
+                    fontWeight='bold'
+                    gutterBottom
+                    color='primary'
+                  >
                     📝 Mô tả chi tiết
                   </Typography>
                   <Typography
@@ -805,7 +829,13 @@ const ReportManagement: React.FC = () => {
               {selectedReport.carTitle && (
                 <Card variant='outlined'>
                   <CardContent>
-                    <Typography variant='subtitle1' component='h3' fontWeight='bold' gutterBottom color='info.main'>
+                    <Typography
+                      variant='subtitle1'
+                      component='h3'
+                      fontWeight='bold'
+                      gutterBottom
+                      color='info.main'
+                    >
                       🚗 Xe liên quan
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -831,7 +861,13 @@ const ReportManagement: React.FC = () => {
               {selectedReport.adminNotes && (
                 <Card variant='outlined'>
                   <CardContent>
-                    <Typography variant='subtitle1' component='h3' fontWeight='bold' gutterBottom color='success.main'>
+                    <Typography
+                      variant='subtitle1'
+                      component='h3'
+                      fontWeight='bold'
+                      gutterBottom
+                      color='success.main'
+                    >
                       🔧 Ghi chú admin
                     </Typography>
                     <Typography
@@ -853,7 +889,13 @@ const ReportManagement: React.FC = () => {
               {/* Timestamps */}
               <Card variant='outlined'>
                 <CardContent>
-                  <Typography variant='subtitle1' component='h3' fontWeight='bold' gutterBottom color='primary'>
+                  <Typography
+                    variant='subtitle1'
+                    component='h3'
+                    fontWeight='bold'
+                    gutterBottom
+                    color='primary'
+                  >
                     ⏰ Thời gian
                   </Typography>
                   <Box
