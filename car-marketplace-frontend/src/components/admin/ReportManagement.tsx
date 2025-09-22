@@ -26,26 +26,20 @@ import {
   DialogContent,
   DialogActions,
   Avatar,
-  Divider,
   Snackbar,
   Alert,
 } from '@mui/material';
 import {
-  Report,
-  Warning,
   CheckCircle,
   Cancel,
   Search,
   Refresh,
   MoreVert,
   Visibility,
-  Phone,
-  Email,
   Close,
   Block,
   Gavel,
   DirectionsCar,
-  Edit,
 } from '@mui/icons-material';
 
 interface ReportItem {
@@ -334,11 +328,11 @@ const ReportManagement: React.FC = () => {
       case 'pending':
         return <Chip label='Chờ xử lý' color='warning' size='small' />;
       case 'investigating':
-        return <Chip label='Đang xử lý' color='info' size='small' />;
+        return <Chip label='Đang điều tra' color='info' size='small' />;
       case 'resolved':
         return <Chip label='Đã giải quyết' color='success' size='small' />;
       case 'dismissed':
-        return <Chip label='Đã bỏ qua' color='default' size='small' />;
+        return <Chip label='Bỏ qua' color='default' size='small' />;
       default:
         return <Chip label={status} color='default' size='small' />;
     }
@@ -349,9 +343,9 @@ const ReportManagement: React.FC = () => {
       case 'fraud':
         return 'Gian lận';
       case 'behavior':
-        return 'Hành vi';
+        return 'Hành vi không phù hợp';
       case 'content':
-        return 'Nội dung';
+        return 'Nội dung không phù hợp';
       case 'other':
         return 'Khác';
       default:
@@ -389,77 +383,60 @@ const ReportManagement: React.FC = () => {
       {/* Statistics Cards */}
       <Box sx={{ display: 'flex', gap: 3, mb: 4, flexWrap: 'wrap' }}>
         <Card sx={{ minWidth: 200, flex: 1 }}>
-          <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-            <Report sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
-            <Box>
-              <Typography variant='h5' fontWeight='bold'>
-                {totalReports}
-              </Typography>
-              <Typography variant='body2' color='text.secondary'>
-                Tổng báo cáo
-              </Typography>
-            </Box>
+          <CardContent sx={{ textAlign: 'center' }}>
+            <Typography variant='h4' color='primary.main' fontWeight='bold'>
+              {totalReports}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              Tổng báo cáo
+            </Typography>
           </CardContent>
         </Card>
 
         <Card sx={{ minWidth: 200, flex: 1 }}>
-          <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-            <Warning sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
-            <Box>
-              <Typography variant='h5' fontWeight='bold'>
-                {pendingReports}
-              </Typography>
-              <Typography variant='body2' color='text.secondary'>
-                Chờ xử lý
-              </Typography>
-            </Box>
+          <CardContent sx={{ textAlign: 'center' }}>
+            <Typography variant='h4' color='warning.main' fontWeight='bold'>
+              {pendingReports}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              Chờ xử lý
+            </Typography>
           </CardContent>
         </Card>
 
         <Card sx={{ minWidth: 200, flex: 1 }}>
-          <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-            <Gavel sx={{ fontSize: 40, color: 'info.main', mr: 2 }} />
-            <Box>
-              <Typography variant='h5' fontWeight='bold'>
-                {investigatingReports}
-              </Typography>
-              <Typography variant='body2' color='text.secondary'>
-                Đang xử lý
-              </Typography>
-            </Box>
+          <CardContent sx={{ textAlign: 'center' }}>
+            <Typography variant='h4' color='info.main' fontWeight='bold'>
+              {investigatingReports}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              Đang điều tra
+            </Typography>
           </CardContent>
         </Card>
 
         <Card sx={{ minWidth: 200, flex: 1 }}>
-          <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-            <CheckCircle sx={{ fontSize: 40, color: 'success.main', mr: 2 }} />
-            <Box>
-              <Typography variant='h5' fontWeight='bold'>
-                {resolvedReports}
-              </Typography>
-              <Typography variant='body2' color='text.secondary'>
-                Đã giải quyết
-              </Typography>
-            </Box>
+          <CardContent sx={{ textAlign: 'center' }}>
+            <Typography variant='h4' color='success.main' fontWeight='bold'>
+              {resolvedReports}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              Đã giải quyết
+            </Typography>
           </CardContent>
         </Card>
       </Box>
 
       {/* Reports Management */}
       <Paper sx={{ p: 3 }}>
-        {/* Filters and Search */}
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 2,
-            mb: 3,
-            flexWrap: 'wrap',
-            alignItems: 'center',
-          }}
-        >
+        <Typography variant='h5' fontWeight='bold' gutterBottom>
+          Quản lý báo cáo
+        </Typography>
+
+        {/* Filters */}
+        <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
           <TextField
-            size='small'
-            placeholder='Tìm kiếm theo người báo cáo, bị báo cáo, lý do...'
+            placeholder='Tìm kiếm báo cáo...'
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
@@ -470,27 +447,27 @@ const ReportManagement: React.FC = () => {
             sx={{ minWidth: 300, flex: 1 }}
           />
 
-          <FormControl size='small' sx={{ minWidth: 140 }}>
+          <FormControl sx={{ minWidth: 150 }}>
             <InputLabel>Trạng thái</InputLabel>
             <Select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
               label='Trạng thái'
+              onChange={(e) => setStatusFilter(e.target.value)}
             >
               <MenuItem value='all'>Tất cả</MenuItem>
               <MenuItem value='pending'>Chờ xử lý</MenuItem>
-              <MenuItem value='investigating'>Đang xử lý</MenuItem>
+              <MenuItem value='investigating'>Đang điều tra</MenuItem>
               <MenuItem value='resolved'>Đã giải quyết</MenuItem>
-              <MenuItem value='dismissed'>Đã bỏ qua</MenuItem>
+              <MenuItem value='dismissed'>Bỏ qua</MenuItem>
             </Select>
           </FormControl>
 
-          <FormControl size='small' sx={{ minWidth: 140 }}>
+          <FormControl sx={{ minWidth: 150 }}>
             <InputLabel>Danh mục</InputLabel>
             <Select
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
               label='Danh mục'
+              onChange={(e) => setCategoryFilter(e.target.value)}
             >
               <MenuItem value='all'>Tất cả</MenuItem>
               <MenuItem value='fraud'>Gian lận</MenuItem>
@@ -510,27 +487,30 @@ const ReportManagement: React.FC = () => {
         </Box>
 
         {/* Reports Table */}
-        <TableContainer>
+        <TableContainer
+          component={Paper}
+          sx={{ border: 1, borderColor: 'divider' }}
+        >
           <Table>
             <TableHead>
-              <TableRow>
+              <TableRow sx={{ bgcolor: 'grey.50' }}>
                 <TableCell>Người báo cáo</TableCell>
-                <TableCell>Bị báo cáo</TableCell>
+                <TableCell>Người bị báo cáo</TableCell>
                 <TableCell>Lý do</TableCell>
                 <TableCell>Danh mục</TableCell>
                 <TableCell>Trạng thái</TableCell>
                 <TableCell>Ngày tạo</TableCell>
-                <TableCell>Thao tác</TableCell>
+                <TableCell align='center'>Thao tác</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredReports
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((report) => (
-                  <TableRow key={report.id}>
+                  <TableRow key={report.id} hover>
                     <TableCell>
                       <Box
-                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                        sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
                       >
                         <Avatar sx={{ width: 32, height: 32 }}>
                           {report.reporter.name.charAt(0)}
@@ -549,7 +529,7 @@ const ReportManagement: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Box
-                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                        sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
                       >
                         <Avatar sx={{ width: 32, height: 32 }}>
                           {report.reported.name.charAt(0)}
@@ -579,9 +559,20 @@ const ReportManagement: React.FC = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Typography variant='body2'>
-                        {getCategoryLabel(report.category)}
-                      </Typography>
+                      <Chip
+                        label={getCategoryLabel(report.category)}
+                        color={
+                          report.category === 'fraud'
+                            ? 'error'
+                            : report.category === 'behavior'
+                            ? 'warning'
+                            : report.category === 'content'
+                            ? 'info'
+                            : 'default'
+                        }
+                        variant='outlined'
+                        size='small'
+                      />
                     </TableCell>
                     <TableCell>{getStatusChip(report.status)}</TableCell>
                     <TableCell>
@@ -589,10 +580,10 @@ const ReportManagement: React.FC = () => {
                         {formatDate(report.createdAt)}
                       </Typography>
                     </TableCell>
-                    <TableCell>
+                    <TableCell align='center'>
                       <IconButton
-                        size='small'
                         onClick={(e) => handleMenuClick(e, report)}
+                        size='small'
                       >
                         <MoreVert />
                       </IconButton>
@@ -631,22 +622,33 @@ const ReportManagement: React.FC = () => {
         </MenuItem>
         {selectedReport?.status === 'pending' && (
           <MenuItem onClick={handleInvestigate}>
-            <Gavel sx={{ mr: 1, color: 'info.main' }} />
+            <Gavel sx={{ mr: 1 }} />
             Bắt đầu điều tra
           </MenuItem>
         )}
-        {(selectedReport?.status === 'pending' ||
-          selectedReport?.status === 'investigating') && (
-          <>
-            <MenuItem onClick={handleResolve}>
-              <CheckCircle sx={{ mr: 1, color: 'success.main' }} />
-              Giải quyết
-            </MenuItem>
-            <MenuItem onClick={handleDismiss}>
-              <Cancel sx={{ mr: 1, color: 'warning.main' }} />
-              Bỏ qua
-            </MenuItem>
-          </>
+        {selectedReport?.status === 'pending' && (
+          <MenuItem onClick={handleResolve} sx={{ color: 'success.main' }}>
+            <CheckCircle sx={{ mr: 1 }} />
+            Giải quyết
+          </MenuItem>
+        )}
+        {selectedReport?.status === 'pending' && (
+          <MenuItem onClick={handleDismiss} sx={{ color: 'warning.main' }}>
+            <Cancel sx={{ mr: 1 }} />
+            Bỏ qua
+          </MenuItem>
+        )}
+        {selectedReport?.status === 'investigating' && (
+          <MenuItem onClick={handleResolve} sx={{ color: 'success.main' }}>
+            <CheckCircle sx={{ mr: 1 }} />
+            Giải quyết
+          </MenuItem>
+        )}
+        {selectedReport?.status === 'investigating' && (
+          <MenuItem onClick={handleDismiss} sx={{ color: 'warning.main' }}>
+            <Cancel sx={{ mr: 1 }} />
+            Bỏ qua
+          </MenuItem>
         )}
         <MenuItem onClick={handleBlockUser} sx={{ color: 'error.main' }}>
           <Block sx={{ mr: 1 }} />
@@ -658,7 +660,7 @@ const ReportManagement: React.FC = () => {
       <Dialog
         open={detailDialogOpen}
         onClose={() => setDetailDialogOpen(false)}
-        maxWidth='md'
+        maxWidth='lg'
         fullWidth
       >
         <DialogTitle
@@ -668,920 +670,204 @@ const ReportManagement: React.FC = () => {
             alignItems: 'center',
           }}
         >
-          <Typography variant='h6'>Chi tiết báo cáo</Typography>
+          Chi tiết báo cáo
           <IconButton onClick={() => setDetailDialogOpen(false)}>
             <Close />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent
+          sx={{ minHeight: '60vh', maxHeight: '80vh', overflow: 'auto' }}
+        >
           {selectedReport && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              {/* Report Info */}
-              <Box>
-                <Typography variant='subtitle1' fontWeight='bold' gutterBottom>
-                  Thông tin báo cáo
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                      sx={{ minWidth: 100 }}
-                    >
-                      Lý do:
-                    </Typography>
-                    <Typography variant='body2'>
-                      {selectedReport.reason}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                      sx={{ minWidth: 100 }}
-                    >
-                      Danh mục:
-                    </Typography>
-                    <Typography variant='body2'>
-                      {getCategoryLabel(selectedReport.category)}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                      sx={{ minWidth: 100 }}
-                    >
-                      Trạng thái:
-                    </Typography>
-                    {getStatusChip(selectedReport.status)}
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                      sx={{ minWidth: 100 }}
-                    >
-                      Loại báo cáo:
-                    </Typography>
-                    <Typography variant='body2'>
-                      {selectedReport.reportedType === 'seller'
-                        ? 'Báo cáo người bán'
-                        : 'Báo cáo người mua'}
-                    </Typography>
-                  </Box>
-                  {selectedReport.carTitle && (
+            <Box
+              sx={{ display: 'flex', flexDirection: 'column', gap: 3, py: 2 }}
+            >
+              {/* Thông tin cơ bản */}
+              <Card variant='outlined'>
+                <CardContent>
+                  <Typography variant='subtitle1' component='h3' fontWeight='bold' gutterBottom color='primary'>
+                    📋 Thông tin báo cáo
+                  </Typography>
+                  <Box
+                    sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
+                  >
                     <Box sx={{ display: 'flex', gap: 2 }}>
                       <Typography
                         variant='body2'
                         color='text.secondary'
                         sx={{ minWidth: 100 }}
                       >
-                        Xe liên quan:
+                        Lý do:
                       </Typography>
                       <Typography variant='body2'>
-                        {selectedReport.carTitle}
+                        {selectedReport.reason}
                       </Typography>
                     </Box>
-                  )}
-                </Box>
-              </Box>
-
-              <Divider />
-
-              {/* Reporter Info */}
-              <Box>
-                <Typography variant='subtitle1' fontWeight='bold' gutterBottom>
-                  Người báo cáo
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar sx={{ width: 48, height: 48 }}>
-                    {selectedReport.reporter.name.charAt(0)}
-                  </Avatar>
-                  <Box>
-                    <Typography variant='body1' fontWeight='medium'>
-                      {selectedReport.reporter.name}
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        mt: 0.5,
-                      }}
-                    >
-                      <Email sx={{ fontSize: 16 }} />
-                      <Typography variant='body2' color='text.secondary'>
-                        {selectedReport.reporter.email}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Phone sx={{ fontSize: 16 }} />
-                      <Typography variant='body2' color='text.secondary'>
-                        {selectedReport.reporter.phone}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              </Box>
-
-              <Divider />
-
-              {/* Reported User Info */}
-              <Box>
-                <Typography variant='subtitle1' fontWeight='bold' gutterBottom>
-                  Người bị báo cáo
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar sx={{ width: 48, height: 48 }}>
-                    {selectedReport.reported.name.charAt(0)}
-                  </Avatar>
-                  <Box>
-                    <Typography variant='body1' fontWeight='medium'>
-                      {selectedReport.reported.name}
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        mt: 0.5,
-                      }}
-                    >
-                      <Email sx={{ fontSize: 16 }} />
-                      <Typography variant='body2' color='text.secondary'>
-                        {selectedReport.reported.email}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Phone sx={{ fontSize: 16 }} />
-                      <Typography variant='body2' color='text.secondary'>
-                        {selectedReport.reported.phone}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              </Box>
-
-              <Divider />
-
-              {/* Description */}
-              <Box>
-                <Typography variant='subtitle1' fontWeight='bold' gutterBottom>
-                  Mô tả chi tiết
-                </Typography>
-                <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
-                  <Typography variant='body2' sx={{ whiteSpace: 'pre-wrap' }}>
-                    {selectedReport.description}
-                  </Typography>
-                </Paper>
-              </Box>
-
-              {/* Car Information if applicable */}
-              {selectedReport.carId && selectedReport.carTitle && (
-                <>
-                  <Divider />
-                  <Box>
-                    <Typography
-                      variant='subtitle1'
-                      fontWeight='bold'
-                      gutterBottom
-                    >
-                      Xe liên quan
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <DirectionsCar sx={{ color: 'primary.main' }} />
-                      <Box>
-                        <Typography variant='body1' fontWeight='medium'>
-                          {selectedReport.carTitle}
-                        </Typography>
-                        <Typography variant='body2' color='text.secondary'>
-                          ID: {selectedReport.carId}
-                        </Typography>
-                        <Button
-                          size='small'
-                          variant='outlined'
-                          sx={{ mt: 1 }}
-                          onClick={() =>
-                            window.open(
-                              `/cars/${selectedReport.carId}`,
-                              '_blank'
-                            )
-                          }
-                        >
-                          Xem bài đăng
-                        </Button>
-                      </Box>
-                    </Box>
-                  </Box>
-                </>
-              )}
-
-              {/* Report Statistics */}
-              <Divider />
-              <Box>
-                <Typography variant='subtitle1' fontWeight='bold' gutterBottom>
-                  Thống kê và Lịch sử người dùng
-                </Typography>
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 2,
-                    mb: 2,
-                  }}
-                >
-                  <Paper
-                    sx={{
-                      p: 2,
-                      textAlign: 'center',
-                      border: 1,
-                      borderColor: 'warning.light',
-                    }}
-                  >
-                    <Typography variant='h6' color='warning.main'>
-                      {
-                        reports.filter(
-                          (r) => r.reported.id === selectedReport.reported.id
-                        ).length
-                      }
-                    </Typography>
-                    <Typography variant='caption' color='text.secondary'>
-                      Tổng báo cáo nhận được
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.primary'
-                      sx={{ mt: 0.5 }}
-                    >
-                      {selectedReport.reported.name}
-                    </Typography>
-                  </Paper>
-                  <Paper
-                    sx={{
-                      p: 2,
-                      textAlign: 'center',
-                      border: 1,
-                      borderColor: 'info.light',
-                    }}
-                  >
-                    <Typography variant='h6' color='info.main'>
-                      {
-                        reports.filter(
-                          (r) => r.reporter.id === selectedReport.reporter.id
-                        ).length
-                      }
-                    </Typography>
-                    <Typography variant='caption' color='text.secondary'>
-                      Báo cáo đã gửi
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.primary'
-                      sx={{ mt: 0.5 }}
-                    >
-                      {selectedReport.reporter.name}
-                    </Typography>
-                  </Paper>
-                </Box>
-
-                {/* Detailed Statistics */}
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr 1fr',
-                    gap: 1,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      p: 1.5,
-                      bgcolor: 'error.50',
-                      borderRadius: 1,
-                      textAlign: 'center',
-                    }}
-                  >
-                    <Typography
-                      variant='body2'
-                      fontWeight='bold'
-                      color='error.main'
-                    >
-                      {
-                        reports.filter(
-                          (r) =>
-                            r.reported.id === selectedReport.reported.id &&
-                            r.status === 'resolved'
-                        ).length
-                      }
-                    </Typography>
-                    <Typography variant='caption'>Đã giải quyết</Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      p: 1.5,
-                      bgcolor: 'warning.50',
-                      borderRadius: 1,
-                      textAlign: 'center',
-                    }}
-                  >
-                    <Typography
-                      variant='body2'
-                      fontWeight='bold'
-                      color='warning.main'
-                    >
-                      {
-                        reports.filter(
-                          (r) =>
-                            r.reported.id === selectedReport.reported.id &&
-                            r.status === 'investigating'
-                        ).length
-                      }
-                    </Typography>
-                    <Typography variant='caption'>Đang xử lý</Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      p: 1.5,
-                      bgcolor: 'info.50',
-                      borderRadius: 1,
-                      textAlign: 'center',
-                    }}
-                  >
-                    <Typography
-                      variant='body2'
-                      fontWeight='bold'
-                      color='info.main'
-                    >
-                      {
-                        reports.filter(
-                          (r) =>
-                            r.reported.id === selectedReport.reported.id &&
-                            r.status === 'pending'
-                        ).length
-                      }
-                    </Typography>
-                    <Typography variant='caption'>Chờ xử lý</Typography>
-                  </Box>
-                </Box>
-
-                {/* Risk Assessment */}
-                <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography variant='body2' fontWeight='medium' gutterBottom>
-                    Đánh giá rủi ro:
-                  </Typography>
-                  {(() => {
-                    const reportCount = reports.filter(
-                      (r) => r.reported.id === selectedReport.reported.id
-                    ).length;
-                    const fraudReports = reports.filter(
-                      (r) =>
-                        r.reported.id === selectedReport.reported.id &&
-                        r.category === 'fraud'
-                    ).length;
-
-                    if (fraudReports > 0 || reportCount >= 3) {
-                      return (
-                        <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                        >
-                          <Warning sx={{ color: 'error.main', fontSize: 20 }} />
-                          <Typography variant='body2' color='error.main'>
-                            Rủi ro cao - Cần xem xét khóa tài khoản
-                          </Typography>
-                        </Box>
-                      );
-                    } else if (reportCount >= 2) {
-                      return (
-                        <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                        >
-                          <Warning
-                            sx={{ color: 'warning.main', fontSize: 20 }}
-                          />
-                          <Typography variant='body2' color='warning.main'>
-                            Rủi ro trung bình - Theo dõi chặt chẽ
-                          </Typography>
-                        </Box>
-                      );
-                    } else {
-                      return (
-                        <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                        >
-                          <CheckCircle
-                            sx={{ color: 'success.main', fontSize: 20 }}
-                          />
-                          <Typography variant='body2' color='success.main'>
-                            Rủi ro thấp - Người dùng đáng tin cậy
-                          </Typography>
-                        </Box>
-                      );
-                    }
-                  })()}
-                </Box>
-              </Box>
-
-              {/* Admin Notes */}
-              {selectedReport.adminNotes && (
-                <>
-                  <Divider />
-                  <Box>
-                    <Typography
-                      variant='subtitle1'
-                      fontWeight='bold'
-                      gutterBottom
-                    >
-                      Ghi chú admin
-                    </Typography>
-                    <Paper
-                      sx={{
-                        p: 2,
-                        bgcolor: 'info.50',
-                        border: 1,
-                        borderColor: 'info.200',
-                      }}
-                    >
+                    <Box sx={{ display: 'flex', gap: 2 }}>
                       <Typography
                         variant='body2'
-                        sx={{ whiteSpace: 'pre-wrap' }}
+                        color='text.secondary'
+                        sx={{ minWidth: 100 }}
                       >
-                        {selectedReport.adminNotes}
+                        Danh mục:
                       </Typography>
-                    </Paper>
-                  </Box>
-                </>
-              )}
-
-              {/* Report Context & Evidence */}
-              <Divider />
-              <Box>
-                <Typography variant='subtitle1' fontWeight='bold' gutterBottom>
-                  Bối cảnh và Bằng chứng
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                    <Typography
-                      variant='body2'
-                      fontWeight='medium'
-                      color='text.primary'
-                      gutterBottom
-                    >
-                      Mô tả sự việc:
-                    </Typography>
-                    <Typography variant='body2' color='text.secondary'>
-                      {selectedReport.description}
-                    </Typography>
-                  </Box>
-
-                  <Box
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: 2,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        p: 2,
-                        border: 1,
-                        borderColor: 'divider',
-                        borderRadius: 1,
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        fontWeight='medium'
-                        color='primary.main'
-                        gutterBottom
-                      >
-                        Loại vi phạm
-                      </Typography>
-                      <Chip
-                        label={getCategoryLabel(selectedReport.category)}
-                        color={
-                          selectedReport.category === 'fraud'
-                            ? 'error'
-                            : selectedReport.category === 'behavior'
-                            ? 'warning'
-                            : selectedReport.category === 'content'
-                            ? 'info'
-                            : 'default'
-                        }
-                        variant='outlined'
-                        size='small'
-                      />
-                    </Box>
-
-                    <Box
-                      sx={{
-                        p: 2,
-                        border: 1,
-                        borderColor: 'divider',
-                        borderRadius: 1,
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        fontWeight='medium'
-                        color='primary.main'
-                        gutterBottom
-                      >
-                        Mức độ nghiêm trọng
-                      </Typography>
-                      <Chip
-                        label={
-                          selectedReport.category === 'fraud'
-                            ? 'Nghiêm trọng'
-                            : selectedReport.category === 'behavior'
-                            ? 'Trung bình'
-                            : 'Nhẹ'
-                        }
-                        color={
-                          selectedReport.category === 'fraud'
-                            ? 'error'
-                            : selectedReport.category === 'behavior'
-                            ? 'warning'
-                            : 'success'
-                        }
-                        size='small'
-                      />
-                    </Box>
-                  </Box>
-                </Box>
-              </Box>
-
-              {/* Action Recommendations */}
-              <Divider />
-              <Box>
-                <Typography variant='subtitle1' fontWeight='bold' gutterBottom>
-                  Khuyến nghị xử lý
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {selectedReport.category === 'fraud' && (
-                    <Alert severity='error' sx={{ mb: 1 }}>
-                      <Typography variant='body2' fontWeight='medium'>
-                        Báo cáo gian lận - Cần xử lý ngay lập tức
-                      </Typography>
-                      <Typography variant='caption'>
-                        • Điều tra chi tiết thông tin xe và người bán
-                        <br />
-                        • Xác minh tài liệu và lịch sử giao dịch
-                        <br />• Có thể cần tạm khóa tài khoản để bảo vệ người
-                        dùng khác
-                      </Typography>
-                    </Alert>
-                  )}
-
-                  {selectedReport.category === 'behavior' && (
-                    <Alert severity='warning' sx={{ mb: 1 }}>
-                      <Typography variant='body2' fontWeight='medium'>
-                        Hành vi không phù hợp - Cần can thiệp
-                      </Typography>
-                      <Typography variant='caption'>
-                        • Gửi cảnh báo đến người bị báo cáo
-                        <br />
-                        • Theo dõi hành vi trong thời gian tới
-                        <br />• Có thể hạn chế một số tính năng nếu tái phạm
-                      </Typography>
-                    </Alert>
-                  )}
-
-                  {selectedReport.category === 'content' && (
-                    <Alert severity='info' sx={{ mb: 1 }}>
-                      <Typography variant='body2' fontWeight='medium'>
-                        Nội dung không phù hợp - Yêu cầu chỉnh sửa
-                      </Typography>
-                      <Typography variant='caption'>
-                        • Liên hệ yêu cầu chỉnh sửa bài đăng
-                        <br />
-                        • Ẩn bài đăng tạm thời cho đến khi được sửa
-                        <br />• Hướng dẫn tuân thủ quy định đăng bài
-                      </Typography>
-                    </Alert>
-                  )}
-
-                  {selectedReport.category === 'other' && (
-                    <Alert severity='info'>
-                      <Typography variant='body2' fontWeight='medium'>
-                        Vấn đề khác - Xem xét cụ thể
-                      </Typography>
-                      <Typography variant='caption'>
-                        • Đánh giá tình huống cụ thể
-                        <br />
-                        • Tư vấn và hỗ trợ cả hai bên
-                        <br />• Ghi nhận để theo dõi xu hướng
-                      </Typography>
-                    </Alert>
-                  )}
-                </Box>
-              </Box>
-
-              {/* Timeline & History */}
-              <Divider />
-              <Box>
-                <Typography variant='subtitle1' fontWeight='bold' gutterBottom>
-                  Lịch sử xử lý chi tiết
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {/* Report Created */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 2,
-                      p: 2,
-                      bgcolor: 'warning.50',
-                      borderRadius: 1,
-                      border: 1,
-                      borderColor: 'warning.200',
-                    }}
-                  >
-                    <Report
-                      sx={{ color: 'warning.main', fontSize: 24, mt: 0.5 }}
-                    />
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        variant='body1'
-                        fontWeight='bold'
-                        color='warning.dark'
-                      >
-                        Báo cáo được tạo
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.primary'
-                        sx={{ mt: 0.5 }}
-                      >
-                        <strong>Thời gian:</strong>{' '}
-                        {formatDate(selectedReport.createdAt)}
-                      </Typography>
-                      <Typography variant='body2' color='text.primary'>
-                        <strong>Người báo cáo:</strong>{' '}
-                        {selectedReport.reporter.name} (
-                        {selectedReport.reporter.role === 'buyer'
-                          ? 'Người mua'
-                          : 'Người bán'}
-                        )
-                      </Typography>
-                      <Typography variant='body2' color='text.primary'>
-                        <strong>Lý do:</strong> {selectedReport.reason}
-                      </Typography>
-                      <Typography variant='body2' color='text.primary'>
-                        <strong>Danh mục:</strong>{' '}
+                      <Typography variant='body2'>
                         {getCategoryLabel(selectedReport.category)}
                       </Typography>
-                      {selectedReport.carTitle && (
-                        <Typography variant='body2' color='text.primary'>
-                          <strong>Xe liên quan:</strong>{' '}
-                          {selectedReport.carTitle}
-                        </Typography>
-                      )}
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                        sx={{ minWidth: 100 }}
+                      >
+                        Trạng thái:
+                      </Typography>
+                      {getStatusChip(selectedReport.status)}
                     </Box>
                   </Box>
+                </CardContent>
+              </Card>
 
-                  {/* Status Updates */}
-                  {selectedReport.updatedAt !== selectedReport.createdAt && (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 2,
-                        p: 2,
-                        bgcolor: 'info.50',
-                        borderRadius: 1,
-                        border: 1,
-                        borderColor: 'info.200',
-                      }}
-                    >
-                      <Edit
-                        sx={{ color: 'info.main', fontSize: 24, mt: 0.5 }}
-                      />
-                      <Box sx={{ flex: 1 }}>
-                        <Typography
-                          variant='body1'
-                          fontWeight='bold'
-                          color='info.dark'
-                        >
-                          Cập nhật trạng thái
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          color='text.primary'
-                          sx={{ mt: 0.5 }}
-                        >
-                          <strong>Thời gian:</strong>{' '}
-                          {formatDate(selectedReport.updatedAt)}
-                        </Typography>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            mt: 1,
-                          }}
-                        >
-                          <Typography variant='body2' color='text.primary'>
-                            <strong>Trạng thái hiện tại:</strong>
-                          </Typography>
-                          {getStatusChip(selectedReport.status)}
-                        </Box>
-
-                        {/* Action taken description */}
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                          sx={{ mt: 1, fontStyle: 'italic' }}
-                        >
-                          {selectedReport.status === 'investigating' &&
-                            'Admin đã bắt đầu quá trình điều tra báo cáo này.'}
-                          {selectedReport.status === 'resolved' &&
-                            'Báo cáo đã được xử lý và giải quyết thành công.'}
-                          {selectedReport.status === 'dismissed' &&
-                            'Báo cáo đã được xem xét và quyết định bỏ qua.'}
-                        </Typography>
-                      </Box>
+              {/* Người báo cáo */}
+              <Card variant='outlined'>
+                <CardContent>
+                  <Typography variant='subtitle1' component='h3' fontWeight='bold' gutterBottom color='primary'>
+                    👤 Người báo cáo
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ width: 48, height: 48 }}>
+                      {selectedReport.reporter.name.charAt(0)}
+                    </Avatar>
+                    <Box>
+                      <Typography variant='body1' fontWeight='medium'>
+                        {selectedReport.reporter.name}
+                      </Typography>
+                      <Typography variant='body2' color='text.secondary'>
+                        📧 {selectedReport.reporter.email}
+                      </Typography>
+                      <Typography variant='body2' color='text.secondary'>
+                        📞 {selectedReport.reporter.phone}
+                      </Typography>
                     </Box>
-                  )}
+                  </Box>
+                </CardContent>
+              </Card>
 
-                  {/* Resolution Details */}
-                  {selectedReport.status === 'resolved' && (
-                    <Box
+              {/* Người bị báo cáo */}
+              <Card variant='outlined'>
+                <CardContent>
+                  <Typography variant='subtitle1' component='h3' fontWeight='bold' gutterBottom color='error'>
+                    🎯 Người bị báo cáo
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ width: 48, height: 48 }}>
+                      {selectedReport.reported.name.charAt(0)}
+                    </Avatar>
+                    <Box>
+                      <Typography variant='body1' fontWeight='medium'>
+                        {selectedReport.reported.name}
+                      </Typography>
+                      <Typography variant='body2' color='text.secondary'>
+                        📧 {selectedReport.reported.email}
+                      </Typography>
+                      <Typography variant='body2' color='text.secondary'>
+                        📞 {selectedReport.reported.phone}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+
+              {/* Mô tả chi tiết */}
+              <Card variant='outlined'>
+                <CardContent>
+                  <Typography variant='subtitle1' component='h3' fontWeight='bold' gutterBottom color='primary'>
+                    📝 Mô tả chi tiết
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{
+                      whiteSpace: 'pre-wrap',
+                      backgroundColor: 'grey.50',
+                      p: 2,
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: 'grey.200',
+                    }}
+                  >
+                    {selectedReport.description}
+                  </Typography>
+                </CardContent>
+              </Card>
+
+              {/* Xe liên quan (nếu có) */}
+              {selectedReport.carTitle && (
+                <Card variant='outlined'>
+                  <CardContent>
+                    <Typography variant='subtitle1' component='h3' fontWeight='bold' gutterBottom color='info.main'>
+                      🚗 Xe liên quan
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <DirectionsCar color='info' />
+                      <Typography variant='body1'>
+                        {selectedReport.carTitle}
+                      </Typography>
+                      <Button
+                        size='small'
+                        variant='outlined'
+                        onClick={() =>
+                          window.open(`/cars/${selectedReport.carId}`, '_blank')
+                        }
+                      >
+                        Xem bài đăng
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Ghi chú admin */}
+              {selectedReport.adminNotes && (
+                <Card variant='outlined'>
+                  <CardContent>
+                    <Typography variant='subtitle1' component='h3' fontWeight='bold' gutterBottom color='success.main'>
+                      🔧 Ghi chú admin
+                    </Typography>
+                    <Typography
+                      variant='body2'
                       sx={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 2,
+                        backgroundColor: 'success.50',
                         p: 2,
-                        bgcolor: 'success.50',
                         borderRadius: 1,
-                        border: 1,
+                        border: '1px solid',
                         borderColor: 'success.200',
                       }}
                     >
-                      <CheckCircle
-                        sx={{ color: 'success.main', fontSize: 24, mt: 0.5 }}
-                      />
-                      <Box sx={{ flex: 1 }}>
-                        <Typography
-                          variant='body1'
-                          fontWeight='bold'
-                          color='success.dark'
-                        >
-                          Báo cáo đã được giải quyết
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          color='text.primary'
-                          sx={{ mt: 0.5 }}
-                        >
-                          <strong>Kết quả xử lý:</strong> Đã thực hiện các biện
-                          pháp cần thiết
-                        </Typography>
-                        {selectedReport.adminNotes && (
-                          <Box
-                            sx={{
-                              mt: 1,
-                              p: 1.5,
-                              bgcolor: 'success.100',
-                              borderRadius: 1,
-                            }}
-                          >
-                            <Typography
-                              variant='body2'
-                              fontWeight='medium'
-                              color='success.dark'
-                            >
-                              Ghi chú từ admin:
-                            </Typography>
-                            <Typography
-                              variant='body2'
-                              color='text.primary'
-                              sx={{ mt: 0.5 }}
-                            >
-                              {selectedReport.adminNotes}
-                            </Typography>
-                          </Box>
-                        )}
-                      </Box>
-                    </Box>
-                  )}
+                      {selectedReport.adminNotes}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              )}
 
-                  {/* Dismissal Details */}
-                  {selectedReport.status === 'dismissed' && (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 2,
-                        p: 2,
-                        bgcolor: 'grey.100',
-                        borderRadius: 1,
-                        border: 1,
-                        borderColor: 'grey.300',
-                      }}
-                    >
-                      <Cancel
-                        sx={{ color: 'grey.600', fontSize: 24, mt: 0.5 }}
-                      />
-                      <Box sx={{ flex: 1 }}>
-                        <Typography
-                          variant='body1'
-                          fontWeight='bold'
-                          color='grey.700'
-                        >
-                          Báo cáo đã bị bỏ qua
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          color='text.primary'
-                          sx={{ mt: 0.5 }}
-                        >
-                          <strong>Lý do:</strong> Không đủ bằng chứng hoặc không
-                          vi phạm quy định
-                        </Typography>
-                        {selectedReport.adminNotes && (
-                          <Box
-                            sx={{
-                              mt: 1,
-                              p: 1.5,
-                              bgcolor: 'grey.50',
-                              borderRadius: 1,
-                            }}
-                          >
-                            <Typography
-                              variant='body2'
-                              fontWeight='medium'
-                              color='grey.700'
-                            >
-                              Ghi chú từ admin:
-                            </Typography>
-                            <Typography
-                              variant='body2'
-                              color='text.primary'
-                              sx={{ mt: 0.5 }}
-                            >
-                              {selectedReport.adminNotes}
-                            </Typography>
-                          </Box>
-                        )}
-                      </Box>
-                    </Box>
-                  )}
-
-                  {/* Next Steps for Pending/Investigating */}
-                  {(selectedReport.status === 'pending' ||
-                    selectedReport.status === 'investigating') && (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 2,
-                        p: 2,
-                        bgcolor: 'grey.50',
-                        borderRadius: 1,
-                        border: 1,
-                        borderColor: 'grey.300',
-                        borderStyle: 'dashed',
-                      }}
-                    >
-                      <Gavel
-                        sx={{ color: 'grey.600', fontSize: 24, mt: 0.5 }}
-                      />
-                      <Box sx={{ flex: 1 }}>
-                        <Typography
-                          variant='body1'
-                          fontWeight='bold'
-                          color='grey.700'
-                        >
-                          Các bước tiếp theo
-                        </Typography>
-                        <Box component='ul' sx={{ mt: 1, pl: 2, m: 0 }}>
-                          <li>
-                            <Typography variant='body2' color='text.primary'>
-                              Xem xét chi tiết mô tả và bằng chứng
-                            </Typography>
-                          </li>
-                          <li>
-                            <Typography variant='body2' color='text.primary'>
-                              Liên hệ với các bên liên quan nếu cần
-                            </Typography>
-                          </li>
-                          <li>
-                            <Typography variant='body2' color='text.primary'>
-                              Quyết định hành động phù hợp (giải quyết, bỏ qua,
-                              hoặc khóa tài khoản)
-                            </Typography>
-                          </li>
-                          <li>
-                            <Typography variant='body2' color='text.primary'>
-                              Ghi chú lý do quyết định để tham khảo sau này
-                            </Typography>
-                          </li>
-                        </Box>
-                      </Box>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
+              {/* Timestamps */}
+              <Card variant='outlined'>
+                <CardContent>
+                  <Typography variant='subtitle1' component='h3' fontWeight='bold' gutterBottom color='primary'>
+                    ⏰ Thời gian
+                  </Typography>
+                  <Box
+                    sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}
+                  >
+                    <Typography variant='body2' color='text.secondary'>
+                      📅 Ngày tạo: {formatDate(selectedReport.createdAt)}
+                    </Typography>
+                    <Typography variant='body2' color='text.secondary'>
+                      🔄 Cập nhật cuối: {formatDate(selectedReport.updatedAt)}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
             </Box>
           )}
         </DialogContent>
