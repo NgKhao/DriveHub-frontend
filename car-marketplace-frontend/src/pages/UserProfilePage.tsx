@@ -334,49 +334,52 @@ const UserProfilePage: React.FC = () => {
         <TabPanel value={activeTab} index={1}>
           <Box sx={{ p: 3 }}>
             <Typography variant='h6' gutterBottom>
-              Bảo mật tài khoản
+              Đổi mật khẩu
             </Typography>
-
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant='subtitle1' gutterBottom>
-                  Đổi mật khẩu
-                </Typography>
-                <Typography variant='body2' color='text.secondary' gutterBottom>
-                  Để bảo mật tài khoản, hãy sử dụng mật khẩu mạnh và duy nhất
-                </Typography>
-                <Button variant='outlined' sx={{ mt: 2 }}>
-                  Đổi mật khẩu
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant='subtitle1' gutterBottom>
-                  Xác thực hai bước
-                </Typography>
-                <Typography variant='body2' color='text.secondary' gutterBottom>
-                  Thêm lớp bảo mật cho tài khoản của bạn
-                </Typography>
-                <FormControlLabel
-                  control={<Switch />}
-                  label='Bật xác thực hai bước'
-                />
-              </CardContent>
-            </Card>
 
             <Card>
               <CardContent>
-                <Typography variant='subtitle1' gutterBottom>
-                  Phiên đăng nhập
-                </Typography>
                 <Typography variant='body2' color='text.secondary' gutterBottom>
-                  Quản lý các thiết bị đã đăng nhập vào tài khoản
+                  Vui lòng nhập mật khẩu hiện tại và mật khẩu mới của bạn
                 </Typography>
-                <Button variant='outlined' color='error' sx={{ mt: 2 }}>
-                  Đăng xuất tất cả thiết bị
-                </Button>
+
+                <Box
+                  component='form'
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    // TODO: gọi API đổi mật khẩu
+                    console.log('Submit đổi mật khẩu');
+                  }}
+                  sx={{
+                    mt: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                  }}
+                >
+                  <TextField
+                    label='Mật khẩu hiện tại'
+                    type='password'
+                    required
+                    fullWidth
+                  />
+                  <TextField
+                    label='Mật khẩu mới'
+                    type='password'
+                    required
+                    fullWidth
+                  />
+                  <TextField
+                    label='Xác nhận mật khẩu mới'
+                    type='password'
+                    required
+                    fullWidth
+                  />
+
+                  <Button type='submit' variant='contained' sx={{ mt: 2 }}>
+                    Xác nhận thay đổi
+                  </Button>
+                </Box>
               </CardContent>
             </Card>
           </Box>
