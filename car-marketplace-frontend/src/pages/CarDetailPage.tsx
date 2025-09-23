@@ -72,10 +72,10 @@ Trang bị:
 
 Liên hệ để xem xe và thương lượng giá!`,
   images: [
-    '/api/placeholder/800/600',
-    '/api/placeholder/800/600',
-    '/api/placeholder/800/600',
-    '/api/placeholder/800/600',
+    'https://s.bonbanh.com/uploads/users/782831/car/6429100/s_1757733616.907.jpg',
+    'https://s.bonbanh.com/uploads/users/782831/car/6429100/s_1757733617.117.jpg',
+    'https://s.bonbanh.com/uploads/users/782831/car/6429100/s_1757733619.332.jpg',
+    'https://s.bonbanh.com/uploads/users/782831/car/6429100/s_1757733620.971.jpg',
   ],
   sellerId: '1',
   sellerName: 'Nguyễn Văn A',

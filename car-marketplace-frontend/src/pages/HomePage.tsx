@@ -28,21 +28,24 @@ import {
   Favorite,
 } from '@mui/icons-material';
 import { formatCurrency } from '../utils/helpers';
+import logo from '../assets/logo.png';
 
 // Mock data for featured cars
 const featuredCars = [
   {
     id: '1',
-    title: 'Toyota Camry 2022 - Xe gia đình sang trọng',
-    brand: 'Toyota',
-    model: 'Camry',
-    year: 2022,
-    price: 1200000000,
-    mileage: 15000,
+    title: 'Hyundai Veloster 1.6 AT - 2011',
+    brand: 'Hyundai',
+    model: 'Veloster',
+    year: 2011,
+    price: 293000000,
+    mileage: 12000,
     fuelType: 'gasoline' as const,
     transmission: 'automatic' as const,
     location: 'Hồ Chí Minh',
-    images: ['/api/placeholder/400/300'],
+    images: [
+      'https://s.bonbanh.com/uploads/users/744077/car/6444417/s_1758599223.880.jpg',
+    ],
     sellerName: 'Nguyễn Văn A',
     condition: 'used' as const,
   },
@@ -102,18 +105,13 @@ const HomePage: React.FC = () => {
       {/* Hero Section */}
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${alpha(
-            theme.palette.primary.main,
-            0.9
-          )} 0%, ${alpha(
-            theme.palette.secondary.main,
-            0.8
-          )} 100%), url('/api/placeholder/1200/600')`,
+          background: `url(${logo})`,
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          color: 'white',
+          backgroundPosition: 'bottom',
           py: 8,
           textAlign: 'center',
+          color: 'white',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
         }}
       >
         <Container maxWidth='lg'>
@@ -126,7 +124,7 @@ const HomePage: React.FC = () => {
           >
             Tìm chiếc xe mơ ước của bạn
           </Typography>
-          <Typography variant='h5' component='p' sx={{ mb: 4, opacity: 0.9 }}>
+          <Typography variant='h5' component='p' sx={{ mb: 4 }}>
             Nền tảng mua bán xe hàng đầu Việt Nam với hàng nghìn lựa chọn
           </Typography>
 
@@ -179,10 +177,6 @@ const HomePage: React.FC = () => {
               variant='contained'
               size='large'
               onClick={() => navigate('/cars')}
-              sx={{
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                '&:hover': { backgroundColor: 'rgba(255,255,255,0.3)' },
-              }}
             >
               Xem tất cả xe
             </Button>
