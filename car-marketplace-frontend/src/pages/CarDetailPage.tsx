@@ -8,11 +8,6 @@ import {
   Paper,
   Chip,
   Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   IconButton,
   Breadcrumbs,
   Link,
@@ -20,7 +15,6 @@ import {
 } from '@mui/material';
 import {
   Phone,
-  Email,
   LocationOn,
   CalendarToday,
   Speed,
@@ -39,7 +33,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import SellerRatings from '../components/common/SellerRatings';
 import ReportDialog from '../components/common/ReportDialog';
 import { useAuthStore } from '../store/authStore';
-import type { Car, ContactInfo } from '../types';
+import type { Car } from '../types';
 
 // Mock car data
 const mockCar: Car = {
@@ -105,16 +99,8 @@ const CarDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error] = useState<string>('');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [contactForm, setContactForm] = useState<ContactInfo>({
-    buyerName: '',
-    buyerPhone: '',
-    buyerEmail: '',
-    message: '',
-    carId: id || '',
-  });
 
   useEffect(() => {
     // Simulate API call
@@ -123,13 +109,6 @@ const CarDetailPage: React.FC = () => {
       setLoading(false);
     }, 1000);
   }, [id]);
-
-  const handleContactSubmit = () => {
-    // TODO: Implement contact API call
-    console.log('Contact form:', contactForm);
-    setContactDialogOpen(false);
-    // Show success message
-  };
 
   const handleShare = () => {
     if (navigator.share) {
@@ -425,16 +404,6 @@ const CarDetailPage: React.FC = () => {
                 Gọi {car.sellerPhone}
               </Button>
 
-              <Button
-                variant='outlined'
-                size='large'
-                startIcon={<Email />}
-                onClick={() => setContactDialogOpen(true)}
-                fullWidth
-              >
-                Gửi tin nhắn
-              </Button>
-
               {/* Chỉ buyer mới có thể báo cáo */}
               {user?.role === 'buyer' && (
                 <Button
@@ -464,68 +433,6 @@ const CarDetailPage: React.FC = () => {
       <Box sx={{ mt: 4 }}>
         <SellerRatings sellerId={car.sellerId} sellerName={car.sellerName} />
       </Box>
-
-      {/* Contact Dialog */}
-      <Dialog
-        open={contactDialogOpen}
-        onClose={() => setContactDialogOpen(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>Liên hệ người bán</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label='Họ tên của bạn'
-            margin='normal'
-            value={contactForm.buyerName}
-            onChange={(e) =>
-              setContactForm({ ...contactForm, buyerName: e.target.value })
-            }
-          />
-          <TextField
-            fullWidth
-            label='Số điện thoại'
-            margin='normal'
-            value={contactForm.buyerPhone}
-            onChange={(e) =>
-              setContactForm({ ...contactForm, buyerPhone: e.target.value })
-            }
-          />
-          <TextField
-            fullWidth
-            label='Email'
-            type='email'
-            margin='normal'
-            value={contactForm.buyerEmail}
-            onChange={(e) =>
-              setContactForm({ ...contactForm, buyerEmail: e.target.value })
-            }
-          />
-          <TextField
-            fullWidth
-            label='Tin nhắn'
-            multiline
-            rows={4}
-            margin='normal'
-            placeholder='Tôi quan tâm đến chiếc xe này...'
-            value={contactForm.message}
-            onChange={(e) =>
-              setContactForm({ ...contactForm, message: e.target.value })
-            }
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setContactDialogOpen(false)}>Hủy</Button>
-          <Button
-            onClick={handleContactSubmit}
-            variant='contained'
-            disabled={!contactForm.buyerName || !contactForm.buyerPhone}
-          >
-            Gửi tin nhắn
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Report Dialog */}
       <ReportDialog

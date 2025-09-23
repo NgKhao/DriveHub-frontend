@@ -162,7 +162,6 @@ const UserProfilePage: React.FC = () => {
         >
           <Tab icon={<Person />} label='Thông tin cơ bản' />
           <Tab icon={<Security />} label='Bảo mật' />
-          <Tab icon={<Notifications />} label='Thông báo' />
         </Tabs>
 
         {/* Basic Information Tab */}
@@ -189,28 +188,6 @@ const UserProfilePage: React.FC = () => {
                 >
                   {user.name?.charAt(0).toUpperCase()}
                 </Avatar>
-                {isEditing && (
-                  <IconButton
-                    sx={{
-                      position: 'absolute',
-                      bottom: 0,
-                      right: 24,
-                      backgroundColor: 'primary.main',
-                      color: 'white',
-                      '&:hover': { backgroundColor: 'primary.dark' },
-                    }}
-                    size='small'
-                    component='label'
-                  >
-                    <PhotoCamera fontSize='small' />
-                    <input
-                      type='file'
-                      hidden
-                      accept='image/*'
-                      onChange={handleAvatarChange}
-                    />
-                  </IconButton>
-                )}
               </Box>
 
               <Box>
@@ -400,76 +377,6 @@ const UserProfilePage: React.FC = () => {
                 <Button variant='outlined' color='error' sx={{ mt: 2 }}>
                   Đăng xuất tất cả thiết bị
                 </Button>
-              </CardContent>
-            </Card>
-          </Box>
-        </TabPanel>
-
-        {/* Notifications Tab */}
-        <TabPanel value={activeTab} index={2}>
-          <Box sx={{ p: 3 }}>
-            <Typography variant='h6' gutterBottom>
-              Cài đặt thông báo
-            </Typography>
-
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant='subtitle1' gutterBottom>
-                  Thông báo email
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <FormControlLabel
-                    control={<Switch defaultChecked />}
-                    label='Xe mới phù hợp'
-                  />
-                  <FormControlLabel
-                    control={<Switch defaultChecked />}
-                    label='Tin nhắn từ người bán'
-                  />
-                  <FormControlLabel
-                    control={<Switch />}
-                    label='Khuyến mãi và ưu đãi'
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-                <Typography variant='subtitle1' gutterBottom>
-                  Thông báo push
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <FormControlLabel
-                    control={<Switch defaultChecked />}
-                    label='Tin nhắn mới'
-                  />
-                  <FormControlLabel
-                    control={<Switch defaultChecked />}
-                    label='Cập nhật trạng thái bài đăng'
-                  />
-                  <FormControlLabel
-                    control={<Switch />}
-                    label='Thông báo marketing'
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent>
-                <Typography variant='subtitle1' gutterBottom>
-                  Tần suất thông báo
-                </Typography>
-                <FormControl fullWidth sx={{ mt: 2 }}>
-                  <InputLabel>Tần suất email</InputLabel>
-                  <Select defaultValue='daily' label='Tần suất email'>
-                    <MenuItem value='immediate'>Ngay lập tức</MenuItem>
-                    <MenuItem value='daily'>Hàng ngày</MenuItem>
-                    <MenuItem value='weekly'>Hàng tuần</MenuItem>
-                    <MenuItem value='never'>Không bao giờ</MenuItem>
-                  </Select>
-                </FormControl>
               </CardContent>
             </Card>
           </Box>
