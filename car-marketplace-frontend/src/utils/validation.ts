@@ -13,7 +13,7 @@ export const isValidPhone = (phone: string): boolean => {
 // Password validation
 export const isValidPassword = (password: string): boolean => {
   // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
+  const passwordRegex = /^.{6,}$/;
   return passwordRegex.test(password);
 };
 
@@ -104,8 +104,7 @@ export const validateRegisterForm = (
   } else if (!isValidPassword(password)) {
     errors.push({
       field: 'password',
-      message:
-        'Mật khẩu phải có ít nhất 8 ký tự, 1 chữ hoa, 1 chữ thường và 1 số',
+      message: 'Mật khẩu phải có ít nhất 6 ký tự',
     });
   }
 

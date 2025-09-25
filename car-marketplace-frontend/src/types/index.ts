@@ -58,6 +58,26 @@ export interface BackendLogoutResponse {
   instance: string;
 }
 
+export interface BackendRegisterRequest {
+  email: string;
+  password: string;
+  fullName: string;
+  phone: string;
+  roleName: string; // 'ADMIN', 'SELLER', 'BUYER'
+}
+
+export interface BackendRegisterResponse {
+  messenger: string;
+  status: number;
+  detail: {
+    fullName: string;
+    email: string;
+    role: string; // 'ADMIN', 'SELLER', 'BUYER'
+    numberPhone: string;
+  };
+  instance: string;
+}
+
 // User Types
 export interface User {
   id: string;
@@ -89,6 +109,46 @@ export const mapBackendUserToFrontendUser = (
     role: roleMap[backendUser.role] || 'buyer',
     phone: backendUser.numberPhone,
     isVerified: true, // Assume verified for now
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+};
+
+// Helper function to convert frontend RegisterRequest to backend format
+export const mapFrontendRegisterToBackendRegister = (
+  registerData: RegisterRequest
+): BackendRegisterRequest => {
+  // Map frontend role to backend role
+  const roleMap: Record<'buyer' | 'seller', string> = {
+    buyer: 'BUYER',
+    seller: 'SELLER',
+  };
+
+  return {
+    email: registerData.email,
+    password: registerData.password,
+    fullName: registerData.name,
+    phone: registerData.phone || '',
+    roleName: roleMap[registerData.role],
+  };
+};
+
+// Helper function to convert backend register response to frontend user
+export const mapBackendRegisterResponseToUser = (
+  backendResponse: BackendRegisterResponse['detail']
+): User => {
+  const roleMap: Record<string, 'buyer' | 'seller'> = {
+    BUYER: 'buyer',
+    SELLER: 'seller',
+  };
+
+  return {
+    id: backendResponse.email,
+    email: backendResponse.email,
+    name: backendResponse.fullName,
+    role: roleMap[backendResponse.role] || 'buyer',
+    phone: backendResponse.numberPhone,
+    isVerified: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

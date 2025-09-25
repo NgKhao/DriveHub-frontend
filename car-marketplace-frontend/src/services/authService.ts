@@ -7,8 +7,13 @@ import type {
   User,
   BackendLoginResponse,
   BackendLogoutResponse,
+  BackendRegisterResponse,
 } from '../types';
-import { mapBackendUserToFrontendUser } from '../types';
+import { 
+  mapBackendUserToFrontendUser,
+  mapFrontendRegisterToBackendRegister,
+  mapBackendRegisterResponseToUser 
+} from '../types';
 
 export const authService = {
   // Login user
@@ -29,12 +34,18 @@ export const authService = {
   },
 
   // Register user
-  register: async (userData: RegisterRequest): Promise<AuthResponse> => {
-    const response = await api.post<ApiResponse<AuthResponse>>(
+  register: async (userData: RegisterRequest): Promise<User> => {
+    // Transform frontend request to backend format
+    const backendRequest = mapFrontendRegisterToBackendRegister(userData);
+    
+    const response = await api.post<BackendRegisterResponse>(
       '/auth/register',
-      userData
+      backendRequest
     );
-    return response.data.data;
+    
+    // Transform backend response to frontend user format
+    // Note: Register doesn't return token, only user info
+    return mapBackendRegisterResponseToUser(response.data.detail);
   },
 
   // Get current user profile

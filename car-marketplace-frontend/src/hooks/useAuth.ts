@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/authService';
-import type { LoginRequest } from '../types';
+import type { LoginRequest, RegisterRequest } from '../types';
 
 interface LoginError {
   response?: { status: number };
@@ -86,11 +86,34 @@ export const useLogoutMutation = () => {
   });
 };
 
+// Hook for register mutation
+export const useRegisterMutation = () => {
+  const navigate = useNavigate();
+  
+  return useMutation({
+    mutationFn: async (registerData: RegisterRequest) => {
+      return await authService.register(registerData);
+    },
+    onSuccess: (user) => {
+      // Registration successful, but no token returned
+      // User needs to login manually
+      console.log('Registration successful:', user);
+      
+      // Navigate to login page with success message
+      navigate('/login?registered=true');
+    },
+    onError: (error) => {
+      console.error('Register error:', error);
+    },
+  });
+};
+
 // Main auth hook that combines auth state and mutations
 export const useAuth = () => {
   const { user, isAuthenticated, token } = useAuthStore();
   const loginMutation = useLoginMutation();
   const logoutMutation = useLogoutMutation();
+  const registerMutation = useRegisterMutation();
 
   return {
     // Auth state
@@ -106,6 +129,14 @@ export const useAuth = () => {
       ? getErrorMessage(loginMutation.error)
       : null,
 
+    // Register
+    register: registerMutation.mutate,
+    registerAsync: registerMutation.mutateAsync,
+    isRegisterLoading: registerMutation.isPending,
+    registerError: registerMutation.error
+      ? getErrorMessage(registerMutation.error)
+      : null,
+
     // Logout
     logout: logoutMutation.mutate,
     logoutAsync: logoutMutation.mutateAsync,
@@ -114,5 +145,6 @@ export const useAuth = () => {
     // Reset mutations
     resetLoginError: loginMutation.reset,
     resetLogoutError: logoutMutation.reset,
+    resetRegisterError: registerMutation.reset,
   };
 };
