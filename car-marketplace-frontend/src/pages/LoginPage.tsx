@@ -149,7 +149,7 @@ const LoginPage: React.FC = () => {
               )}
             />
 
-            <Controller
+            {/* <Controller
               name='role'
               control={control}
               render={({ field }) => (
@@ -166,7 +166,7 @@ const LoginPage: React.FC = () => {
                   </Select>
                 </FormControl>
               )}
-            />
+            /> */}
 
             <Button
               type='submit'
