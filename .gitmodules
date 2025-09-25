@@ -1,0 +1,3 @@
+[submodule "car-marketplace-backend"]
+	path = car-marketplace-backend
+	url = https://github.com/VPhuc2704/car-trading-platform.git
