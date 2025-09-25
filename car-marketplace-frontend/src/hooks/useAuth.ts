@@ -89,7 +89,7 @@ export const useLogoutMutation = () => {
 // Hook for register mutation
 export const useRegisterMutation = () => {
   const navigate = useNavigate();
-  
+
   return useMutation({
     mutationFn: async (registerData: RegisterRequest) => {
       return await authService.register(registerData);
@@ -98,7 +98,7 @@ export const useRegisterMutation = () => {
       // Registration successful, but no token returned
       // User needs to login manually
       console.log('Registration successful:', user);
-      
+
       // Navigate to login page with success message
       navigate('/login?registered=true');
     },
