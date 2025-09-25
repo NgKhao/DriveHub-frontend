@@ -27,7 +27,7 @@ interface LoginFormData extends LoginRequest {
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { mockLogin, quickLogin } = useAuthStore();
+  const { login } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -49,38 +49,20 @@ const LoginPage: React.FC = () => {
       setIsLoading(true);
       setError('');
 
-      // Use mock authentication for development
-      const result = await mockLogin(data.email, data.password);
+      // TODO: Integrate with real API backend
+      // const result = await authService.login({
+      //   email: data.email,
+      //   password: data.password
+      // });
+      // login(result.user, result.token);
+      // navigate('/'); // Redirect after successful login
 
-      if (!result.success) {
-        setError(result.error || 'Đăng nhập thất bại');
-        return;
-      }
-
-      // Redirect based on role
-      if (data.email.includes('admin')) {
-        navigate('/admin');
-      } else if (data.email.includes('seller')) {
-        navigate('/seller-dashboard');
-      } else {
-        navigate('/');
-      }
+      console.log('Login attempt:', { email: data.email, role: data.role });
+      setError('API backend chưa được tích hợp');
     } catch {
       setError('Đăng nhập thất bại');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleQuickLogin = (role: 'admin' | 'seller' | 'buyer') => {
-    quickLogin(role);
-
-    if (role === 'admin') {
-      navigate('/admin');
-    } else if (role === 'seller') {
-      navigate('/seller-dashboard');
-    } else {
-      navigate('/');
     }
   };
 
@@ -217,56 +199,6 @@ const LoginPage: React.FC = () => {
                 'Đăng nhập'
               )}
             </Button>
-
-            {/* Quick Login for Testing */}
-            <Box sx={{ mt: 3, mb: 2 }}>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-                align='center'
-                sx={{ mb: 2 }}
-              >
-                Đăng nhập nhanh để test:
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                <Button
-                  size='small'
-                  variant='outlined'
-                  onClick={() => handleQuickLogin('admin')}
-                  disabled={isLoading}
-                  sx={{ flex: 1, minWidth: '100px' }}
-                >
-                  Admin
-                </Button>
-                <Button
-                  size='small'
-                  variant='outlined'
-                  onClick={() => handleQuickLogin('seller')}
-                  disabled={isLoading}
-                  sx={{ flex: 1, minWidth: '100px' }}
-                >
-                  Seller
-                </Button>
-                <Button
-                  size='small'
-                  variant='outlined'
-                  onClick={() => handleQuickLogin('buyer')}
-                  disabled={isLoading}
-                  sx={{ flex: 1, minWidth: '100px' }}
-                >
-                  Buyer
-                </Button>
-              </Box>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-                align='center'
-                sx={{ mt: 1, display: 'block' }}
-              >
-                Hoặc sử dụng: admin@test.com/admin123,
-                seller@test.com/seller123, buyer@test.com/buyer123
-              </Typography>
-            </Box>
 
             <Box textAlign='center' mt={2}>
               <Typography variant='body2' color='text.secondary'>

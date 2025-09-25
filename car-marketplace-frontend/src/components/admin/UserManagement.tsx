@@ -46,95 +46,10 @@ import {
 import { formatDate } from '../../utils/helpers';
 import type { User } from '../../types';
 
-// Mock data for users (only sellers and buyers)
-const mockUsers: User[] = [
-  {
-    id: '1',
-    email: 'nguyen.van.a@gmail.com',
-    name: 'Nguyễn Văn A',
-    role: 'seller',
-    phone: '0901234567',
-    avatar: '/api/placeholder/40/40',
-    isVerified: true,
-    createdAt: '2024-01-15T08:00:00Z',
-    updatedAt: '2024-01-15T08:00:00Z',
-  },
-  {
-    id: '2',
-    email: 'tran.thi.b@gmail.com',
-    name: 'Trần Thị B',
-    role: 'buyer',
-    phone: '0987654321',
-    isVerified: true,
-    createdAt: '2024-01-20T10:30:00Z',
-    updatedAt: '2024-01-20T10:30:00Z',
-  },
-  {
-    id: '3',
-    email: 'le.van.c@gmail.com',
-    name: 'Lê Văn C',
-    role: 'seller',
-    phone: '0912345678',
-    isVerified: false,
-    createdAt: '2024-02-01T14:15:00Z',
-    updatedAt: '2024-02-01T14:15:00Z',
-  },
-  {
-    id: '4',
-    email: 'pham.thi.d@gmail.com',
-    name: 'Phạm Thị D',
-    role: 'buyer',
-    phone: '0934567890',
-    isVerified: true,
-    createdAt: '2024-02-05T09:45:00Z',
-    updatedAt: '2024-02-05T09:45:00Z',
-  },
-  {
-    id: '5',
-    email: 'hoang.van.e@gmail.com',
-    name: 'Hoàng Văn E',
-    role: 'seller',
-    phone: '0945678901',
-    isVerified: false,
-    createdAt: '2024-02-10T16:20:00Z',
-    updatedAt: '2024-02-10T16:20:00Z',
-  },
-  {
-    id: '6',
-    email: 'vo.thi.f@gmail.com',
-    name: 'Võ Thị F',
-    role: 'buyer',
-    phone: '0956789012',
-    isVerified: true,
-    createdAt: '2024-02-12T11:30:00Z',
-    updatedAt: '2024-02-12T11:30:00Z',
-  },
-  {
-    id: '7',
-    email: 'dao.van.g@gmail.com',
-    name: 'Đào Văn G',
-    role: 'seller',
-    phone: '0967890123',
-    isVerified: false,
-    createdAt: '2024-02-15T13:45:00Z',
-    updatedAt: '2024-02-15T13:45:00Z',
-  },
-  {
-    id: '8',
-    email: 'bui.thi.h@gmail.com',
-    name: 'Bùi Thị H',
-    role: 'buyer',
-    phone: '0978901234',
-    isVerified: true,
-    createdAt: '2024-02-18T15:20:00Z',
-    updatedAt: '2024-02-18T15:20:00Z',
-  },
-];
-
 const UserManagement: React.FC = () => {
   // User management states
-  const [users, setUsers] = useState<User[]>(mockUsers);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
