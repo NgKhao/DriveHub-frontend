@@ -20,11 +20,11 @@ import {
   Favorite,
   Report,
 } from '@mui/icons-material';
-import { useAuthStore } from '../../store/authStore';
+import { useAuth } from '../../hooks/useAuth';
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, logout } = useAuth();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -38,7 +38,6 @@ const Header: React.FC = () => {
   const handleLogout = () => {
     logout();
     handleClose();
-    navigate('/');
   };
 
   return (

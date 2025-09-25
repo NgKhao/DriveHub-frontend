@@ -5,16 +5,27 @@ import type {
   LoginRequest,
   RegisterRequest,
   User,
+  BackendLoginResponse,
+  BackendLogoutResponse,
 } from '../types';
+import { mapBackendUserToFrontendUser } from '../types';
 
 export const authService = {
   // Login user
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {
-    const response = await api.post<ApiResponse<AuthResponse>>(
-      '/auth/login',
-      credentials
-    );
-    return response.data.data;
+    const response = await api.post<BackendLoginResponse>('/auth/login', {
+      email: credentials.email,
+      password: credentials.password,
+    });
+
+    // Transform backend response to frontend format
+    const user = mapBackendUserToFrontendUser(response.data.detail.userInfo);
+    const token = response.data.detail.token.token;
+
+    return {
+      user,
+      token,
+    };
   },
 
   // Register user
@@ -42,8 +53,10 @@ export const authService = {
   },
 
   // Logout user
-  logout: async (): Promise<void> => {
-    await api.post('/auth/logout');
+  logout: async (token: string): Promise<void> => {
+    await api.post<BackendLogoutResponse>('/auth/logout', {
+      token,
+    });
   },
 
   // Refresh token

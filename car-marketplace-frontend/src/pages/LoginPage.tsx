@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff, DirectionsCar } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
-import { useAuthStore } from '../store/authStore';
+import { useAuth } from '../hooks/useAuth';
 import type { LoginRequest } from '../types';
 
 interface LoginFormData extends LoginRequest {
@@ -26,11 +26,8 @@ interface LoginFormData extends LoginRequest {
 }
 
 const LoginPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const { login, isLoginLoading, loginError, resetLoginError } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
 
   const {
     control,
@@ -45,25 +42,14 @@ const LoginPage: React.FC = () => {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    try {
-      setIsLoading(true);
-      setError('');
+    // Reset previous errors
+    resetLoginError();
 
-      // TODO: Integrate with real API backend
-      // const result = await authService.login({
-      //   email: data.email,
-      //   password: data.password
-      // });
-      // login(result.user, result.token);
-      // navigate('/'); // Redirect after successful login
-
-      console.log('Login attempt:', { email: data.email, role: data.role });
-      setError('API backend chưa được tích hợp');
-    } catch {
-      setError('Đăng nhập thất bại');
-    } finally {
-      setIsLoading(false);
-    }
+    // Call login mutation
+    login({
+      email: data.email,
+      password: data.password,
+    });
   };
 
   return (
@@ -96,9 +82,9 @@ const LoginPage: React.FC = () => {
             </Typography>
           </Box>
 
-          {error && (
+          {loginError && (
             <Alert severity='error' sx={{ mb: 3 }}>
-              {error}
+              {loginError}
             </Alert>
           )}
 
@@ -122,7 +108,7 @@ const LoginPage: React.FC = () => {
                   margin='normal'
                   error={!!errors.email}
                   helperText={errors.email?.message}
-                  disabled={isLoading}
+                  disabled={isLoginLoading}
                 />
               )}
             />
@@ -146,7 +132,7 @@ const LoginPage: React.FC = () => {
                   margin='normal'
                   error={!!errors.password}
                   helperText={errors.password?.message}
-                  disabled={isLoading}
+                  disabled={isLoginLoading}
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position='end'>
@@ -172,7 +158,7 @@ const LoginPage: React.FC = () => {
                   <Select
                     {...field}
                     label='Loại tài khoản'
-                    disabled={isLoading}
+                    disabled={isLoginLoading}
                   >
                     <MenuItem value='buyer'>Người mua</MenuItem>
                     <MenuItem value='seller'>Người bán</MenuItem>
@@ -187,10 +173,10 @@ const LoginPage: React.FC = () => {
               fullWidth
               variant='contained'
               size='large'
-              disabled={isLoading}
+              disabled={isLoginLoading}
               sx={{ mt: 3, mb: 2, py: 1.5 }}
             >
-              {isLoading ? (
+              {isLoginLoading ? (
                 <>
                   <CircularProgress size={20} sx={{ mr: 1 }} />
                   Đang đăng nhập...

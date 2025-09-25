@@ -32,6 +32,32 @@ export interface AuthResponse {
   token: string;
 }
 
+// Backend API Response Types
+export interface BackendLoginResponse {
+  messenger: string;
+  status: number;
+  detail: {
+    userInfo: {
+      fullName: string;
+      email: string;
+      role: string; // 'SELLER', 'BUYER', 'ADMIN'
+      numberPhone: string;
+    };
+    token: {
+      type: string; // 'Bearer'
+      token: string;
+    };
+  };
+  instance: string;
+}
+
+export interface BackendLogoutResponse {
+  messenger: string;
+  status: number;
+  detail: null;
+  instance: string;
+}
+
 // User Types
 export interface User {
   id: string;
@@ -44,6 +70,29 @@ export interface User {
   createdAt: string;
   updatedAt: string;
 }
+
+// Helper function to convert backend user to frontend user
+export const mapBackendUserToFrontendUser = (
+  backendUser: BackendLoginResponse['detail']['userInfo']
+): User => {
+  // Map backend role to frontend role
+  const roleMap: Record<string, 'buyer' | 'seller' | 'admin'> = {
+    BUYER: 'buyer',
+    SELLER: 'seller',
+    ADMIN: 'admin',
+  };
+
+  return {
+    id: backendUser.email, // Use email as ID since backend doesn't provide ID
+    email: backendUser.email,
+    name: backendUser.fullName,
+    role: roleMap[backendUser.role] || 'buyer',
+    phone: backendUser.numberPhone,
+    isVerified: true, // Assume verified for now
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+};
 
 // Car Types
 export interface Car {
