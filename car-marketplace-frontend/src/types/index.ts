@@ -152,6 +152,27 @@ export interface BackendAdminUpdateUserResponse {
   instance: string;
 }
 
+export interface BackendCreateUserRequest {
+  email: string;
+  fullName: string;
+  numberPhone: string;
+  role: string; // 'BUYER', 'SELLER'
+}
+
+export interface BackendCreateUserResponse {
+  messenger: string;
+  status: number;
+  detail: {
+    id: number;
+    email: string;
+    fullName: string;
+    numberPhone: string;
+    role: string; // 'BUYER', 'SELLER'
+    isActive: boolean;
+  };
+  instance: string;
+}
+
 // User Types
 export interface User {
   id: string;
@@ -314,6 +335,48 @@ export const mapFrontendUserToBackendAdminUpdate = (userData: {
 // Helper function to convert backend admin update response to frontend user
 export const mapBackendAdminUpdateResponseToUser = (
   backendResponse: BackendAdminUpdateUserResponse['detail']
+): User => {
+  const roleMap: Record<string, 'buyer' | 'seller' | 'admin'> = {
+    BUYER: 'buyer',
+    SELLER: 'seller',
+    ADMIN: 'admin',
+  };
+
+  return {
+    id: backendResponse.id.toString(),
+    email: backendResponse.email,
+    name: backendResponse.fullName,
+    role: roleMap[backendResponse.role] || 'buyer',
+    phone: backendResponse.numberPhone,
+    isVerified: backendResponse.isActive,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+};
+
+// Helper function to convert frontend create user data to backend format
+export const mapFrontendCreateUserToBackend = (userData: {
+  name: string;
+  email: string;
+  phone: string;
+  role: 'buyer' | 'seller';
+}): BackendCreateUserRequest => {
+  const roleMap: Record<'buyer' | 'seller', string> = {
+    buyer: 'BUYER',
+    seller: 'SELLER',
+  };
+
+  return {
+    email: userData.email,
+    fullName: userData.name,
+    numberPhone: userData.phone,
+    role: roleMap[userData.role],
+  };
+};
+
+// Helper function to convert backend create user response to frontend user
+export const mapBackendCreateUserResponseToUser = (
+  backendResponse: BackendCreateUserResponse['detail']
 ): User => {
   const roleMap: Record<string, 'buyer' | 'seller' | 'admin'> = {
     BUYER: 'buyer',

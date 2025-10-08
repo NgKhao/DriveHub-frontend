@@ -87,6 +87,29 @@ export const useUpdateUserAdmin = () => {
   });
 };
 
+// Hook for creating user - new API endpoint
+export const useCreateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userData: {
+      name: string;
+      email: string;
+      phone: string;
+      role: 'buyer' | 'seller';
+    }) => {
+      return adminService.createUser(userData);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch users query
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+    onError: (error: AdminError) => {
+      console.error('Create user error:', error);
+    },
+  });
+};
+
 // Hook for deleting user
 export const useDeleteUser = () => {
   const queryClient = useQueryClient();
@@ -127,6 +150,7 @@ export const useToggleUserStatus = () => {
 export const useAdmin = () => {
   const updateUserMutation = useUpdateUser();
   const updateUserAdminMutation = useUpdateUserAdmin();
+  const createUserMutation = useCreateUser();
   const deleteUserMutation = useDeleteUser();
   const toggleUserStatusMutation = useToggleUserStatus();
 
@@ -147,6 +171,14 @@ export const useAdmin = () => {
       ? getErrorMessage(updateUserAdminMutation.error)
       : null,
 
+    // Create user
+    createUser: createUserMutation.mutate,
+    createUserAsync: createUserMutation.mutateAsync,
+    isCreateUserLoading: createUserMutation.isPending,
+    createUserError: createUserMutation.error
+      ? getErrorMessage(createUserMutation.error)
+      : null,
+
     deleteUser: deleteUserMutation.mutate,
     deleteUserAsync: deleteUserMutation.mutateAsync,
     isDeleteUserLoading: deleteUserMutation.isPending,
@@ -164,6 +196,7 @@ export const useAdmin = () => {
     // Reset mutations
     resetUpdateUserError: updateUserMutation.reset,
     resetUpdateUserAdminError: updateUserAdminMutation.reset,
+    resetCreateUserError: createUserMutation.reset,
     resetDeleteUserError: deleteUserMutation.reset,
     resetToggleUserStatusError: toggleUserStatusMutation.reset,
   };

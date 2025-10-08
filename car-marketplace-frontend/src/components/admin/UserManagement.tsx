@@ -64,7 +64,8 @@ const UserManagement: React.FC = () => {
     error,
     refetch,
   } = useUsers(page, rowsPerPage);
-  const { updateUserAdmin, deleteUser } = useAdmin();
+  const { updateUserAdmin, deleteUser, createUser, isCreateUserLoading } =
+    useAdmin();
 
   // Dialog states
   const [userDetailDialogOpen, setUserDetailDialogOpen] = useState(false);
@@ -310,18 +311,6 @@ const UserManagement: React.FC = () => {
       return;
     }
 
-    if (!addUserForm.password.trim()) {
-      setSnackbarMessage('Vui lòng nhập mật khẩu');
-      setSnackbarOpen(true);
-      return;
-    }
-
-    if (addUserForm.password !== addUserForm.confirmPassword) {
-      setSnackbarMessage('Mật khẩu xác nhận không khớp');
-      setSnackbarOpen(true);
-      return;
-    }
-
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(addUserForm.email)) {
@@ -337,12 +326,26 @@ const UserManagement: React.FC = () => {
       return;
     }
 
-    // TODO: Call API to create user
-    console.log('Creating user:', addUserForm);
-    setSnackbarMessage('Tạo tài khoản thành công! (Demo - chưa kết nối API)');
-    setSnackbarOpen(true);
-    handleCloseAddUserDialog();
-    refetch();
+    // Call API to create user
+    const userData = {
+      name: addUserForm.name,
+      email: addUserForm.email,
+      phone: addUserForm.phone || '',
+      role: addUserForm.role,
+    };
+
+    createUser(userData, {
+      onSuccess: () => {
+        setSnackbarMessage('Tạo tài khoản thành công!');
+        setSnackbarOpen(true);
+        handleCloseAddUserDialog();
+        refetch();
+      },
+      onError: (error) => {
+        setSnackbarMessage(error?.message || 'Có lỗi xảy ra khi tạo tài khoản');
+        setSnackbarOpen(true);
+      },
+    });
   };
 
   // Handle error state
@@ -831,31 +834,6 @@ const UserManagement: React.FC = () => {
               placeholder='Nhập số điện thoại (tùy chọn)'
             />
 
-            <TextField
-              fullWidth
-              label='Mật khẩu *'
-              type='password'
-              value={addUserForm.password}
-              onChange={(e) =>
-                setAddUserForm({ ...addUserForm, password: e.target.value })
-              }
-              placeholder='Nhập mật khẩu'
-            />
-
-            <TextField
-              fullWidth
-              label='Xác nhận mật khẩu *'
-              type='password'
-              value={addUserForm.confirmPassword}
-              onChange={(e) =>
-                setAddUserForm({
-                  ...addUserForm,
-                  confirmPassword: e.target.value,
-                })
-              }
-              placeholder='Nhập lại mật khẩu'
-            />
-
             <FormControl fullWidth>
               <InputLabel>Vai trò *</InputLabel>
               <Select
@@ -898,15 +876,20 @@ const UserManagement: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 3, gap: 1 }}>
-          <Button onClick={handleCloseAddUserDialog} variant='outlined'>
+          <Button
+            onClick={handleCloseAddUserDialog}
+            variant='outlined'
+            disabled={isCreateUserLoading}
+          >
             Hủy
           </Button>
           <Button
             onClick={handleAddUser}
             variant='contained'
-            startIcon={<Add />}
+            startIcon={isCreateUserLoading ? undefined : <Add />}
+            disabled={isCreateUserLoading}
           >
-            Tạo tài khoản
+            {isCreateUserLoading ? 'Đang tạo...' : 'Tạo tài khoản'}
           </Button>
         </DialogActions>
       </Dialog>

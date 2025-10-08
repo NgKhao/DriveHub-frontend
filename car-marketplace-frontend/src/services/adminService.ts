@@ -7,11 +7,14 @@ import type {
   AdminStats,
   BackendGetUsersResponse,
   BackendAdminUpdateUserResponse,
+  BackendCreateUserResponse,
 } from '../types';
 import {
   mapBackendGetUsersResponseToPaginated,
   mapFrontendUserToBackendAdminUpdate,
   mapBackendAdminUpdateResponseToUser,
+  mapFrontendCreateUserToBackend,
+  mapBackendCreateUserResponseToUser,
 } from '../types';
 
 export const adminService = {
@@ -66,6 +69,25 @@ export const adminService = {
 
     // Convert backend response to frontend format
     return mapBackendAdminUpdateResponseToUser(response.data.detail);
+  },
+
+  // Create user - new API endpoint
+  createUser: async (userData: {
+    name: string;
+    email: string;
+    phone: string;
+    role: 'buyer' | 'seller';
+  }): Promise<User> => {
+    // Convert frontend data to backend format
+    const backendData = mapFrontendCreateUserToBackend(userData);
+
+    const response = await api.post<BackendCreateUserResponse>(
+      '/admin/users',
+      backendData
+    );
+
+    // Convert backend response to frontend format
+    return mapBackendCreateUserResponseToUser(response.data.detail);
   },
 
   // Delete user
