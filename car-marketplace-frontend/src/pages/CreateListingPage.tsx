@@ -10,8 +10,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormControlLabel,
-  Checkbox,
   Alert,
   Snackbar,
   IconButton,
@@ -63,24 +61,6 @@ const INITIAL_FORM_DATA: CarFormData = {
   images: [],
 };
 
-const AVAILABLE_FEATURES = [
-  'ABS',
-  'Airbag',
-  'Điều hòa tự động',
-  'Camera lùi',
-  'Cảm biến lùi',
-  'Bluetooth',
-  'GPS',
-  'Cruise Control',
-  'Ghế da',
-  'Cửa sổ trời',
-  'Hệ thống âm thanh cao cấp',
-  'Phanh tay điện tử',
-  'Khởi động bằng nút bấm',
-  'Cảm biến áp suất lốp',
-  'Camera 360 độ',
-];
-
 const CAR_BRANDS = [
   'Toyota',
   'Honda',
@@ -121,15 +101,6 @@ const CreateListingPage: React.FC = () => {
 
     // Clear errors for this field
     setErrors((prev) => prev.filter((error) => error.field !== field));
-  };
-
-  const handleFeatureToggle = (feature: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      features: prev.features.includes(feature)
-        ? prev.features.filter((f) => f !== feature)
-        : [...prev.features, feature],
-    }));
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -520,27 +491,6 @@ const CreateListingPage: React.FC = () => {
               helperText={getErrorMessage('description')}
               placeholder='Mô tả chi tiết về xe, tình trạng, lịch sử sử dụng, trang bị...'
             />
-
-            {/* Trang bị */}
-            <Box>
-              <Typography variant='h6' gutterBottom>
-                Trang bị xe
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {AVAILABLE_FEATURES.map((feature) => (
-                  <FormControlLabel
-                    key={feature}
-                    control={
-                      <Checkbox
-                        checked={formData.features.includes(feature)}
-                        onChange={() => handleFeatureToggle(feature)}
-                      />
-                    }
-                    label={feature}
-                  />
-                ))}
-              </Box>
-            </Box>
 
             {/* Hình ảnh */}
             <Box>

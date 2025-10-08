@@ -21,8 +21,6 @@ import {
   FormControl,
   InputLabel,
   Select,
-  FormControlLabel,
-  Checkbox,
 } from '@mui/material';
 import {
   Add,
@@ -30,9 +28,7 @@ import {
   Delete,
   MoreVert,
   Visibility,
-  Payment,
   DirectionsCar,
-  Star,
   Warning,
   Save,
   Cancel,
@@ -44,25 +40,6 @@ import { formatCurrency, formatDate } from '../utils/helpers';
 import { validateCarForm } from '../utils/validation';
 import type { Car } from '../types';
 import type { ValidationError } from '../utils/validation';
-
-// Constants for form options
-const AVAILABLE_FEATURES = [
-  'ABS',
-  'Airbag',
-  'Điều hòa tự động',
-  'Camera lùi',
-  'Cảm biến lùi',
-  'Bluetooth',
-  'GPS',
-  'Cruise Control',
-  'Ghế da',
-  'Cửa sổ trời',
-  'Hệ thống âm thanh cao cấp',
-  'Phanh tay điện tử',
-  'Khởi động bằng nút bấm',
-  'Cảm biến áp suất lốp',
-  'Camera 360 độ',
-];
 
 const CAR_BRANDS = [
   'Toyota',
@@ -225,15 +202,6 @@ const SellerDashboardPage: React.FC = () => {
     handleMenuClose();
   };
 
-  const handleFeatureToggle = (feature: string) => {
-    setEditForm((prev) => ({
-      ...prev,
-      features: prev.features.includes(feature)
-        ? prev.features.filter((f) => f !== feature)
-        : [...prev.features, feature],
-    }));
-  };
-
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
 
@@ -349,34 +317,6 @@ const SellerDashboardPage: React.FC = () => {
     handleMenuClose();
   };
 
-  const handlePromote = () => {
-    if (selectedListing) {
-      // Redirect to VNPay for promoting existing listing
-      const vnpayUrl =
-        `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?` +
-        `vnp_Version=2.1.0&` +
-        `vnp_Command=pay&` +
-        `vnp_TmnCode=YOUR_TMN_CODE&` +
-        `vnp_Amount=${100000 * 100}&` + // Promotion fee: 100,000 VND
-        `vnp_CurrCode=VND&` +
-        `vnp_TxnRef=promote_${selectedListing.id}&` +
-        `vnp_OrderInfo=Dây tin xe ${selectedListing.title}&` +
-        `vnp_OrderType=other&` +
-        `vnp_Locale=vn&` +
-        `vnp_ReturnUrl=${encodeURIComponent(
-          window.location.origin + '/seller-dashboard?payment=success'
-        )}&` +
-        `vnp_IpAddr=127.0.0.1&` +
-        `vnp_CreateDate=${new Date()
-          .toISOString()
-          .replace(/[-:]/g, '')
-          .slice(0, 14)}`;
-
-      window.location.href = vnpayUrl;
-    }
-    handleMenuClose();
-  };
-
   const handleDelete = () => {
     setDeleteDialogOpen(true);
     handleMenuClose();
@@ -484,23 +424,6 @@ const SellerDashboardPage: React.FC = () => {
 
         <Card sx={{ minWidth: 200, flex: 1 }}>
           <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-            <Star sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
-            <Box>
-              <Typography variant='h5' fontWeight='bold'>
-                {mockListings.reduce(
-                  (sum, car) => sum + (car.favorites || 0),
-                  0
-                )}
-              </Typography>
-              <Typography variant='body2' color='text.secondary'>
-                Yêu thích
-              </Typography>
-            </Box>
-          </CardContent>
-        </Card>
-
-        <Card sx={{ minWidth: 200, flex: 1 }}>
-          <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
             <Warning sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
             <Box>
               <Typography variant='h5' fontWeight='bold'>
@@ -553,11 +476,6 @@ const SellerDashboardPage: React.FC = () => {
                   color={getStatusColor(listing.status)}
                   size='small'
                 />
-                <Chip
-                  label={`${listing.favorites || 0} yêu thích`}
-                  variant='outlined'
-                  size='small'
-                />
               </Box>
 
               <Typography variant='body2' color='text.secondary' gutterBottom>
@@ -586,10 +504,7 @@ const SellerDashboardPage: React.FC = () => {
           <Edit sx={{ mr: 1 }} />
           Chỉnh sửa
         </MenuItem>
-        <MenuItem onClick={handlePromote}>
-          <Payment sx={{ mr: 1 }} />
-          Đẩy tin
-        </MenuItem>
+
         <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
           <Delete sx={{ mr: 1 }} />
           Xóa bài đăng
@@ -875,27 +790,6 @@ const SellerDashboardPage: React.FC = () => {
               helperText={getErrorMessage('description')}
               placeholder='Mô tả chi tiết về xe, tình trạng, lịch sử sử dụng, trang bị...'
             />
-
-            {/* Trang bị */}
-            <Box>
-              <Typography variant='h6' gutterBottom>
-                Trang bị xe
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {AVAILABLE_FEATURES.map((feature) => (
-                  <FormControlLabel
-                    key={feature}
-                    control={
-                      <Checkbox
-                        checked={editForm.features.includes(feature)}
-                        onChange={() => handleFeatureToggle(feature)}
-                      />
-                    }
-                    label={feature}
-                  />
-                ))}
-              </Box>
-            </Box>
 
             {/* Hình ảnh */}
             <Box>

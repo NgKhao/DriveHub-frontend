@@ -8,6 +8,7 @@ import type {
   BackendGetUsersResponse,
   BackendAdminUpdateUserResponse,
   BackendCreateUserResponse,
+  BackendDeleteUserResponse,
 } from '../types';
 import {
   mapBackendGetUsersResponseToPaginated,
@@ -92,7 +93,8 @@ export const adminService = {
 
   // Delete user
   deleteUser: async (id: string): Promise<void> => {
-    await api.delete(`/admin/users/${id}`);
+    await api.delete<BackendDeleteUserResponse>(`/admin/users/${id}`);
+    // API returns 204 status with null detail, no need to transform response
   },
 
   // Block/Unblock user

@@ -57,12 +57,7 @@ Thông tin xe:
 - Xe chạy ít, chủ yêu thương
 - Giấy tờ đầy đủ, sang tên ngay
 
-Trang bị:
-- Hệ thống âm thanh cao cấp
-- Camera lùi, cảm biến va chạm
-- Điều hòa tự động 2 vùng
-- Ghế da cao cấp
-- Hệ thống an toàn Toyota Safety Sense
+
 
 Liên hệ để xem xe và thương lượng giá!`,
   images: [
@@ -324,20 +319,6 @@ const CarDetailPage: React.FC = () => {
               </Box>
             </Box>
           </Paper>
-
-          {/* Features */}
-          {car.features && car.features.length > 0 && (
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Typography variant='h6' gutterBottom>
-                Trang bị
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {car.features.map((feature, index) => (
-                  <Chip key={index} label={feature} variant='outlined' />
-                ))}
-              </Box>
-            </Paper>
-          )}
 
           {/* Description */}
           <Paper sx={{ p: 3 }}>

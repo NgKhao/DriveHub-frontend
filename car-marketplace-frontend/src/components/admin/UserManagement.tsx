@@ -207,6 +207,12 @@ const UserManagement: React.FC = () => {
           setSnackbarOpen(true);
           refetch(); // Refetch data
         },
+        onError: (error) => {
+          setSnackbarMessage(
+            error?.message || 'Có lỗi xảy ra khi xóa người dùng'
+          );
+          setSnackbarOpen(true);
+        },
       });
     }
     handleMenuClose();
