@@ -38,7 +38,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import { validateCarForm } from '../utils/validation';
-import type { Car } from '../types';
+import { useSellerPosts, useSeller } from '../hooks/useSeller';
+import type { SellerPost } from '../types';
 import type { ValidationError } from '../utils/validation';
 
 const CAR_BRANDS = [
@@ -59,67 +60,22 @@ const CAR_BRANDS = [
   'Vinfast',
 ];
 
-// Mock data (removed views field)
-const mockListings: Car[] = [
-  {
-    id: '1',
-    title: 'Toyota Camry 2022 - Xe gia đình sang trọng',
-    brand: 'Toyota',
-    model: 'Camry',
-    year: 2022,
-    price: 1200000000,
-    mileage: 15000,
-    fuelType: 'gasoline',
-    transmission: 'automatic',
-    color: 'Trắng',
-    location: 'Hồ Chí Minh',
-    images: ['/api/placeholder/400/300'],
-    description: 'Xe đẹp như mới',
-    condition: 'used',
-    status: 'active',
-    sellerId: '1',
-    sellerName: 'Nguyễn Văn A',
-    sellerPhone: '0901234567',
-    sellerType: 'individual',
-    features: ['ABS', 'Airbag', 'Điều hòa tự động'],
-    createdAt: '2024-01-15T08:00:00Z',
-    updatedAt: '2024-01-15T08:00:00Z',
-    favorites: 12,
-  },
-  {
-    id: '2',
-    title: 'Honda Civic 2023 - Mới 100%',
-    brand: 'Honda',
-    model: 'Civic',
-    year: 2023,
-    price: 850000000,
-    mileage: 0,
-    fuelType: 'gasoline',
-    transmission: 'automatic',
-    color: 'Đỏ',
-    location: 'Hà Nội',
-    images: ['/api/placeholder/400/300'],
-    description: 'Xe mới chưa đăng ký',
-    condition: 'new',
-    status: 'pending',
-    sellerId: '1',
-    sellerName: 'Nguyễn Văn A',
-    sellerPhone: '0987654321',
-    sellerType: 'dealer',
-    features: ['Bluetooth', 'Camera lùi', 'Cảm biến lùi'],
-    createdAt: '2024-02-01T10:00:00Z',
-    updatedAt: '2024-02-01T10:00:00Z',
-    favorites: 5,
-  },
-];
+// Using real API data now - mockListings removed
 
 const SellerDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuthStore();
+
+  // API hooks
+  const { data: sellerPosts, isLoading, error, refetch } = useSellerPosts();
+  const { deletePost } = useSeller();
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedListing, setSelectedListing] = useState<Car | null>(null);
+  const [selectedListing, setSelectedListing] = useState<SellerPost | null>(
+    null
+  );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -163,7 +119,7 @@ const SellerDashboardPage: React.FC = () => {
 
   const handleMenuClick = (
     event: React.MouseEvent<HTMLElement>,
-    listing: Car
+    listing: SellerPost
   ) => {
     setAnchorEl(event.currentTarget);
     setSelectedListing(listing);
@@ -178,20 +134,27 @@ const SellerDashboardPage: React.FC = () => {
     if (selectedListing) {
       setEditForm({
         title: selectedListing.title,
-        brand: selectedListing.brand,
-        model: selectedListing.model,
-        year: selectedListing.year,
+        brand: selectedListing.carDetail.make, // Map from carDetail.make
+        model: selectedListing.carDetail.model,
+        year: selectedListing.carDetail.year,
         price: selectedListing.price.toString(),
-        mileage: selectedListing.mileage.toString(),
-        fuelType: selectedListing.fuelType,
-        transmission: selectedListing.transmission,
-        color: selectedListing.color,
-        condition: selectedListing.condition,
+        mileage: selectedListing.carDetail.mileage.toString(),
+        fuelType: selectedListing.carDetail.fuelType as
+          | 'gasoline'
+          | 'diesel'
+          | 'hybrid'
+          | 'electric',
+        transmission: selectedListing.carDetail.transmission as
+          | 'manual'
+          | 'automatic',
+        color: selectedListing.carDetail.color,
+        condition: selectedListing.carDetail.condition as 'new' | 'used',
         description: selectedListing.description,
         location: selectedListing.location,
-        sellerPhone: selectedListing.sellerPhone || '',
-        sellerType: selectedListing.sellerType || 'individual',
-        features: selectedListing.features || [],
+        sellerPhone: selectedListing.phoneContact,
+        sellerType:
+          selectedListing.sellerType === 'agency' ? 'dealer' : 'individual', // Map agency to dealer
+        features: [], // SellerPost doesn't have features, so empty array
         images: [], // Start with empty for edit (existing images will be shown separately)
       });
       // Initialize preview images from existing images URLs
@@ -323,22 +286,39 @@ const SellerDashboardPage: React.FC = () => {
   };
 
   const confirmDelete = () => {
-    // TODO: Implement delete API call
-    console.log('Deleting listing:', selectedListing?.id);
-    setSnackbarMessage('Bài đăng đã được xóa thành công!');
-    setSnackbarOpen(true);
-    setDeleteDialogOpen(false);
-    setSelectedListing(null);
+    if (selectedListing) {
+      deletePost(selectedListing.id, {
+        onSuccess: () => {
+          setSnackbarMessage('Bài đăng đã được xóa thành công!');
+          setSnackbarOpen(true);
+          setDeleteDialogOpen(false);
+          setSelectedListing(null);
+          refetch(); // Refresh the posts list
+        },
+        onError: (error) => {
+          setSnackbarMessage(
+            error?.message || 'Có lỗi xảy ra khi xóa bài đăng'
+          );
+          setSnackbarOpen(true);
+        },
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active':
+      case 'approved':
         return 'success';
       case 'pending':
         return 'warning';
       case 'rejected':
         return 'error';
+      case 'draft':
+        return 'info';
+      case 'blocked':
+        return 'error';
+      case 'hidden':
+        return 'default';
       default:
         return 'default';
     }
@@ -346,12 +326,18 @@ const SellerDashboardPage: React.FC = () => {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'Đang hiển thị';
+      case 'approved':
+        return 'Đã duyệt';
       case 'pending':
         return 'Chờ duyệt';
       case 'rejected':
         return 'Bị từ chối';
+      case 'draft':
+        return 'Nháp';
+      case 'blocked':
+        return 'Bị chặn';
+      case 'hidden':
+        return 'Đã ẩn';
       default:
         return status;
     }
@@ -413,7 +399,7 @@ const SellerDashboardPage: React.FC = () => {
             />
             <Box>
               <Typography variant='h5' fontWeight='bold'>
-                {mockListings.length}
+                {sellerPosts?.length || 0}
               </Typography>
               <Typography variant='body2' color='text.secondary'>
                 Tổng bài đăng
@@ -427,7 +413,8 @@ const SellerDashboardPage: React.FC = () => {
             <Warning sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
             <Box>
               <Typography variant='h5' fontWeight='bold'>
-                {mockListings.filter((car) => car.status === 'pending').length}
+                {sellerPosts?.filter((post) => post.status === 'pending')
+                  .length || 0}
               </Typography>
               <Typography variant='body2' color='text.secondary'>
                 Chờ duyệt
@@ -438,57 +425,74 @@ const SellerDashboardPage: React.FC = () => {
       </Box>
 
       {/* Listings */}
-      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-        {mockListings.map((listing) => (
-          <Card key={listing.id} sx={{ width: 350, mb: 2 }}>
-            <CardMedia
-              component='img'
-              height='200'
-              image={listing.images[0]}
-              alt={listing.title}
-            />
-            <CardContent>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  mb: 1,
-                }}
-              >
-                <Typography variant='h6' component='h3' noWrap sx={{ flex: 1 }}>
-                  {listing.title}
-                </Typography>
-                <IconButton
-                  onClick={(e) => handleMenuClick(e, listing)}
-                  size='small'
+      {isLoading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <Typography>Đang tải...</Typography>
+        </Box>
+      ) : error ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <Typography color='error'>
+            Có lỗi xảy ra khi tải danh sách bài đăng
+          </Typography>
+        </Box>
+      ) : (
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          {(sellerPosts || []).map((listing) => (
+            <Card key={listing.id} sx={{ width: 350, mb: 2 }}>
+              <CardMedia
+                component='img'
+                height='200'
+                image={listing.images[0]}
+                alt={listing.title}
+              />
+              <CardContent>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    mb: 1,
+                  }}
                 >
-                  <MoreVert />
-                </IconButton>
-              </Box>
+                  <Typography
+                    variant='h6'
+                    component='h3'
+                    noWrap
+                    sx={{ flex: 1 }}
+                  >
+                    {listing.title}
+                  </Typography>
+                  <IconButton
+                    onClick={(e) => handleMenuClick(e, listing)}
+                    size='small'
+                  >
+                    <MoreVert />
+                  </IconButton>
+                </Box>
 
-              <Typography variant='h6' color='primary' gutterBottom>
-                {formatCurrency(listing.price)}
-              </Typography>
+                <Typography variant='h6' color='primary' gutterBottom>
+                  {formatCurrency(listing.price)}
+                </Typography>
 
-              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                <Chip
-                  label={getStatusText(listing.status)}
-                  color={getStatusColor(listing.status)}
-                  size='small'
-                />
-              </Box>
+                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                  <Chip
+                    label={getStatusText(listing.status)}
+                    color={getStatusColor(listing.status)}
+                    size='small'
+                  />
+                </Box>
 
-              <Typography variant='body2' color='text.secondary' gutterBottom>
-                Đăng: {formatDate(listing.createdAt)}
-              </Typography>
+                <Typography variant='body2' color='text.secondary' gutterBottom>
+                  Đăng: {formatDate(listing.createdAt)}
+                </Typography>
 
-              <Typography variant='body2' color='text.secondary'>
-                {listing.location}
-              </Typography>
-            </CardContent>
-          </Card>
-        ))}
-      </Box>
+                <Typography variant='body2' color='text.secondary'>
+                  {listing.location}
+                </Typography>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
+      )}
 
       {/* Context Menu */}
       <Menu

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -33,83 +33,31 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import SellerRatings from '../components/common/SellerRatings';
 import ReportDialog from '../components/common/ReportDialog';
 import { useAuthStore } from '../store/authStore';
-import type { Car } from '../types';
-
-// Mock car data
-const mockCar: Car = {
-  id: '1',
-  title: 'Toyota Camry 2022 - Xe gia đình sang trọng',
-  brand: 'Toyota',
-  model: 'Camry',
-  year: 2022,
-  price: 1200000000,
-  mileage: 15000,
-  fuelType: 'gasoline',
-  transmission: 'automatic',
-  color: 'Đen',
-  description: `Xe Toyota Camry 2022 màu đen, nội thất kem sang trọng. 
-  
-Thông tin xe:
-- Xe gia đình 5 chỗ
-- Bảo dưỡng định kỳ tại Toyota
-- Không tai nạn, không ngập nước
-- Còn bảo hành chính hãng
-- Xe chạy ít, chủ yêu thương
-- Giấy tờ đầy đủ, sang tên ngay
-
-
-
-Liên hệ để xem xe và thương lượng giá!`,
-  images: [
-    'https://s.bonbanh.com/uploads/users/782831/car/6429100/s_1757733616.907.jpg',
-    'https://s.bonbanh.com/uploads/users/782831/car/6429100/s_1757733617.117.jpg',
-    'https://s.bonbanh.com/uploads/users/782831/car/6429100/s_1757733619.332.jpg',
-    'https://s.bonbanh.com/uploads/users/782831/car/6429100/s_1757733620.971.jpg',
-  ],
-  sellerId: '1',
-  sellerName: 'Nguyễn Văn A',
-  sellerPhone: '0901234567',
-  sellerType: 'individual',
-  location: 'Quận 1, Hồ Chí Minh',
-  status: 'active',
-  features: [
-    'ABS',
-    'Airbag',
-    'Điều hòa tự động',
-    'Camera lùi',
-    'Cảm biến lùi',
-    'Bluetooth',
-  ],
-  condition: 'used',
-  createdAt: '2024-01-01T00:00:00Z',
-  updatedAt: '2024-01-01T00:00:00Z',
-};
+import { useSellerPostDetail } from '../hooks/useSeller';
 
 const CarDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
-  const [car, setCar] = useState<Car | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error] = useState<string>('');
+  // Use API hook instead of manual state management
+  const {
+    data: sellerPost,
+    isLoading: loading,
+    error,
+  } = useSellerPostDetail(id || '');
+
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setCar(mockCar);
-      setLoading(false);
-    }, 1000);
-  }, [id]);
-
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: car?.title,
-        text: `Xem xe ${car?.title} - ${formatCurrency(car?.price || 0)}`,
+        title: sellerPost?.title,
+        text: `Xem xe ${sellerPost?.title} - ${formatCurrency(
+          sellerPost?.price || 0
+        )}`,
         url: window.location.href,
       });
     } else {
@@ -126,10 +74,12 @@ const CarDetailPage: React.FC = () => {
     );
   }
 
-  if (error || !car) {
+  if (error || !sellerPost) {
     return (
       <Container maxWidth='lg' sx={{ py: 4 }}>
-        <Alert severity='error'>{error || 'Không tìm thấy thông tin xe'}</Alert>
+        <Alert severity='error'>
+          {error?.message || 'Không tìm thấy thông tin xe'}
+        </Alert>
       </Container>
     );
   }
@@ -201,8 +151,8 @@ const CarDetailPage: React.FC = () => {
           <Paper sx={{ mb: 3 }}>
             <Box sx={{ position: 'relative' }}>
               <img
-                src={car.images[selectedImageIndex]}
-                alt={car.title}
+                src={sellerPost.images[selectedImageIndex]}
+                alt={sellerPost.title}
                 style={{
                   width: '100%',
                   height: '400px',
@@ -211,15 +161,21 @@ const CarDetailPage: React.FC = () => {
                 }}
               />
               <Chip
-                label={car.condition === 'new' ? 'Xe mới' : 'Xe cũ'}
-                color={car.condition === 'new' ? 'success' : 'primary'}
+                label={
+                  sellerPost.carDetail.condition === 'NEW' ? 'Xe mới' : 'Xe cũ'
+                }
+                color={
+                  sellerPost.carDetail.condition === 'NEW'
+                    ? 'success'
+                    : 'primary'
+                }
                 sx={{ position: 'absolute', top: 16, left: 16 }}
               />
             </Box>
 
-            {car.images.length > 1 && (
+            {sellerPost.images.length > 1 && (
               <Box sx={{ display: 'flex', gap: 1, p: 2, overflowX: 'auto' }}>
-                {car.images.map((image, index) => (
+                {sellerPost.images.map((image, index) => (
                   <Box
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
@@ -238,7 +194,7 @@ const CarDetailPage: React.FC = () => {
                   >
                     <img
                       src={image}
-                      alt={`${car.title} ${index + 1}`}
+                      alt={`${sellerPost.title} ${index + 1}`}
                       style={{
                         width: '100%',
                         height: '100%',
@@ -263,7 +219,9 @@ const CarDetailPage: React.FC = () => {
                   <CalendarToday fontSize='small' color='action' />
                   <Typography>Năm sản xuất:</Typography>
                 </Box>
-                <Typography fontWeight='medium'>{car.year}</Typography>
+                <Typography fontWeight='medium'>
+                  {sellerPost.carDetail.year}
+                </Typography>
               </Box>
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -272,7 +230,7 @@ const CarDetailPage: React.FC = () => {
                   <Typography>Số km đã đi:</Typography>
                 </Box>
                 <Typography fontWeight='medium'>
-                  {car.mileage.toLocaleString()} km
+                  {sellerPost.carDetail.mileage.toLocaleString()} km
                 </Typography>
               </Box>
 
@@ -282,11 +240,11 @@ const CarDetailPage: React.FC = () => {
                   <Typography>Nhiên liệu:</Typography>
                 </Box>
                 <Typography fontWeight='medium'>
-                  {car.fuelType === 'gasoline'
+                  {sellerPost.carDetail.fuelType === 'GASOLINE'
                     ? 'Xăng'
-                    : car.fuelType === 'diesel'
+                    : sellerPost.carDetail.fuelType === 'DIESEL'
                     ? 'Dầu'
-                    : car.fuelType === 'hybrid'
+                    : sellerPost.carDetail.fuelType === 'HYBRID'
                     ? 'Hybrid'
                     : 'Điện'}
                 </Typography>
@@ -298,7 +256,9 @@ const CarDetailPage: React.FC = () => {
                   <Typography>Hộp số:</Typography>
                 </Box>
                 <Typography fontWeight='medium'>
-                  {car.transmission === 'automatic' ? 'Tự động' : 'Số sàn'}
+                  {sellerPost.carDetail.transmission === 'AUTOMATIC'
+                    ? 'Tự động'
+                    : 'Số sàn'}
                 </Typography>
               </Box>
 
@@ -307,7 +267,9 @@ const CarDetailPage: React.FC = () => {
                   <Palette fontSize='small' color='action' />
                   <Typography>Màu sắc:</Typography>
                 </Box>
-                <Typography fontWeight='medium'>{car.color}</Typography>
+                <Typography fontWeight='medium'>
+                  {sellerPost.carDetail.color}
+                </Typography>
               </Box>
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -315,7 +277,9 @@ const CarDetailPage: React.FC = () => {
                   <LocationOn fontSize='small' color='action' />
                   <Typography>Vị trí:</Typography>
                 </Box>
-                <Typography fontWeight='medium'>{car.location}</Typography>
+                <Typography fontWeight='medium'>
+                  {sellerPost.location}
+                </Typography>
               </Box>
             </Box>
           </Paper>
@@ -332,7 +296,7 @@ const CarDetailPage: React.FC = () => {
                 lineHeight: 1.7,
               }}
             >
-              {car.description}
+              {sellerPost.description}
             </Typography>
           </Paper>
         </Box>
@@ -341,7 +305,7 @@ const CarDetailPage: React.FC = () => {
         <Box sx={{ flex: 1 }}>
           <Paper sx={{ p: 3, position: 'sticky', top: 20 }}>
             <Typography variant='h4' gutterBottom fontWeight='bold'>
-              {car.title}
+              {sellerPost.title}
             </Typography>
 
             <Typography
@@ -350,11 +314,11 @@ const CarDetailPage: React.FC = () => {
               fontWeight='bold'
               gutterBottom
             >
-              {formatCurrency(car.price)}
+              {formatCurrency(sellerPost.price)}
             </Typography>
 
             <Typography variant='body2' color='text.secondary' gutterBottom>
-              Đăng {formatRelativeTime(car.createdAt)}
+              Đăng {formatRelativeTime(sellerPost.createdAt)}
             </Typography>
 
             <Divider sx={{ my: 3 }} />
@@ -366,10 +330,10 @@ const CarDetailPage: React.FC = () => {
 
             <Box sx={{ mb: 3 }}>
               <Typography variant='body1' fontWeight='medium'>
-                {car.sellerName}
+                Người bán
               </Typography>
               <Typography variant='body2' color='text.secondary'>
-                {car.sellerType === 'individual' ? 'Cá nhân' : 'Đại lý'}
+                {sellerPost.sellerType === 'individual' ? 'Cá nhân' : 'Đại lý'}
               </Typography>
             </Box>
 
@@ -379,10 +343,10 @@ const CarDetailPage: React.FC = () => {
                 variant='contained'
                 size='large'
                 startIcon={<Phone />}
-                href={`tel:${car.sellerPhone}`}
+                href={`tel:${sellerPost.phoneContact}`}
                 fullWidth
               >
-                Gọi {car.sellerPhone}
+                Gọi {sellerPost.phoneContact}
               </Button>
 
               {/* Chỉ buyer mới có thể báo cáo */}
@@ -412,15 +376,18 @@ const CarDetailPage: React.FC = () => {
 
       {/* Seller Ratings Section */}
       <Box sx={{ mt: 4 }}>
-        <SellerRatings sellerId={car.sellerId} sellerName={car.sellerName} />
+        <SellerRatings
+          sellerId={sellerPost.id}
+          sellerName={`Người bán bài đăng ${sellerPost.id}`}
+        />
       </Box>
 
       {/* Report Dialog */}
       <ReportDialog
         open={reportDialogOpen}
         onClose={() => setReportDialogOpen(false)}
-        reportedId={car.sellerId}
-        reportedName={car.sellerName}
+        reportedId={sellerPost.id}
+        reportedName={`Người bán bài đăng ${sellerPost.id}`}
         reportedType='seller'
       />
     </Container>

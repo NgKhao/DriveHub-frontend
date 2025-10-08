@@ -238,6 +238,44 @@ export interface BackendCreatePostResponse {
   instance: string;
 }
 
+export interface BackendPostItem {
+  postId: number;
+  title: string;
+  description: string;
+  price: number;
+  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'BLOCKED' | 'HIDDEN';
+  location: string;
+  phoneContact: string;
+  sellerType: 'INDIVIDUAL' | 'AGENCY';
+  images: string[];
+  carDetailDTO: {
+    make: string;
+    model: string;
+    year: number;
+    mileage: number;
+    fuelType: string;
+    transmission: string;
+    color: string;
+    condition: string;
+  };
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface BackendGetPostsResponse {
+  messenger: string;
+  status: number;
+  detail: BackendPostItem[];
+  instance: string;
+}
+
+export interface BackendGetPostDetailResponse {
+  messenger: string;
+  status: number;
+  detail: BackendPostItem;
+  instance: string;
+}
+
 // User Types
 export interface User {
   id: string;
@@ -583,6 +621,75 @@ export const mapBackendCreatePostResponseToSellerPost = (
     createdAt: backendResponse.createdAt,
     updatedAt: backendResponse.updatedAt,
   };
+};
+
+// Helper function to convert image URLs with base URL
+export const convertImageUrls = (images: string[]): string[] => {
+  const baseUrl = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8080';
+  return images.map((imagePath) => `${baseUrl}${imagePath}`);
+};
+
+// Helper function to convert backend post item to seller post
+export const mapBackendPostItemToSellerPost = (
+  backendPost: BackendPostItem
+): SellerPost => {
+  const sellerTypeMap: Record<
+    'INDIVIDUAL' | 'AGENCY',
+    'individual' | 'agency'
+  > = {
+    INDIVIDUAL: 'individual',
+    AGENCY: 'agency',
+  };
+
+  const statusMap: Record<
+    string,
+    'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden'
+  > = {
+    DRAFT: 'draft',
+    PENDING: 'pending',
+    APPROVED: 'approved',
+    REJECTED: 'rejected',
+    BLOCKED: 'blocked',
+    HIDDEN: 'hidden',
+  };
+
+  return {
+    id: backendPost.postId.toString(),
+    title: backendPost.title,
+    description: backendPost.description,
+    price: backendPost.price,
+    status: statusMap[backendPost.status] || 'draft',
+    location: backendPost.location,
+    phoneContact: backendPost.phoneContact,
+    sellerType: sellerTypeMap[backendPost.sellerType],
+    images: convertImageUrls(backendPost.images), // Convert image URLs
+    carDetail: {
+      make: backendPost.carDetailDTO.make,
+      model: backendPost.carDetailDTO.model,
+      year: backendPost.carDetailDTO.year,
+      mileage: backendPost.carDetailDTO.mileage,
+      fuelType: backendPost.carDetailDTO.fuelType,
+      transmission: backendPost.carDetailDTO.transmission,
+      color: backendPost.carDetailDTO.color,
+      condition: backendPost.carDetailDTO.condition,
+    },
+    createdAt: backendPost.createdAt,
+    updatedAt: backendPost.updatedAt,
+  };
+};
+
+// Helper function to convert backend get posts response to seller posts array
+export const mapBackendGetPostsResponseToSellerPosts = (
+  backendResponse: BackendGetPostsResponse['detail']
+): SellerPost[] => {
+  return backendResponse.map(mapBackendPostItemToSellerPost);
+};
+
+// Helper function to convert backend get post detail response to seller post
+export const mapBackendGetPostDetailResponseToSellerPost = (
+  backendResponse: BackendGetPostDetailResponse['detail']
+): SellerPost => {
+  return mapBackendPostItemToSellerPost(backendResponse);
 };
 
 // Car Types

@@ -51,6 +51,17 @@ export const useSellerPosts = () => {
   });
 };
 
+// Hook for fetching single post detail
+export const useSellerPostDetail = (postId: string) => {
+  return useQuery<SellerPost, SellerError>({
+    queryKey: ['seller', 'posts', postId],
+    queryFn: () => sellerService.getPostById(postId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+    enabled: !!postId, // Only run query if postId is provided
+  });
+};
+
 // Hook for updating post
 export const useUpdatePost = () => {
   const queryClient = useQueryClient();

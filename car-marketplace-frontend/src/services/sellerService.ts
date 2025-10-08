@@ -3,10 +3,14 @@ import type {
   CreatePostData,
   SellerPost,
   BackendCreatePostResponse,
+  BackendGetPostsResponse,
+  BackendGetPostDetailResponse,
 } from '../types';
 import {
   mapFrontendCreatePostToBackend,
   mapBackendCreatePostResponseToSellerPost,
+  mapBackendGetPostsResponseToSellerPosts,
+  mapBackendGetPostDetailResponseToSellerPost,
 } from '../types';
 
 export interface CreatePostResult {
@@ -54,16 +58,10 @@ export const sellerService = {
 
   // Get seller's posts
   getMyPosts: async (): Promise<SellerPost[]> => {
-    // TODO: Implement when API is available
-    // const response = await api.get<{
-    //   messenger: string;
-    //   status: number;
-    //   detail: unknown[];
-    //   instance: string;
-    // }>('/seller/posts');
+    const response = await api.get<BackendGetPostsResponse>('/seller/posts');
 
-    // For now, return empty array until backend provides this endpoint
-    return [];
+    // Transform backend response to frontend format
+    return mapBackendGetPostsResponseToSellerPosts(response.data.detail);
   },
 
   // Update post
@@ -88,11 +86,10 @@ export const sellerService = {
 
   // Get post by ID
   getPostById: async (postId: string): Promise<SellerPost> => {
-    // TODO: Implement when API is available
-    const response = await api.get<BackendCreatePostResponse>(
+    const response = await api.get<BackendGetPostDetailResponse>(
       `/seller/posts/${postId}`
     );
 
-    return mapBackendCreatePostResponseToSellerPost(response.data.detail.post);
+    return mapBackendGetPostDetailResponseToSellerPost(response.data.detail);
   },
 };
