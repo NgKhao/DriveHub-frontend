@@ -62,7 +62,7 @@ const UserManagement: React.FC = () => {
     error,
     refetch,
   } = useUsers(page, rowsPerPage);
-  const { updateUserAdmin, deleteUser, toggleUserStatus } = useAdmin();
+  const { updateUserAdmin, deleteUser } = useAdmin();
 
   // Dialog states
   const [userDetailDialogOpen, setUserDetailDialogOpen] = useState(false);
@@ -157,14 +157,23 @@ const UserManagement: React.FC = () => {
 
   const handleToggleVerification = () => {
     if (selectedUser) {
-      toggleUserStatus(
-        { id: selectedUser.id, isBlocked: selectedUser.isVerified },
+      // Use updateUserAdmin to toggle user status (same API as edit user)
+      const newStatus = !selectedUser.isVerified;
+
+      updateUserAdmin(
+        {
+          id: selectedUser.id,
+          userData: {
+            name: selectedUser.name,
+            phone: selectedUser.phone,
+            role: selectedUser.role as 'buyer' | 'seller',
+            isVerified: newStatus,
+          },
+        },
         {
           onSuccess: () => {
             setSnackbarMessage(
-              selectedUser.isVerified
-                ? 'Đã vô hiệu hóa tài khoản'
-                : 'Đã kích hoạt tài khoản'
+              newStatus ? 'Đã kích hoạt tài khoản' : 'Đã vô hiệu hóa tài khoản'
             );
             setSnackbarOpen(true);
             refetch(); // Refetch data
