@@ -21,11 +21,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { validateCarForm } from '../utils/validation';
 import { formatCurrency } from '../utils/helpers';
+import { useSeller } from '../hooks/useSeller';
 import type { ValidationError } from '../utils/validation';
+import type { CreatePostData } from '../types';
 
 interface CarFormData {
   title: string;
-  brand: string;
+  brand: string; // This will be 'make' in API
   model: string;
   year: number;
   price: number;
@@ -37,7 +39,7 @@ interface CarFormData {
   description: string;
   location: string;
   sellerPhone: string;
-  sellerType: 'individual' | 'dealer';
+  sellerType: 'individual' | 'agency'; // Updated to match API
   features: string[];
   images: File[];
 }
@@ -82,10 +84,10 @@ const CAR_BRANDS = [
 const CreateListingPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { createPost, isCreatePostLoading, createPostError } = useSeller();
 
   const [formData, setFormData] = useState<CarFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<ValidationError[]>([]);
-  const [loading, setLoading] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [previewImages, setPreviewImages] = useState<string[]>([]);
@@ -176,47 +178,42 @@ const CreateListingPage: React.FC = () => {
       return;
     }
 
-    setLoading(true);
+    // Prepare data for API
+    const createPostData: CreatePostData = {
+      title: formData.title,
+      description: formData.description,
+      price: formData.price,
+      location: formData.location,
+      phoneContact: formData.sellerPhone,
+      sellerType: formData.sellerType,
+      make: formData.brand, // Map brand to make
+      model: formData.model,
+      year: formData.year,
+      mileage: formData.mileage,
+      fuelType: formData.fuelType,
+      transmission: formData.transmission,
+      color: formData.color,
+      condition: formData.condition,
+      images: formData.images,
+    };
 
-    try {
-      // TODO: Implement API call to create listing
-      console.log('Creating listing:', formData);
+    // Call API to create post
+    createPost(createPostData, {
+      onSuccess: (result) => {
+        setSnackbarMessage('Tạo bài viết thành công! Chuyển đến thanh toán...');
+        setSnackbarOpen(true);
 
-      // Simulate API call to create listing and get listing ID
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Mock listing ID from API response
-      const newListingId = `listing_${Date.now()}`;
-
-      // Redirect to VNPay payment gateway
-      // In real implementation, you would get the VNPay payment URL from your backend
-      const vnpayUrl =
-        `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?` +
-        `vnp_Version=2.1.0&` +
-        `vnp_Command=pay&` +
-        `vnp_TmnCode=YOUR_TMN_CODE&` +
-        `vnp_Amount=${50000 * 100}&` + // VNPay amount in VND * 100
-        `vnp_CurrCode=VND&` +
-        `vnp_TxnRef=${newListingId}&` +
-        `vnp_OrderInfo=Thanh toan dang tin xe ${formData.title}&` +
-        `vnp_OrderType=other&` +
-        `vnp_Locale=vn&` +
-        `vnp_ReturnUrl=${encodeURIComponent(
-          window.location.origin + '/seller-dashboard?payment=success'
-        )}&` +
-        `vnp_IpAddr=127.0.0.1&` +
-        `vnp_CreateDate=${new Date()
-          .toISOString()
-          .replace(/[-:]/g, '')
-          .slice(0, 14)}`;
-
-      // Redirect to VNPay
-      window.location.href = vnpayUrl;
-    } catch {
-      setSnackbarMessage('Có lỗi xảy ra, vui lòng thử lại');
-      setSnackbarOpen(true);
-      setLoading(false);
-    }
+        // Redirect to VNPay payment gateway
+        window.location.href = result.vnpayUrl;
+      },
+      onError: (error) => {
+        console.error('Create post error:', error);
+        setSnackbarMessage(
+          createPostError || 'Có lỗi xảy ra, vui lòng thử lại'
+        );
+        setSnackbarOpen(true);
+      },
+    });
   };
 
   const getErrorMessage = (field: string) => {
@@ -562,7 +559,7 @@ const CreateListingPage: React.FC = () => {
                 variant='outlined'
                 startIcon={<Cancel />}
                 onClick={() => navigate(-1)}
-                disabled={loading}
+                disabled={isCreatePostLoading}
               >
                 Hủy
               </Button>
@@ -570,9 +567,9 @@ const CreateListingPage: React.FC = () => {
                 type='submit'
                 variant='contained'
                 startIcon={<Save />}
-                disabled={loading}
+                disabled={isCreatePostLoading}
               >
-                {loading ? 'Đang đăng...' : 'Đăng bài'}
+                {isCreatePostLoading ? 'Đang đăng...' : 'Đăng bài'}
               </Button>
             </Box>
           </Box>

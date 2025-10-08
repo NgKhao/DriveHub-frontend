@@ -180,6 +180,64 @@ export interface BackendDeleteUserResponse {
   instance: string;
 }
 
+// Seller Post Types
+export interface BackendCreatePostRequest {
+  title: string;
+  description: string;
+  price: number;
+  location: string;
+  phoneContact: string;
+  sellerType: 'INDIVIDUAL' | 'AGENCY';
+  carDetailDTO: {
+    make: string;
+    model: string;
+    year: number;
+    mileage: number;
+    fuelType: string;
+    transmission: string;
+    color: string;
+    condition: string;
+  };
+}
+
+export interface BackendCreatePostResponse {
+  messenger: string;
+  status: number;
+  detail: {
+    post: {
+      postId: number;
+      title: string;
+      description: string;
+      price: number;
+      status:
+        | 'DRAFT'
+        | 'PENDING'
+        | 'APPROVED'
+        | 'REJECTED'
+        | 'BLOCKED'
+        | 'HIDDEN';
+      location: string;
+      phoneContact: string;
+      sellerType: 'INDIVIDUAL' | 'AGENCY';
+      images: string[];
+      carDetailDTO: {
+        make: string;
+        model: string;
+        year: number;
+        mileage: number;
+        fuelType: string;
+        transmission: string;
+        color: string;
+        condition: string;
+      };
+      createdAt: string;
+      updatedAt: string | null;
+    };
+    vnpayUrl: string;
+  };
+  instance: string;
+}
+
 // User Types
 export interface User {
   id: string;
@@ -400,6 +458,130 @@ export const mapBackendCreateUserResponseToUser = (
     isVerified: backendResponse.isActive,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+  };
+};
+
+// Frontend Create Post Types
+export interface CreatePostData {
+  title: string;
+  description: string;
+  price: number;
+  location: string;
+  phoneContact: string;
+  sellerType: 'individual' | 'agency';
+  make: string;
+  model: string;
+  year: number;
+  mileage: number;
+  fuelType: string;
+  transmission: string;
+  color: string;
+  condition: string;
+  images: File[];
+}
+
+export interface SellerPost {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden';
+  location: string;
+  phoneContact: string;
+  sellerType: 'individual' | 'agency';
+  images: string[];
+  carDetail: {
+    make: string;
+    model: string;
+    year: number;
+    mileage: number;
+    fuelType: string;
+    transmission: string;
+    color: string;
+    condition: string;
+  };
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+// Helper function to convert frontend create post data to backend format
+export const mapFrontendCreatePostToBackend = (
+  postData: CreatePostData
+): BackendCreatePostRequest => {
+  const sellerTypeMap: Record<
+    'individual' | 'agency',
+    'INDIVIDUAL' | 'AGENCY'
+  > = {
+    individual: 'INDIVIDUAL',
+    agency: 'AGENCY',
+  };
+
+  return {
+    title: postData.title,
+    description: postData.description,
+    price: postData.price,
+    location: postData.location,
+    phoneContact: postData.phoneContact,
+    sellerType: sellerTypeMap[postData.sellerType],
+    carDetailDTO: {
+      make: postData.make,
+      model: postData.model,
+      year: postData.year,
+      mileage: postData.mileage,
+      fuelType: postData.fuelType,
+      transmission: postData.transmission,
+      color: postData.color,
+      condition: postData.condition,
+    },
+  };
+};
+
+// Helper function to convert backend create post response to frontend format
+export const mapBackendCreatePostResponseToSellerPost = (
+  backendResponse: BackendCreatePostResponse['detail']['post']
+): SellerPost => {
+  const sellerTypeMap: Record<
+    'INDIVIDUAL' | 'AGENCY',
+    'individual' | 'agency'
+  > = {
+    INDIVIDUAL: 'individual',
+    AGENCY: 'agency',
+  };
+
+  const statusMap: Record<
+    string,
+    'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden'
+  > = {
+    DRAFT: 'draft',
+    PENDING: 'pending',
+    APPROVED: 'approved',
+    REJECTED: 'rejected',
+    BLOCKED: 'blocked',
+    HIDDEN: 'hidden',
+  };
+
+  return {
+    id: backendResponse.postId.toString(),
+    title: backendResponse.title,
+    description: backendResponse.description,
+    price: backendResponse.price,
+    status: statusMap[backendResponse.status] || 'draft',
+    location: backendResponse.location,
+    phoneContact: backendResponse.phoneContact,
+    sellerType: sellerTypeMap[backendResponse.sellerType],
+    images: backendResponse.images,
+    carDetail: {
+      make: backendResponse.carDetailDTO.make,
+      model: backendResponse.carDetailDTO.model,
+      year: backendResponse.carDetailDTO.year,
+      mileage: backendResponse.carDetailDTO.mileage,
+      fuelType: backendResponse.carDetailDTO.fuelType,
+      transmission: backendResponse.carDetailDTO.transmission,
+      color: backendResponse.carDetailDTO.color,
+      condition: backendResponse.carDetailDTO.condition,
+    },
+    createdAt: backendResponse.createdAt,
+    updatedAt: backendResponse.updatedAt,
   };
 };
 
