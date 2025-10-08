@@ -8,11 +8,15 @@ import type {
   BackendLoginResponse,
   BackendLogoutResponse,
   BackendRegisterResponse,
+  BackendUpdateProfileResponse,
+  BackendResetPasswordResponse,
 } from '../types';
 import {
   mapBackendUserToFrontendUser,
   mapFrontendRegisterToBackendRegister,
   mapBackendRegisterResponseToUser,
+  mapFrontendUserToBackendUpdate,
+  mapBackendUpdateProfileResponseToUser,
 } from '../types';
 
 export const authService = {
@@ -55,12 +59,20 @@ export const authService = {
   },
 
   // Update user profile
-  updateProfile: async (userData: Partial<User>): Promise<User> => {
-    const response = await api.put<ApiResponse<User>>(
-      '/auth/profile',
-      userData
+  updateProfile: async (userData: {
+    name?: string;
+    phone?: string;
+  }): Promise<User> => {
+    // Transform frontend data to backend format
+    const backendRequest = mapFrontendUserToBackendUpdate(userData);
+
+    const response = await api.put<BackendUpdateProfileResponse>(
+      '/account/me',
+      backendRequest
     );
-    return response.data.data;
+
+    // Transform backend response to frontend user format
+    return mapBackendUpdateProfileResponseToUser(response.data.detail);
   },
 
   // Logout user
@@ -84,8 +96,15 @@ export const authService = {
   },
 
   // Reset password
-  resetPassword: async (token: string, password: string): Promise<void> => {
-    await api.post('/auth/reset-password', { token, password });
+  resetPassword: async (
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> => {
+    await api.patch<BackendResetPasswordResponse>('/reset/password', {
+      password: currentPassword,
+      newPassword: newPassword,
+    });
+    // Response has no meaningful data to return, just success/failure
   },
 
   // Verify email

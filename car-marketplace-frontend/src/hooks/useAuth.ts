@@ -108,12 +108,59 @@ export const useRegisterMutation = () => {
   });
 };
 
+// Hook for update profile mutation
+export const useUpdateProfileMutation = () => {
+  const queryClient = useQueryClient();
+  const { updateUser } = useAuthStore();
+
+  return useMutation({
+    mutationFn: async (userData: { name?: string; phone?: string }) => {
+      return await authService.updateProfile(userData);
+    },
+    onSuccess: (updatedUser) => {
+      // Update auth store with new user data
+      updateUser(updatedUser);
+
+      // Invalidate and refetch any user-related queries
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+
+      console.log('Profile updated successfully:', updatedUser);
+    },
+    onError: (error) => {
+      console.error('Update profile error:', error);
+    },
+  });
+};
+
+// Hook for reset password mutation
+export const useResetPasswordMutation = () => {
+  return useMutation({
+    mutationFn: async (passwordData: {
+      currentPassword: string;
+      newPassword: string;
+    }) => {
+      return await authService.resetPassword(
+        passwordData.currentPassword,
+        passwordData.newPassword
+      );
+    },
+    onSuccess: () => {
+      console.log('Password reset successfully');
+    },
+    onError: (error) => {
+      console.error('Reset password error:', error);
+    },
+  });
+};
+
 // Main auth hook that combines auth state and mutations
 export const useAuth = () => {
   const { user, isAuthenticated, token } = useAuthStore();
   const loginMutation = useLoginMutation();
   const logoutMutation = useLogoutMutation();
   const registerMutation = useRegisterMutation();
+  const updateProfileMutation = useUpdateProfileMutation();
+  const resetPasswordMutation = useResetPasswordMutation();
 
   return {
     // Auth state
@@ -137,6 +184,22 @@ export const useAuth = () => {
       ? getErrorMessage(registerMutation.error)
       : null,
 
+    // Update Profile
+    updateProfile: updateProfileMutation.mutate,
+    updateProfileAsync: updateProfileMutation.mutateAsync,
+    isUpdateProfileLoading: updateProfileMutation.isPending,
+    updateProfileError: updateProfileMutation.error
+      ? getErrorMessage(updateProfileMutation.error)
+      : null,
+
+    // Reset Password
+    resetPassword: resetPasswordMutation.mutate,
+    resetPasswordAsync: resetPasswordMutation.mutateAsync,
+    isResetPasswordLoading: resetPasswordMutation.isPending,
+    resetPasswordError: resetPasswordMutation.error
+      ? getErrorMessage(resetPasswordMutation.error)
+      : null,
+
     // Logout
     logout: logoutMutation.mutate,
     logoutAsync: logoutMutation.mutateAsync,
@@ -146,5 +209,7 @@ export const useAuth = () => {
     resetLoginError: loginMutation.reset,
     resetLogoutError: logoutMutation.reset,
     resetRegisterError: registerMutation.reset,
+    resetUpdateProfileError: updateProfileMutation.reset,
+    resetResetPasswordError: resetPasswordMutation.reset,
   };
 };

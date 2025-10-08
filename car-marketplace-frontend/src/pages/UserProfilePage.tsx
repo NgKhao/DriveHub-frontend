@@ -13,29 +13,17 @@ import {
   Alert,
   CircularProgress,
   Divider,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Switch,
-  FormControlLabel,
   Card,
   CardContent,
-  IconButton,
 } from '@mui/material';
-import {
-  Person,
-  Security,
-  Notifications,
-  Edit,
-  Save,
-  Cancel,
-  PhotoCamera,
-} from '@mui/icons-material';
+import { Person, Security, Edit, Save, Cancel } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuthStore } from '../store/authStore';
-import { authService } from '../services/authService';
-import { validateRegisterForm } from '../utils/validation';
+import { useAuth } from '../hooks/useAuth';
+import {
+  validateRegisterForm,
+  validateResetPasswordForm,
+} from '../utils/validation';
 import type { User } from '../types';
 
 interface TabPanelProps {
@@ -62,12 +50,21 @@ function TabPanel(props: TabPanelProps) {
 
 const UserProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, updateUser } = useAuthStore();
+  const { user } = useAuthStore();
+  const {
+    updateProfile,
+    isUpdateProfileLoading,
+    updateProfileError,
+    resetUpdateProfileError,
+    resetPassword,
+    isResetPasswordLoading,
+    resetPasswordError,
+    resetResetPasswordError,
+  } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
+  const [passwordSuccess, setPasswordSuccess] = useState<string>('');
 
   const {
     control,
@@ -82,47 +79,62 @@ const UserProfilePage: React.FC = () => {
     },
   });
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  // Form for reset password
+  const {
+    control: passwordControl,
+    handleSubmit: handlePasswordSubmit,
+    formState: { errors: passwordErrors },
+    reset: resetPasswordForm,
+  } = useForm<{
+    currentPassword: string;
+    newPassword: string;
+    confirmNewPassword: string;
+  }>({
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: '',
+    },
+  });
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
 
   const onSubmit = async (data: Partial<User>) => {
-    try {
-      setIsLoading(true);
-      setError('');
+    // Reset previous error
+    resetUpdateProfileError();
 
-      // Validate form
-      if (data.name && data.email) {
-        const validationErrors = validateRegisterForm(
-          data.email,
-          '', // password not required for profile update
-          '',
-          data.name,
-          data.phone
-        );
-        const relevantErrors = validationErrors.filter(
-          (err) => err.field !== 'password' && err.field !== 'confirmPassword'
-        );
-        if (relevantErrors.length > 0) {
-          setError(relevantErrors[0].message);
-          return;
-        }
+    // Validate form
+    if (data.name) {
+      const validationErrors = validateRegisterForm(
+        user?.email || '', // use current email for validation
+        '', // password not required for profile update
+        '',
+        data.name,
+        data.phone
+      );
+      const relevantErrors = validationErrors.filter(
+        (err) => err.field !== 'password' && err.field !== 'confirmPassword'
+      );
+      if (relevantErrors.length > 0) {
+        return; // validation will be shown by form errors
       }
-
-      // Call API to update profile
-      const updatedUser = await authService.updateProfile(data);
-
-      // Update store
-      updateUser(updatedUser);
-
-      setSuccess('Cập nhật thông tin thành công!');
-      setIsEditing(false);
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      setError(error.response?.data?.message || 'Cập nhật thất bại');
-    } finally {
-      setIsLoading(false);
     }
+
+    // Call update profile mutation
+    updateProfile(
+      {
+        name: data.name,
+        phone: data.phone,
+      },
+      {
+        onSuccess: () => {
+          setSuccess('Cập nhật thông tin thành công!');
+          setIsEditing(false);
+        },
+      }
+    );
   };
 
   const handleCancel = () => {
@@ -132,15 +144,43 @@ const UserProfilePage: React.FC = () => {
       phone: user?.phone || '',
     });
     setIsEditing(false);
-    setError('');
+    resetUpdateProfileError();
   };
 
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // TODO: Implement avatar upload
-      console.log('Upload avatar:', file);
+  const onPasswordSubmit = (data: {
+    currentPassword: string;
+    newPassword: string;
+    confirmNewPassword: string;
+  }) => {
+    // Reset previous error and success
+    resetResetPasswordError();
+    setPasswordSuccess('');
+
+    // Validate form
+    const validationErrors = validateResetPasswordForm(
+      data.currentPassword,
+      data.newPassword,
+      data.confirmNewPassword
+    );
+
+    if (validationErrors.length > 0) {
+      // Validation errors will be shown by form
+      return;
     }
+
+    // Call reset password mutation
+    resetPassword(
+      {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      },
+      {
+        onSuccess: () => {
+          setPasswordSuccess('Đổi mật khẩu thành công!');
+          resetPasswordForm();
+        },
+      }
+    );
   };
 
   if (!user) {
@@ -167,9 +207,9 @@ const UserProfilePage: React.FC = () => {
         {/* Basic Information Tab */}
         <TabPanel value={activeTab} index={0}>
           <Box sx={{ p: 3 }}>
-            {error && (
+            {updateProfileError && (
               <Alert severity='error' sx={{ mb: 3 }}>
-                {error}
+                {updateProfileError}
               </Alert>
             )}
 
@@ -227,9 +267,13 @@ const UserProfilePage: React.FC = () => {
                       startIcon={<Save />}
                       onClick={handleSubmit(onSubmit)}
                       variant='contained'
-                      disabled={isLoading}
+                      disabled={isUpdateProfileLoading}
                     >
-                      {isLoading ? <CircularProgress size={20} /> : 'Lưu'}
+                      {isUpdateProfileLoading ? (
+                        <CircularProgress size={20} />
+                      ) : (
+                        'Lưu'
+                      )}
                     </Button>
                   </Box>
                 )}
@@ -306,9 +350,11 @@ const UserProfilePage: React.FC = () => {
                       fullWidth
                       label='Email'
                       type='email'
-                      disabled={!isEditing}
+                      disabled={true} // Always disabled as per requirements
                       error={!!errors.email}
-                      helperText={errors.email?.message}
+                      helperText={
+                        errors.email?.message || 'Email không thể chỉnh sửa'
+                      }
                     />
                   )}
                 />
@@ -337,49 +383,107 @@ const UserProfilePage: React.FC = () => {
               Đổi mật khẩu
             </Typography>
 
+            {resetPasswordError && (
+              <Alert severity='error' sx={{ mb: 3 }}>
+                {resetPasswordError}
+              </Alert>
+            )}
+
+            {passwordSuccess && (
+              <Alert severity='success' sx={{ mb: 3 }}>
+                {passwordSuccess}
+              </Alert>
+            )}
+
             <Card>
               <CardContent>
                 <Typography variant='body2' color='text.secondary' gutterBottom>
                   Vui lòng nhập mật khẩu hiện tại và mật khẩu mới của bạn
                 </Typography>
 
-                <Box
-                  component='form'
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    // TODO: gọi API đổi mật khẩu
-                    console.log('Submit đổi mật khẩu');
-                  }}
-                  sx={{
-                    mt: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 2,
-                  }}
-                >
-                  <TextField
-                    label='Mật khẩu hiện tại'
-                    type='password'
-                    required
-                    fullWidth
-                  />
-                  <TextField
-                    label='Mật khẩu mới'
-                    type='password'
-                    required
-                    fullWidth
-                  />
-                  <TextField
-                    label='Xác nhận mật khẩu mới'
-                    type='password'
-                    required
-                    fullWidth
-                  />
+                <form onSubmit={handlePasswordSubmit(onPasswordSubmit)}>
+                  <Box
+                    sx={{
+                      mt: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2,
+                    }}
+                  >
+                    <Controller
+                      name='currentPassword'
+                      control={passwordControl}
+                      rules={{
+                        required: 'Mật khẩu hiện tại là bắt buộc',
+                      }}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          label='Mật khẩu hiện tại'
+                          type='password'
+                          fullWidth
+                          error={!!passwordErrors.currentPassword}
+                          helperText={passwordErrors.currentPassword?.message}
+                        />
+                      )}
+                    />
 
-                  <Button type='submit' variant='contained' sx={{ mt: 2 }}>
-                    Xác nhận thay đổi
-                  </Button>
-                </Box>
+                    <Controller
+                      name='newPassword'
+                      control={passwordControl}
+                      rules={{
+                        required: 'Mật khẩu mới là bắt buộc',
+                        minLength: {
+                          value: 6,
+                          message: 'Mật khẩu mới phải có ít nhất 6 ký tự',
+                        },
+                      }}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          label='Mật khẩu mới'
+                          type='password'
+                          fullWidth
+                          error={!!passwordErrors.newPassword}
+                          helperText={passwordErrors.newPassword?.message}
+                        />
+                      )}
+                    />
+
+                    <Controller
+                      name='confirmNewPassword'
+                      control={passwordControl}
+                      rules={{
+                        required: 'Xác nhận mật khẩu mới là bắt buộc',
+                      }}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          label='Xác nhận mật khẩu mới'
+                          type='password'
+                          fullWidth
+                          error={!!passwordErrors.confirmNewPassword}
+                          helperText={
+                            passwordErrors.confirmNewPassword?.message
+                          }
+                        />
+                      )}
+                    />
+
+                    <Button
+                      type='submit'
+                      variant='contained'
+                      disabled={isResetPasswordLoading}
+                      sx={{ mt: 2 }}
+                    >
+                      {isResetPasswordLoading ? (
+                        <CircularProgress size={20} />
+                      ) : (
+                        'Xác nhận thay đổi'
+                      )}
+                    </Button>
+                  </Box>
+                </form>
               </CardContent>
             </Card>
           </Box>

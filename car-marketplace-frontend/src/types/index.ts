@@ -78,6 +78,37 @@ export interface BackendRegisterResponse {
   instance: string;
 }
 
+export interface BackendUpdateProfileRequest {
+  fullName?: string;
+  numberPhone?: string;
+}
+
+export interface BackendUpdateProfileResponse {
+  messenger: string;
+  status: number;
+  detail: {
+    id: number;
+    email: string;
+    fullName: string;
+    numberPhone: string;
+    role: string;
+    isActive: boolean;
+  };
+  instance: string;
+}
+
+export interface BackendResetPasswordRequest {
+  password: string;
+  newPassword: string;
+}
+
+export interface BackendResetPasswordResponse {
+  messenger: string;
+  status: number;
+  detail: null;
+  instance: string;
+}
+
 // User Types
 export interface User {
   id: string;
@@ -149,6 +180,39 @@ export const mapBackendRegisterResponseToUser = (
     role: roleMap[backendResponse.role] || 'buyer',
     phone: backendResponse.numberPhone,
     isVerified: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+};
+
+// Helper function to convert frontend user data to backend update format
+export const mapFrontendUserToBackendUpdate = (userData: {
+  name?: string;
+  phone?: string;
+}): BackendUpdateProfileRequest => {
+  return {
+    fullName: userData.name,
+    numberPhone: userData.phone,
+  };
+};
+
+// Helper function to convert backend profile response to frontend user
+export const mapBackendUpdateProfileResponseToUser = (
+  backendResponse: BackendUpdateProfileResponse['detail']
+): User => {
+  const roleMap: Record<string, 'buyer' | 'seller' | 'admin'> = {
+    BUYER: 'buyer',
+    SELLER: 'seller',
+    ADMIN: 'admin',
+  };
+
+  return {
+    id: backendResponse.id.toString(),
+    email: backendResponse.email,
+    name: backendResponse.fullName,
+    role: roleMap[backendResponse.role] || 'buyer',
+    phone: backendResponse.numberPhone,
+    isVerified: backendResponse.isActive,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

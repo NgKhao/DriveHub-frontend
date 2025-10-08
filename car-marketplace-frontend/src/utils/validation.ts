@@ -122,6 +122,47 @@ export const validateRegisterForm = (
   return errors;
 };
 
+// Validate reset password form
+export const validateResetPasswordForm = (
+  currentPassword: string,
+  newPassword: string,
+  confirmNewPassword: string
+): ValidationError[] => {
+  const errors: ValidationError[] = [];
+
+  if (!isRequired(currentPassword)) {
+    errors.push({
+      field: 'currentPassword',
+      message: 'Mật khẩu hiện tại là bắt buộc',
+    });
+  }
+
+  if (!isRequired(newPassword)) {
+    errors.push({ field: 'newPassword', message: 'Mật khẩu mới là bắt buộc' });
+  } else if (!isValidPassword(newPassword)) {
+    errors.push({
+      field: 'newPassword',
+      message: 'Mật khẩu mới phải có ít nhất 6 ký tự',
+    });
+  }
+
+  if (newPassword !== confirmNewPassword) {
+    errors.push({
+      field: 'confirmNewPassword',
+      message: 'Xác nhận mật khẩu mới không khớp',
+    });
+  }
+
+  if (currentPassword === newPassword) {
+    errors.push({
+      field: 'newPassword',
+      message: 'Mật khẩu mới phải khác mật khẩu hiện tại',
+    });
+  }
+
+  return errors;
+};
+
 // Validate car form
 export const validateCarForm = (carData: {
   title: string;
