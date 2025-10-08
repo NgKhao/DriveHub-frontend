@@ -5,7 +5,9 @@ import type {
   Car,
   User,
   AdminStats,
+  BackendGetUsersResponse,
 } from '../types';
+import { mapBackendGetUsersResponseToPaginated } from '../types';
 
 export const adminService = {
   // Get admin dashboard stats
@@ -15,11 +17,13 @@ export const adminService = {
   },
 
   // Get all users
-  getUsers: async (page = 1, limit = 20): Promise<PaginatedResponse<User>> => {
-    const response = await api.get<ApiResponse<PaginatedResponse<User>>>(
-      `/admin/users?page=${page}&limit=${limit}`
+  getUsers: async (page = 0, size = 10): Promise<PaginatedResponse<User>> => {
+    const response = await api.get<BackendGetUsersResponse>(
+      `/admin/users?page=${page}&size=${size}`
     );
-    return response.data.data;
+
+    // Transform backend response to frontend format
+    return mapBackendGetUsersResponseToPaginated(response.data.detail);
   },
 
   // Get user by ID

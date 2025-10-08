@@ -44,17 +44,25 @@ import {
   ShoppingCart,
 } from '@mui/icons-material';
 import { formatDate } from '../../utils/helpers';
+import { useUsers, useAdmin } from '../../hooks/useAdmin';
 import type { User } from '../../types';
 
 const UserManagement: React.FC = () => {
-  // User management states
-  const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // API hooks
+  const {
+    data: usersData,
+    isLoading,
+    error,
+    refetch,
+  } = useUsers(page, rowsPerPage);
+  const { updateUser, deleteUser, toggleUserStatus } = useAdmin();
 
   // Dialog states
   const [userDetailDialogOpen, setUserDetailDialogOpen] = useState(false);
@@ -73,11 +81,16 @@ const UserManagement: React.FC = () => {
     isActive: true,
   });
 
-  const filterUsers = React.useCallback(() => {
-    // Filter out admin users and then apply other filters
-    const nonAdminUsers = users.filter((user) => user.role !== 'admin');
+  // Get filtered users from API data
+  const filteredUsers = React.useMemo(() => {
+    if (!usersData?.items) return [];
 
-    const filtered = nonAdminUsers.filter((user) => {
+    // Filter out admin users and then apply other filters
+    const nonAdminUsers = usersData.items.filter(
+      (user) => user.role !== 'admin'
+    );
+
+    return nonAdminUsers.filter((user) => {
       const matchesSearch =
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -91,14 +104,7 @@ const UserManagement: React.FC = () => {
 
       return matchesSearch && matchesRole && matchesStatus;
     });
-
-    setFilteredUsers(filtered);
-    setPage(0); // Reset to first page when filtering
-  }, [searchQuery, roleFilter, statusFilter, users]);
-
-  React.useEffect(() => {
-    filterUsers();
-  }, [filterUsers]);
+  }, [usersData?.items, searchQuery, roleFilter, statusFilter]);
 
   const handleMenuClick = (
     event: React.MouseEvent<HTMLElement>,
@@ -110,7 +116,7 @@ const UserManagement: React.FC = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-    setSelectedUser(null);
+    // Don't clear selectedUser here as it's needed for the dialog
   };
 
   const handleViewUser = () => {
@@ -151,51 +157,58 @@ const UserManagement: React.FC = () => {
 
   const handleToggleVerification = () => {
     if (selectedUser) {
-      const updatedUsers = users.map((user) =>
-        user.id === selectedUser.id
-          ? { ...user, isVerified: !user.isVerified }
-          : user
+      toggleUserStatus(
+        { id: selectedUser.id, isBlocked: selectedUser.isVerified },
+        {
+          onSuccess: () => {
+            setSnackbarMessage(
+              selectedUser.isVerified
+                ? 'Đã vô hiệu hóa tài khoản'
+                : 'Đã kích hoạt tài khoản'
+            );
+            setSnackbarOpen(true);
+            refetch(); // Refetch data
+          },
+        }
       );
-      setUsers(updatedUsers);
-      setSnackbarMessage(
-        selectedUser.isVerified
-          ? 'Đã vô hiệu hóa tài khoản'
-          : 'Đã kích hoạt tài khoản'
-      );
-      setSnackbarOpen(true);
     }
     handleMenuClose();
   };
 
   const handleDeleteUser = () => {
     if (selectedUser) {
-      const updatedUsers = users.filter((user) => user.id !== selectedUser.id);
-      setUsers(updatedUsers);
-      setSnackbarMessage('Đã xóa người dùng thành công');
-      setSnackbarOpen(true);
+      deleteUser(selectedUser.id, {
+        onSuccess: () => {
+          setSnackbarMessage('Đã xóa người dùng thành công');
+          setSnackbarOpen(true);
+          refetch(); // Refetch data
+        },
+      });
     }
     handleMenuClose();
   };
 
   const handleSaveUser = () => {
     if (selectedUser) {
-      const updatedUsers = users.map((user) =>
-        user.id === selectedUser.id
-          ? {
-              ...user,
-              name: editForm.name,
-              email: editForm.email,
-              phone: editForm.phone,
-              role: editForm.role,
-              isVerified: editForm.isActive, // Mapping isActive back to isVerified
-              updatedAt: new Date().toISOString(),
-            }
-          : user
+      const userData = {
+        name: editForm.name,
+        email: editForm.email,
+        phone: editForm.phone,
+        role: editForm.role,
+        isVerified: editForm.isActive,
+      };
+
+      updateUser(
+        { id: selectedUser.id, userData },
+        {
+          onSuccess: () => {
+            setSnackbarMessage('Đã cập nhật thông tin người dùng');
+            setSnackbarOpen(true);
+            handleCloseDialog();
+            refetch(); // Refetch data
+          },
+        }
       );
-      setUsers(updatedUsers);
-      setSnackbarMessage('Đã cập nhật thông tin người dùng');
-      setSnackbarOpen(true);
-      setUserDetailDialogOpen(false);
     }
   };
 
@@ -242,6 +255,29 @@ const UserManagement: React.FC = () => {
     setStatusFilter('all');
   };
 
+  const handleCloseDialog = () => {
+    setUserDetailDialogOpen(false);
+    setSelectedUser(null);
+    setEditMode(false);
+  };
+
+  // Handle error state
+  if (error) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant='h6' color='error' gutterBottom>
+          Lỗi khi tải dữ liệu người dùng
+        </Typography>
+        <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+          {error.message || 'Có lỗi xảy ra. Vui lòng thử lại.'}
+        </Typography>
+        <Button variant='outlined' onClick={() => refetch()}>
+          Thử lại
+        </Button>
+      </Box>
+    );
+  }
+
   return (
     <Box>
       {/* Statistics Cards */}
@@ -251,7 +287,7 @@ const UserManagement: React.FC = () => {
             <People sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
             <Box>
               <Typography variant='h5' fontWeight='bold'>
-                {users.filter((u) => u.role !== 'admin').length}
+                {isLoading ? '...' : usersData?.total || 0}
               </Typography>
               <Typography variant='body2' color='text.secondary'>
                 Tổng người dùng
@@ -265,7 +301,10 @@ const UserManagement: React.FC = () => {
             <Storefront sx={{ fontSize: 40, color: 'secondary.main', mr: 2 }} />
             <Box>
               <Typography variant='h5' fontWeight='bold'>
-                {users.filter((u) => u.role === 'seller').length}
+                {isLoading
+                  ? '...'
+                  : usersData?.items.filter((u) => u.role === 'seller')
+                      .length || 0}
               </Typography>
               <Typography variant='body2' color='text.secondary'>
                 Người bán
@@ -279,7 +318,10 @@ const UserManagement: React.FC = () => {
             <ShoppingCart sx={{ fontSize: 40, color: 'info.main', mr: 2 }} />
             <Box>
               <Typography variant='h5' fontWeight='bold'>
-                {users.filter((u) => u.role === 'buyer').length}
+                {isLoading
+                  ? '...'
+                  : usersData?.items.filter((u) => u.role === 'buyer').length ||
+                    0}
               </Typography>
               <Typography variant='body2' color='text.secondary'>
                 Người mua
@@ -293,7 +335,11 @@ const UserManagement: React.FC = () => {
             <VerifiedUser sx={{ fontSize: 40, color: 'success.main', mr: 2 }} />
             <Box>
               <Typography variant='h5' fontWeight='bold'>
-                {users.filter((u) => u.role !== 'admin' && u.isVerified).length}
+                {isLoading
+                  ? '...'
+                  : usersData?.items.filter(
+                      (u) => u.role !== 'admin' && u.isVerified
+                    ).length || 0}
               </Typography>
               <Typography variant='body2' color='text.secondary'>
                 Đang hoạt động
@@ -338,7 +384,6 @@ const UserManagement: React.FC = () => {
               <MenuItem value='all'>Tất cả</MenuItem>
               <MenuItem value='buyer'>Người mua</MenuItem>
               <MenuItem value='seller'>Người bán</MenuItem>
-              <MenuItem value='admin'>Quản trị viên</MenuItem>
             </Select>
           </FormControl>
 
@@ -361,6 +406,14 @@ const UserManagement: React.FC = () => {
             onClick={handleReset}
           >
             Đặt lại
+          </Button>
+
+          <Button
+            variant='outlined'
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Đang tải...' : 'Làm mới'}
           </Button>
         </Box>
 
@@ -441,7 +494,7 @@ const UserManagement: React.FC = () => {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component='div'
-          count={filteredUsers.length}
+          count={usersData?.total || 0}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
@@ -480,7 +533,7 @@ const UserManagement: React.FC = () => {
       {/* User Detail Dialog */}
       <Dialog
         open={userDetailDialogOpen}
-        onClose={() => setUserDetailDialogOpen(false)}
+        onClose={handleCloseDialog}
         maxWidth='sm'
         fullWidth
       >
@@ -506,15 +559,17 @@ const UserManagement: React.FC = () => {
             >
               <Avatar
                 src={selectedUser?.avatar}
-                alt={selectedUser?.name}
+                alt={selectedUser?.name || 'User'}
                 sx={{ width: 60, height: 60 }}
               >
-                {selectedUser?.name.charAt(0)}
+                {selectedUser?.name?.charAt(0) || '?'}
               </Avatar>
               <Box>
-                <Typography variant='h6'>{selectedUser?.name}</Typography>
+                <Typography variant='h6'>
+                  {selectedUser?.name || 'Đang tải...'}
+                </Typography>
                 <Typography variant='body2' color='text.secondary'>
-                  ID: {selectedUser?.id}
+                  ID: {selectedUser?.id || 'Đang tải...'}
                 </Typography>
               </Box>
             </Box>
@@ -595,7 +650,7 @@ const UserManagement: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setUserDetailDialogOpen(false)}>
+          <Button onClick={handleCloseDialog}>
             {editMode ? 'Hủy' : 'Đóng'}
           </Button>
           {editMode ? (

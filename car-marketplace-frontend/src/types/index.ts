@@ -109,6 +109,28 @@ export interface BackendResetPasswordResponse {
   instance: string;
 }
 
+export interface BackendGetUsersResponse {
+  messenger: string;
+  status: number;
+  detail: {
+    content: {
+      id: number;
+      email: string;
+      fullName: string;
+      numberPhone: string;
+      role: string;
+      isActive: boolean;
+    }[];
+    pageNumber: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+    first: boolean;
+    last: boolean;
+  };
+  instance: string;
+}
+
 // User Types
 export interface User {
   id: string;
@@ -215,6 +237,36 @@ export const mapBackendUpdateProfileResponseToUser = (
     isVerified: backendResponse.isActive,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+  };
+};
+
+// Helper function to convert backend get users response to frontend format
+export const mapBackendGetUsersResponseToPaginated = (
+  backendResponse: BackendGetUsersResponse['detail']
+): PaginatedResponse<User> => {
+  const roleMap: Record<string, 'buyer' | 'seller' | 'admin'> = {
+    BUYER: 'buyer',
+    SELLER: 'seller',
+    ADMIN: 'admin',
+  };
+
+  const users: User[] = backendResponse.content.map((user) => ({
+    id: user.id.toString(),
+    email: user.email,
+    name: user.fullName,
+    role: roleMap[user.role] || 'buyer',
+    phone: user.numberPhone,
+    isVerified: user.isActive,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }));
+
+  return {
+    items: users,
+    total: backendResponse.totalElements,
+    page: backendResponse.pageNumber + 1, // Backend uses 0-based, frontend uses 1-based
+    limit: backendResponse.pageSize,
+    totalPages: backendResponse.totalPages,
   };
 };
 
