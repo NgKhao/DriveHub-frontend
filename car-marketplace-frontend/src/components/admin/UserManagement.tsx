@@ -42,6 +42,8 @@ import {
   VerifiedUser,
   Storefront,
   ShoppingCart,
+  Add,
+  Close,
 } from '@mui/icons-material';
 import { formatDate } from '../../utils/helpers';
 import { useUsers, useAdmin } from '../../hooks/useAdmin';
@@ -66,6 +68,7 @@ const UserManagement: React.FC = () => {
 
   // Dialog states
   const [userDetailDialogOpen, setUserDetailDialogOpen] = useState(false);
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -78,6 +81,17 @@ const UserManagement: React.FC = () => {
     email: '',
     phone: '',
     role: 'buyer' as 'buyer' | 'seller', // Only buyer and seller roles
+    isActive: true,
+  });
+
+  // Add user states
+  const [addUserForm, setAddUserForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+    role: 'buyer' as 'buyer' | 'seller',
     isActive: true,
   });
 
@@ -269,6 +283,68 @@ const UserManagement: React.FC = () => {
     setEditMode(false);
   };
 
+  const handleCloseAddUserDialog = () => {
+    setAddUserDialogOpen(false);
+    setAddUserForm({
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      confirmPassword: '',
+      role: 'buyer',
+      isActive: true,
+    });
+  };
+
+  const handleAddUser = () => {
+    // Validation
+    if (!addUserForm.name.trim()) {
+      setSnackbarMessage('Vui lòng nhập tên người dùng');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    if (!addUserForm.email.trim()) {
+      setSnackbarMessage('Vui lòng nhập email');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    if (!addUserForm.password.trim()) {
+      setSnackbarMessage('Vui lòng nhập mật khẩu');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    if (addUserForm.password !== addUserForm.confirmPassword) {
+      setSnackbarMessage('Mật khẩu xác nhận không khớp');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(addUserForm.email)) {
+      setSnackbarMessage('Email không hợp lệ');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // Phone validation (optional)
+    if (addUserForm.phone && !/^(\+84|0)[3-9]\d{8}$/.test(addUserForm.phone)) {
+      setSnackbarMessage('Số điện thoại không hợp lệ');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // TODO: Call API to create user
+    console.log('Creating user:', addUserForm);
+    setSnackbarMessage('Tạo tài khoản thành công! (Demo - chưa kết nối API)');
+    setSnackbarOpen(true);
+    handleCloseAddUserDialog();
+    refetch();
+  };
+
   // Handle error state
   if (error) {
     return (
@@ -422,6 +498,14 @@ const UserManagement: React.FC = () => {
             disabled={isLoading}
           >
             {isLoading ? 'Đang tải...' : 'Làm mới'}
+          </Button>
+
+          <Button
+            variant='contained'
+            startIcon={<Add />}
+            onClick={() => setAddUserDialogOpen(true)}
+          >
+            Thêm tài khoản
           </Button>
         </Box>
 
@@ -679,6 +763,151 @@ const UserManagement: React.FC = () => {
               Chỉnh sửa
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Add User Dialog */}
+      <Dialog
+        open={addUserDialogOpen}
+        onClose={handleCloseAddUserDialog}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Typography variant='h6'>Thêm tài khoản mới</Typography>
+            <IconButton
+              aria-label='close'
+              onClick={handleCloseAddUserDialog}
+              sx={{ color: 'grey.500' }}
+            >
+              <Close />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              mt: 2,
+            }}
+          >
+            <TextField
+              fullWidth
+              label='Tên người dùng *'
+              value={addUserForm.name}
+              onChange={(e) =>
+                setAddUserForm({ ...addUserForm, name: e.target.value })
+              }
+              placeholder='Nhập họ và tên'
+            />
+
+            <TextField
+              fullWidth
+              label='Email *'
+              type='email'
+              value={addUserForm.email}
+              onChange={(e) =>
+                setAddUserForm({ ...addUserForm, email: e.target.value })
+              }
+              placeholder='Nhập địa chỉ email'
+            />
+
+            <TextField
+              fullWidth
+              label='Số điện thoại'
+              value={addUserForm.phone}
+              onChange={(e) =>
+                setAddUserForm({ ...addUserForm, phone: e.target.value })
+              }
+              placeholder='Nhập số điện thoại (tùy chọn)'
+            />
+
+            <TextField
+              fullWidth
+              label='Mật khẩu *'
+              type='password'
+              value={addUserForm.password}
+              onChange={(e) =>
+                setAddUserForm({ ...addUserForm, password: e.target.value })
+              }
+              placeholder='Nhập mật khẩu'
+            />
+
+            <TextField
+              fullWidth
+              label='Xác nhận mật khẩu *'
+              type='password'
+              value={addUserForm.confirmPassword}
+              onChange={(e) =>
+                setAddUserForm({
+                  ...addUserForm,
+                  confirmPassword: e.target.value,
+                })
+              }
+              placeholder='Nhập lại mật khẩu'
+            />
+
+            <FormControl fullWidth>
+              <InputLabel>Vai trò *</InputLabel>
+              <Select
+                value={addUserForm.role}
+                onChange={(e) =>
+                  setAddUserForm({
+                    ...addUserForm,
+                    role: e.target.value as 'buyer' | 'seller',
+                  })
+                }
+                label='Vai trò *'
+              >
+                <MenuItem value='buyer'>Người mua</MenuItem>
+                <MenuItem value='seller'>Người bán</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={addUserForm.isActive}
+                  onChange={(e) =>
+                    setAddUserForm({
+                      ...addUserForm,
+                      isActive: e.target.checked,
+                    })
+                  }
+                />
+              }
+              label='Kích hoạt tài khoản ngay'
+            />
+
+            <Box sx={{ bgcolor: 'info.light', p: 2, borderRadius: 1, mt: 1 }}>
+              <Typography variant='body2' color='info.dark'>
+                <strong>Lưu ý:</strong> Tài khoản mới sẽ được tạo với thông tin
+                bạn cung cấp. Người dùng có thể đăng nhập bằng email và mật khẩu
+                này.
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, gap: 1 }}>
+          <Button onClick={handleCloseAddUserDialog} variant='outlined'>
+            Hủy
+          </Button>
+          <Button
+            onClick={handleAddUser}
+            variant='contained'
+            startIcon={<Add />}
+          >
+            Tạo tài khoản
+          </Button>
         </DialogActions>
       </Dialog>
 
