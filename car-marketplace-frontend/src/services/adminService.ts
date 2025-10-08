@@ -6,8 +6,13 @@ import type {
   User,
   AdminStats,
   BackendGetUsersResponse,
+  BackendAdminUpdateUserResponse,
 } from '../types';
-import { mapBackendGetUsersResponseToPaginated } from '../types';
+import {
+  mapBackendGetUsersResponseToPaginated,
+  mapFrontendUserToBackendAdminUpdate,
+  mapBackendAdminUpdateResponseToUser,
+} from '../types';
 
 export const adminService = {
   // Get admin dashboard stats
@@ -32,13 +37,35 @@ export const adminService = {
     return response.data.data;
   },
 
-  // Update user
+  // Update user (old method - keep for compatibility)
   updateUser: async (id: string, userData: Partial<User>): Promise<User> => {
     const response = await api.put<ApiResponse<User>>(
       `/admin/users/${id}`,
       userData
     );
     return response.data.data;
+  },
+
+  // Update user admin - new API endpoint
+  updateUserAdmin: async (
+    id: string,
+    userData: {
+      name?: string;
+      phone?: string;
+      role?: 'buyer' | 'seller';
+      isVerified?: boolean;
+    }
+  ): Promise<User> => {
+    // Convert frontend data to backend format
+    const backendData = mapFrontendUserToBackendAdminUpdate(userData);
+
+    const response = await api.put<BackendAdminUpdateUserResponse>(
+      `/admin/account/${id}`,
+      backendData
+    );
+
+    // Convert backend response to frontend format
+    return mapBackendAdminUpdateResponseToUser(response.data.detail);
   },
 
   // Delete user

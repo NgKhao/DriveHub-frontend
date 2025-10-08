@@ -62,7 +62,7 @@ const UserManagement: React.FC = () => {
     error,
     refetch,
   } = useUsers(page, rowsPerPage);
-  const { updateUser, deleteUser, toggleUserStatus } = useAdmin();
+  const { updateUserAdmin, deleteUser, toggleUserStatus } = useAdmin();
 
   // Dialog states
   const [userDetailDialogOpen, setUserDetailDialogOpen] = useState(false);
@@ -192,13 +192,12 @@ const UserManagement: React.FC = () => {
     if (selectedUser) {
       const userData = {
         name: editForm.name,
-        email: editForm.email,
         phone: editForm.phone,
         role: editForm.role,
         isVerified: editForm.isActive,
       };
 
-      updateUser(
+      updateUserAdmin(
         { id: selectedUser.id, userData },
         {
           onSuccess: () => {
@@ -591,7 +590,8 @@ const UserManagement: React.FC = () => {
               onChange={(e) =>
                 setEditForm({ ...editForm, email: e.target.value })
               }
-              disabled={!editMode}
+              disabled={true} // Email cannot be edited
+              helperText='Email không thể chỉnh sửa'
             />
 
             <TextField

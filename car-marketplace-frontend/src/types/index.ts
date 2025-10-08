@@ -131,6 +131,27 @@ export interface BackendGetUsersResponse {
   instance: string;
 }
 
+export interface BackendAdminUpdateUserRequest {
+  fullName?: string;
+  numberPhone?: string;
+  roleName?: string; // 'BUYER', 'SELLER'
+  isActive?: boolean;
+}
+
+export interface BackendAdminUpdateUserResponse {
+  messenger: string;
+  status: number;
+  detail: {
+    id: number;
+    email: string;
+    fullName: string;
+    numberPhone: string;
+    role: string; // 'BUYER', 'SELLER', 'ADMIN'
+    isActive: boolean;
+  };
+  instance: string;
+}
+
 // User Types
 export interface User {
   id: string;
@@ -267,6 +288,48 @@ export const mapBackendGetUsersResponseToPaginated = (
     page: backendResponse.pageNumber + 1, // Backend uses 0-based, frontend uses 1-based
     limit: backendResponse.pageSize,
     totalPages: backendResponse.totalPages,
+  };
+};
+
+// Helper function to convert frontend user data to backend admin update format
+export const mapFrontendUserToBackendAdminUpdate = (userData: {
+  name?: string;
+  phone?: string;
+  role?: 'buyer' | 'seller';
+  isVerified?: boolean;
+}): BackendAdminUpdateUserRequest => {
+  const roleMap: Record<'buyer' | 'seller', string> = {
+    buyer: 'BUYER',
+    seller: 'SELLER',
+  };
+
+  return {
+    fullName: userData.name,
+    numberPhone: userData.phone,
+    roleName: userData.role ? roleMap[userData.role] : undefined,
+    isActive: userData.isVerified,
+  };
+};
+
+// Helper function to convert backend admin update response to frontend user
+export const mapBackendAdminUpdateResponseToUser = (
+  backendResponse: BackendAdminUpdateUserResponse['detail']
+): User => {
+  const roleMap: Record<string, 'buyer' | 'seller' | 'admin'> = {
+    BUYER: 'buyer',
+    SELLER: 'seller',
+    ADMIN: 'admin',
+  };
+
+  return {
+    id: backendResponse.id.toString(),
+    email: backendResponse.email,
+    name: backendResponse.fullName,
+    role: roleMap[backendResponse.role] || 'buyer',
+    phone: backendResponse.numberPhone,
+    isVerified: backendResponse.isActive,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 };
 

@@ -40,7 +40,7 @@ export const useAdminStats = () => {
   });
 };
 
-// Hook for updating user
+// Hook for updating user (old method)
 export const useUpdateUser = () => {
   const queryClient = useQueryClient();
 
@@ -54,6 +54,35 @@ export const useUpdateUser = () => {
     },
     onError: (error: AdminError) => {
       console.error('Update user error:', error);
+    },
+  });
+};
+
+// Hook for updating user admin - new API endpoint
+export const useUpdateUserAdmin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      userData,
+    }: {
+      id: string;
+      userData: {
+        name?: string;
+        phone?: string;
+        role?: 'buyer' | 'seller';
+        isVerified?: boolean;
+      };
+    }) => {
+      return adminService.updateUserAdmin(id, userData);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch users query
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+    onError: (error: AdminError) => {
+      console.error('Update user admin error:', error);
     },
   });
 };
@@ -97,16 +126,25 @@ export const useToggleUserStatus = () => {
 // Main admin hook that combines all admin operations
 export const useAdmin = () => {
   const updateUserMutation = useUpdateUser();
+  const updateUserAdminMutation = useUpdateUserAdmin();
   const deleteUserMutation = useDeleteUser();
   const toggleUserStatusMutation = useToggleUserStatus();
 
   return {
-    // User management
+    // User management (old method)
     updateUser: updateUserMutation.mutate,
     updateUserAsync: updateUserMutation.mutateAsync,
     isUpdateUserLoading: updateUserMutation.isPending,
     updateUserError: updateUserMutation.error
       ? getErrorMessage(updateUserMutation.error)
+      : null,
+
+    // User management admin (new method)
+    updateUserAdmin: updateUserAdminMutation.mutate,
+    updateUserAdminAsync: updateUserAdminMutation.mutateAsync,
+    isUpdateUserAdminLoading: updateUserAdminMutation.isPending,
+    updateUserAdminError: updateUserAdminMutation.error
+      ? getErrorMessage(updateUserAdminMutation.error)
       : null,
 
     deleteUser: deleteUserMutation.mutate,
@@ -125,6 +163,7 @@ export const useAdmin = () => {
 
     // Reset mutations
     resetUpdateUserError: updateUserMutation.reset,
+    resetUpdateUserAdminError: updateUserAdminMutation.reset,
     resetDeleteUserError: deleteUserMutation.reset,
     resetToggleUserStatusError: toggleUserStatusMutation.reset,
   };
