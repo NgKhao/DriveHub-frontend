@@ -5,6 +5,7 @@ import type {
   BackendCreatePostResponse,
   BackendGetPostsResponse,
   BackendGetPostDetailResponse,
+  BackendDeletePostResponse,
 } from '../types';
 import {
   mapFrontendCreatePostToBackend,
@@ -80,8 +81,8 @@ export const sellerService = {
 
   // Delete post
   deletePost: async (postId: string): Promise<void> => {
-    // TODO: Implement when API is available
-    await api.delete(`/seller/posts/${postId}`);
+    await api.delete<BackendDeletePostResponse>(`/seller/posts/${postId}`);
+    // Backend returns 204 status with null detail, no need to process response
   },
 
   // Get post by ID

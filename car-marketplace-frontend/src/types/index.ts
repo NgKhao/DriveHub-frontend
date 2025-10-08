@@ -276,6 +276,13 @@ export interface BackendGetPostDetailResponse {
   instance: string;
 }
 
+export interface BackendDeletePostResponse {
+  messenger: string;
+  status: number;
+  detail: null;
+  instance: string;
+}
+
 // User Types
 export interface User {
   id: string;

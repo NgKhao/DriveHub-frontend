@@ -282,7 +282,8 @@ const SellerDashboardPage: React.FC = () => {
 
   const handleDelete = () => {
     setDeleteDialogOpen(true);
-    handleMenuClose();
+    // Only close menu without resetting selectedListing
+    setAnchorEl(null);
   };
 
   const confirmDelete = () => {
@@ -880,7 +881,10 @@ const SellerDashboardPage: React.FC = () => {
       {/* Delete Dialog */}
       <Dialog
         open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setSelectedListing(null);
+        }}
       >
         <DialogTitle>Xác nhận xóa</DialogTitle>
         <DialogContent>
@@ -892,7 +896,14 @@ const SellerDashboardPage: React.FC = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Hủy</Button>
+          <Button
+            onClick={() => {
+              setDeleteDialogOpen(false);
+              setSelectedListing(null);
+            }}
+          >
+            Hủy
+          </Button>
           <Button onClick={confirmDelete} color='error' variant='contained'>
             Xóa
           </Button>
