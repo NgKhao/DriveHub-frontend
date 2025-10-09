@@ -1078,3 +1078,116 @@ export const CAR_CONDITIONS = ['new', 'used'] as const;
 export const USER_ROLES = ['buyer', 'seller', 'admin'] as const;
 
 export const CAR_STATUS = ['active', 'pending', 'sold', 'rejected'] as const;
+
+// Favorite API Types
+export interface BackendAddFavoriteResponse {
+  messenger: string;
+  status: number;
+  detail: {
+    favoriteId: number;
+    post: BackendPostItem;
+  };
+  instance: string;
+}
+
+export interface BackendRemoveFavoriteResponse {
+  messenger: string;
+  status: number;
+  detail: null;
+  instance: string;
+}
+
+export interface BackendGetFavoritesResponse {
+  messenger: string;
+  status: number;
+  detail: BackendFavoriteItem[];
+  instance: string;
+}
+
+export interface BackendFavoriteItem {
+  favoriteId: number;
+  post: {
+    postId: number;
+    title: string;
+    description: string;
+    price: number;
+    status: string;
+    location: string;
+    phoneContact: string;
+    sellerType: string;
+    images: string[];
+    carDetailDTO: {
+      make: string;
+      model: string;
+      year: number;
+      mileage: number;
+      fuelType: string;
+      transmission: string;
+      color: string;
+      condition: string;
+    };
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
+export interface FavoriteItem {
+  favoriteId: number;
+  post: SellerPost;
+}
+
+// Mapping function for add favorite response
+export const mapBackendAddFavoriteResponseToFavoriteItem = (
+  backendResponse: BackendAddFavoriteResponse['detail']
+): FavoriteItem => {
+  return {
+    favoriteId: backendResponse.favoriteId,
+    post: mapBackendPostItemToSellerPost(backendResponse.post),
+  };
+};
+
+// Mapping function for backend favorite item to SellerPost
+export const mapBackendFavoriteItemToSellerPost = (
+  backendFavoriteItem: BackendFavoriteItem
+): SellerPost => {
+  const post = backendFavoriteItem.post;
+  const baseImgUrl =
+    import.meta.env.VITE_API_IMG_URL || 'http://localhost:8080';
+
+  return {
+    id: post.postId.toString(),
+    title: post.title,
+    description: post.description,
+    price: post.price,
+    status: post.status.toLowerCase() as 'approved' | 'pending' | 'rejected',
+    location: post.location,
+    phoneContact: post.phoneContact,
+    sellerType: post.sellerType.toLowerCase() as 'individual' | 'agency',
+    images: post.images.map((img) => `${baseImgUrl}${img}`),
+    carDetail: {
+      make: post.carDetailDTO.make,
+      model: post.carDetailDTO.model,
+      year: post.carDetailDTO.year,
+      mileage: post.carDetailDTO.mileage,
+      fuelType: post.carDetailDTO.fuelType.toLowerCase() as
+        | 'gasoline'
+        | 'diesel'
+        | 'hybrid'
+        | 'electric',
+      transmission: post.carDetailDTO.transmission.toLowerCase() as
+        | 'manual'
+        | 'automatic',
+      color: post.carDetailDTO.color,
+      condition: post.carDetailDTO.condition.toLowerCase() as 'new' | 'used',
+    },
+    createdAt: post.createdAt,
+    updatedAt: post.updatedAt,
+  };
+};
+
+// Mapping function for get favorites response
+export const mapBackendGetFavoritesResponseToSellerPosts = (
+  backendResponse: BackendGetFavoritesResponse['detail']
+): SellerPost[] => {
+  return backendResponse.map(mapBackendFavoriteItemToSellerPost);
+};

@@ -1,41 +1,72 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Box,
   Container,
   Typography,
+  Box,
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { Favorite, FavoriteBorder } from '@mui/icons-material';
+import { Favorite } from '@mui/icons-material';
 import { useAuthStore } from '../store/authStore';
-import { useFavoriteStore } from '../store/favoriteStore';
-import { useCarStore } from '../store/carStore';
+import { useFavoritesManager } from '../hooks/useFavorites';
 import CarCard from '../components/car/CarCard';
-import { useNavigate } from 'react-router-dom';
+import type { Car, SellerPost } from '../types';
+
+// Helper function to convert SellerPost to Car format for CarCard component
+const mapSellerPostToCar = (sellerPost: SellerPost): Car => {
+  return {
+    id: sellerPost.id,
+    title: sellerPost.title,
+    brand: sellerPost.carDetail.make,
+    model: sellerPost.carDetail.model,
+    year: sellerPost.carDetail.year,
+    price: sellerPost.price,
+    mileage: sellerPost.carDetail.mileage,
+    fuelType: sellerPost.carDetail.fuelType.toLowerCase() as
+      | 'gasoline'
+      | 'diesel'
+      | 'hybrid'
+      | 'electric',
+    transmission: sellerPost.carDetail.transmission.toLowerCase() as
+      | 'manual'
+      | 'automatic',
+    color: sellerPost.carDetail.color,
+    description: sellerPost.description,
+    images: sellerPost.images,
+    sellerId: sellerPost.id,
+    sellerName: 'Seller',
+    sellerPhone: sellerPost.phoneContact,
+    sellerType: sellerPost.sellerType === 'agency' ? 'dealer' : 'individual',
+    location: sellerPost.location,
+    status:
+      sellerPost.status === 'approved'
+        ? 'active'
+        : (sellerPost.status as 'pending' | 'sold' | 'rejected'),
+    condition: sellerPost.carDetail.condition.toLowerCase() as 'new' | 'used',
+    createdAt: sellerPost.createdAt,
+    updatedAt: sellerPost.updatedAt || sellerPost.createdAt,
+  };
+};
 
 const FavoritesPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuthStore();
-  const { favorites, isLoading, error, getFavorites } = useFavoriteStore();
-  const { cars } = useCarStore();
+  const { isAuthenticated, user } = useAuthStore();
+  const { favorites, isLoadingFavorites, favoritesError } =
+    useFavoritesManager();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      getFavorites();
-    }
-  }, [isAuthenticated, getFavorites]);
-
-  if (!isAuthenticated) {
+  // Only buyers can access favorites
+  if (!isAuthenticated || user?.role !== 'buyer') {
     return (
       <Container maxWidth='lg' sx={{ py: 4 }}>
         <Alert severity='warning'>
-          Bạn cần đăng nhập để xem danh sách yêu thích.
+          Chỉ người mua mới có thể sử dụng tính năng yêu thích.
         </Alert>
       </Container>
     );
   }
 
-  if (isLoading) {
+  if (isLoadingFavorites) {
     return (
       <Container maxWidth='lg' sx={{ py: 4, textAlign: 'center' }}>
         <CircularProgress />
@@ -46,38 +77,37 @@ const FavoritesPage: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (favoritesError) {
     return (
       <Container maxWidth='lg' sx={{ py: 4 }}>
-        <Alert severity='error'>{error}</Alert>
+        <Alert severity='error'>{favoritesError}</Alert>
       </Container>
     );
   }
 
-  // Get favorite cars by matching car IDs
-  const favoriteCars = cars
-    .filter((car) => favorites.some((fav) => fav.carId === car.id))
-    .map((car) => ({ ...car, isFavorite: true }));
+  const favoriteCars = favorites.map(mapSellerPostToCar);
 
   return (
     <Container maxWidth='lg' sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
         <Favorite sx={{ fontSize: 32, color: 'error.main', mr: 2 }} />
-        <Typography variant='h4' component='h1'>
+        <Typography
+          variant='h4'
+          component='h1'
+          gutterBottom
+          sx={{ fontWeight: 600 }}
+        >
           Xe yêu thích
         </Typography>
       </Box>
 
       {favoriteCars.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 8 }}>
-          <FavoriteBorder
-            sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }}
-          />
           <Typography variant='h6' color='text.secondary' gutterBottom>
-            Chưa có xe nào trong danh sách yêu thích
+            Bạn chưa có xe nào trong danh sách yêu thích
           </Typography>
-          <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
-            Hãy thêm những chiếc xe bạn quan tâm vào danh sách yêu thích
+          <Typography variant='body1' color='text.secondary' sx={{ mb: 3 }}>
+            Khám phá và thêm những chiếc xe bạn quan tâm vào danh sách yêu thích
           </Typography>
           <Typography
             variant='body2'
@@ -95,8 +125,8 @@ const FavoritesPage: React.FC = () => {
             gridTemplateColumns: {
               xs: '1fr',
               sm: 'repeat(2, 1fr)',
-              md: 'repeat(3, 1fr)',
-              lg: 'repeat(4, 1fr)',
+              lg: 'repeat(3, 1fr)',
+              xl: 'repeat(4, 1fr)',
             },
             gap: 3,
           }}

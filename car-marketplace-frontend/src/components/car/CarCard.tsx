@@ -18,8 +18,8 @@ import {
   FavoriteBorder,
 } from '@mui/icons-material';
 import { formatCurrency } from '../../utils/helpers';
-import { useFavoriteStore } from '../../store/favoriteStore';
 import { useAuthStore } from '../../store/authStore';
+import { useFavoritesManager } from '../../hooks/useFavorites';
 import type { Car } from '../../types';
 
 interface CarCardProps {
@@ -29,11 +29,12 @@ interface CarCardProps {
 
 const CarCard: React.FC<CarCardProps> = ({ car, showFavorite = true }) => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
-  const { isFavorite, addToFavorites, removeFromFavorites } =
-    useFavoriteStore();
+  const { isAuthenticated, user } = useAuthStore();
+  const { isFavorite, toggleFavorite, isTogglingFavorite } =
+    useFavoritesManager();
 
-  const isCarFavorite = isAuthenticated ? isFavorite(car.id) : false;
+  const isCarFavorite =
+    isAuthenticated && user?.role === 'buyer' ? isFavorite(car.id) : false;
 
   const handleCardClick = () => {
     navigate(`/cars/${car.id}`);
@@ -45,7 +46,7 @@ const CarCard: React.FC<CarCardProps> = ({ car, showFavorite = true }) => {
     console.log('Contact seller:', car.sellerId);
   };
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
     if (!isAuthenticated) {
@@ -53,10 +54,15 @@ const CarCard: React.FC<CarCardProps> = ({ car, showFavorite = true }) => {
       return;
     }
 
-    if (isCarFavorite) {
-      removeFromFavorites(car.id);
-    } else {
-      addToFavorites(car.id);
+    // Only buyers can add to favorites
+    if (user?.role !== 'buyer') {
+      return;
+    }
+
+    try {
+      await toggleFavorite(car.id, isCarFavorite);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
   };
 
@@ -96,8 +102,8 @@ const CarCard: React.FC<CarCardProps> = ({ car, showFavorite = true }) => {
           }}
         />
 
-        {/* Favorite Button */}
-        {showFavorite && (
+        {/* Favorite Button - Only show for buyers */}
+        {showFavorite && isAuthenticated && user?.role === 'buyer' && (
           <IconButton
             sx={{
               position: 'absolute',
@@ -109,6 +115,7 @@ const CarCard: React.FC<CarCardProps> = ({ car, showFavorite = true }) => {
               },
             }}
             onClick={handleFavoriteClick}
+            disabled={isTogglingFavorite}
           >
             {isCarFavorite ? <Favorite color='error' /> : <FavoriteBorder />}
           </IconButton>

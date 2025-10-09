@@ -315,9 +315,6 @@ const HomePage: React.FC = () => {
                         color={car.condition === 'new' ? 'success' : 'primary'}
                         size='small'
                       />
-                      <IconButton size='small'>
-                        <Favorite />
-                      </IconButton>
                     </Box>
 
                     <Typography variant='h6' component='h3' gutterBottom noWrap>

@@ -36,44 +36,77 @@ import { useAuthStore } from '../store/authStore';
 import { useSellerPostDetail } from '../hooks/useSeller';
 import { useAdminPostDetail } from '../hooks/useAdmin';
 import { usePublicPostDetail } from '../hooks/usePublic';
+import { useFavoritesManager } from '../hooks/useFavorites';
 
 const CarDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
-  // Determine which API to use based on user authentication and role
+  // Determine which API to use based on URL context
   const isAdmin = user?.role === 'admin';
   const isAuthenticated = !!user;
 
-  // Conditionally call hooks based on user state to avoid unnecessary API calls
+  // Determine context based on current URL path
+  const currentPath = window.location.pathname;
+  const isAdminContext = currentPath.startsWith('/admin');
+  const isSellerContext = currentPath.startsWith('/seller-dashboard');
+
+  // For public routes (/cars/:id from HomePage, CarListingsPage), always use public API
+  // This ensures that posts viewed from public listings use public/posts/{id} API
+  // Only use admin/seller APIs when specifically in admin/seller dashboard contexts
+  const shouldUsePublicAPI = !isAdminContext && !isSellerContext;
+
+  console.log('CarDetailPage Context:', {
+    currentPath,
+    isAdminContext,
+    isSellerContext,
+    shouldUsePublicAPI,
+    userRole: user?.role,
+  });
+
+  // Conditionally call hooks based on context to avoid unnecessary API calls
   // that would trigger 401 redirects
   const adminPostQuery = useAdminPostDetail(
     id || '',
-    isAuthenticated && isAdmin
+    isAdminContext && isAuthenticated && isAdmin
   );
   const sellerPostQuery = useSellerPostDetail(
     id || '',
-    isAuthenticated && !isAdmin
+    isSellerContext && isAuthenticated
   );
-  const publicPostQuery = usePublicPostDetail(id || '', !isAuthenticated);
+  const publicPostQuery = usePublicPostDetail(id || '', shouldUsePublicAPI);
 
-  // Use appropriate data based on user authentication status and role
+  // Use appropriate data based on context
   let sellerPost, loading, error;
-  if (!isAuthenticated) {
-    // Use public API for non-authenticated users
+  if (shouldUsePublicAPI) {
+    // Use public API for all public routes (default for /cars/:id)
     ({ data: sellerPost, isLoading: loading, error } = publicPostQuery);
-  } else if (isAdmin) {
-    // Use admin API for admin users
+  } else if (isAdminContext && isAuthenticated && isAdmin) {
+    // Use admin API only when in admin dashboard context
     ({ data: sellerPost, isLoading: loading, error } = adminPostQuery);
-  } else {
-    // Use seller API for authenticated non-admin users
+  } else if (isSellerContext && isAuthenticated) {
+    // Use seller API only when in seller dashboard context
     ({ data: sellerPost, isLoading: loading, error } = sellerPostQuery);
+  } else {
+    // Fallback to public API for any other case
+    ({ data: sellerPost, isLoading: loading, error } = publicPostQuery);
   }
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
+
+  // Favorites management
+  const {
+    isFavorite: isPostFavorite,
+    toggleFavorite,
+    isTogglingFavorite,
+  } = useFavoritesManager();
+
+  const isCarFavorite =
+    isAuthenticated && user?.role === 'buyer' && sellerPost
+      ? isPostFavorite(sellerPost.id)
+      : false;
 
   const handleShare = () => {
     if (navigator.share) {
@@ -151,8 +184,19 @@ const CarDetailPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 1 }}>
           {/* Chỉ buyer mới có thể favorite */}
           {isAuthenticated && user?.role === 'buyer' && (
-            <IconButton onClick={() => setIsFavorite(!isFavorite)}>
-              {isFavorite ? <Favorite color='error' /> : <FavoriteBorder />}
+            <IconButton
+              onClick={async () => {
+                if (sellerPost) {
+                  try {
+                    await toggleFavorite(sellerPost.id, isCarFavorite);
+                  } catch (error) {
+                    console.error('Error toggling favorite:', error);
+                  }
+                }
+              }}
+              disabled={isTogglingFavorite}
+            >
+              {isCarFavorite ? <Favorite color='error' /> : <FavoriteBorder />}
             </IconButton>
           )}
           <IconButton onClick={handleShare}>
@@ -378,7 +422,7 @@ const CarDetailPage: React.FC = () => {
                 <Button
                   variant='outlined'
                   size='large'
-                  onClick={() => navigate('/auth/login')}
+                  onClick={() => navigate('/login')}
                   fullWidth
                   sx={{ mt: 1 }}
                 >
