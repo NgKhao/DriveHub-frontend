@@ -1395,3 +1395,131 @@ export const mapBackendGetFavoritesResponseToSellerPosts = (
 ): SellerPost[] => {
   return backendResponse.map(mapBackendFavoriteItemToSellerPost);
 };
+
+// ============================================================================
+// REVIEW SYSTEM TYPES
+// ============================================================================
+
+// Frontend Review interfaces
+export interface Review {
+  id: string;
+  rating: number;
+  comment?: string;
+  reviewerId: string;
+  reviewedId: string;
+  createdAt: string;
+}
+
+export interface ReviewSummary {
+  sellerId: string;
+  averageRating: number;
+  totalReviews: number;
+  reviews: Review[];
+}
+
+export interface CreateReviewData {
+  reviewedId: string;
+  rating: number;
+  comment?: string;
+}
+
+// Backend Review API types
+export interface BackendCreateReviewRequest {
+  reviewedId: number;
+  rating: number;
+  comment?: string;
+}
+
+export interface BackendCreateReviewResponse {
+  messenger: string;
+  status: number;
+  detail: {
+    id: number;
+    rating: number;
+    comment?: string;
+    reviewerId: number;
+    reviewedId: number;
+    createdAt: string;
+  };
+  instance: string;
+}
+
+export interface BackendReviewItem {
+  id: number;
+  rating: number;
+  comment?: string;
+  reviewerId: number;
+  reviewedId: number;
+  createdAt: string;
+}
+
+export interface BackendGetSellerReviewsResponse {
+  messenger: string;
+  status: number;
+  detail: {
+    content: BackendReviewItem[];
+    pageNumber: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+    first: boolean;
+    last: boolean;
+  };
+  instance: string;
+}
+
+// Mapping functions
+export const mapFrontendCreateReviewToBackend = (
+  reviewData: CreateReviewData
+): BackendCreateReviewRequest => {
+  return {
+    reviewedId: parseInt(reviewData.reviewedId),
+    rating: reviewData.rating,
+    comment: reviewData.comment,
+  };
+};
+
+export const mapBackendReviewItemToReview = (
+  backendReview: BackendReviewItem
+): Review => {
+  return {
+    id: backendReview.id.toString(),
+    rating: backendReview.rating,
+    comment: backendReview.comment,
+    reviewerId: backendReview.reviewerId.toString(),
+    reviewedId: backendReview.reviewedId.toString(),
+    createdAt: backendReview.createdAt,
+  };
+};
+
+export const mapBackendCreateReviewResponseToReview = (
+  backendResponse: BackendCreateReviewResponse['detail']
+): Review => {
+  return {
+    id: backendResponse.id.toString(),
+    rating: backendResponse.rating,
+    comment: backendResponse.comment,
+    reviewerId: backendResponse.reviewerId.toString(),
+    reviewedId: backendResponse.reviewedId.toString(),
+    createdAt: backendResponse.createdAt,
+  };
+};
+
+export const mapBackendGetSellerReviewsResponseToReviewSummary = (
+  backendResponse: BackendGetSellerReviewsResponse['detail'],
+  sellerId: string
+): ReviewSummary => {
+  const reviews = backendResponse.content.map(mapBackendReviewItemToReview);
+
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : 0;
+
+  return {
+    sellerId,
+    averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
+    totalReviews: backendResponse.totalElements,
+    reviews,
+  };
+};

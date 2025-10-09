@@ -12,8 +12,8 @@ import {
 } from '@mui/material';
 import StarRating from './StarRating';
 import ReportDialog from './ReportDialog';
-import { useRatingStore } from '../../store/ratingStore';
 import { useAuthStore } from '../../store/authStore';
+import { useCreateReview } from '../../hooks/useReviews';
 
 interface RatingDialogProps {
   open: boolean;
@@ -35,7 +35,7 @@ const RatingDialog: React.FC<RatingDialogProps> = ({
   existingRating,
 }) => {
   const { user } = useAuthStore();
-  const { rateSeller, updateRating } = useRatingStore();
+  const createReviewMutation = useCreateReview();
 
   const [rating, setRating] = useState(existingRating?.rating || 0);
   const [review, setReview] = useState(existingRating?.review || '');
@@ -65,10 +65,18 @@ const RatingDialog: React.FC<RatingDialogProps> = ({
     setError(null);
 
     try {
-      if (existingRating) {
-        await updateRating(existingRating.id, rating, review);
+      // For now, we only support creating new reviews
+      // Update functionality can be added later
+      if (!existingRating) {
+        await createReviewMutation.mutateAsync({
+          reviewedId: sellerId,
+          rating,
+          comment: review,
+        });
       } else {
-        await rateSeller(sellerId, rating, review);
+        // TODO: Implement update review API
+        setError('Chức năng cập nhật đánh giá sẽ được bổ sung sau');
+        return;
       }
 
       // If user wants to report after rating, show report dialog

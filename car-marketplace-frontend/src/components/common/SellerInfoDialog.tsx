@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -24,7 +24,7 @@ import {
 } from '@mui/icons-material';
 import StarRating from './StarRating';
 import RatingDialog from './RatingDialog';
-import { useRatingStore } from '../../store/ratingStore';
+import { useUserReviewForSeller } from '../../hooks/useReviews';
 import { useAuthStore } from '../../store/authStore';
 import type { SellerPost } from '../../types';
 
@@ -40,11 +40,7 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
   sellerPost,
 }) => {
   const { user, isAuthenticated } = useAuthStore();
-  const { getSellerRating, getUserRatingForSeller, fetchSellerRatings } =
-    useRatingStore();
-
   const [showRatingDialog, setShowRatingDialog] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Use actual seller info if available, otherwise fallback to post info
   const sellerId = sellerPost.sellerInfo?.sellerId?.toString() || sellerPost.id;
@@ -54,26 +50,14 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
   const sellerPhone =
     sellerPost.sellerInfo?.sellerPhone || sellerPost.phoneContact;
 
-  const sellerRating = getSellerRating(sellerId);
-  const userRating =
-    isAuthenticated && user ? getUserRatingForSeller(sellerId, user.id) : null;
+  // Use real API to get reviews
+  const { userReview, reviewSummary, isLoading } = useUserReviewForSeller(
+    sellerId,
+    user?.id,
+    open
+  );
 
-  useEffect(() => {
-    if (open) {
-      const loadRatings = async () => {
-        setIsLoading(true);
-        try {
-          await fetchSellerRatings(sellerId);
-        } catch (error) {
-          console.error('Failed to load seller ratings:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      loadRatings();
-    }
-  }, [sellerId, fetchSellerRatings, open]);
+  // No need for useEffect anymore - data is loaded by the hook
 
   const formatTimeAgo = (dateString: string): string => {
     const date = new Date(dateString);
@@ -93,15 +77,15 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
   };
 
   const getRatingStats = () => {
-    if (!sellerRating) return null;
+    if (!reviewSummary) return null;
 
     const stats = [5, 4, 3, 2, 1].map((star) => {
-      const count = sellerRating.ratings.filter(
+      const count = reviewSummary.reviews.filter(
         (r) => Math.floor(r.rating) === star
       ).length;
       const percentage =
-        sellerRating.totalRatings > 0
-          ? Math.round((count / sellerRating.totalRatings) * 100)
+        reviewSummary.totalReviews > 0
+          ? Math.round((count / reviewSummary.totalReviews) * 100)
           : 0;
       return { star, count, percentage };
     });
@@ -200,7 +184,7 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
                       startIcon={<RateReview />}
                       onClick={() => setShowRatingDialog(true)}
                     >
-                      {userRating ? 'Chỉnh sửa đánh giá' : 'Đánh giá'}
+                      {userReview ? 'Chỉnh sửa đánh giá' : 'Đánh giá'}
                     </Button>
                   )}
               </Box>
@@ -216,7 +200,7 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
 
               {isLoading ? (
                 <Typography>Đang tải đánh giá...</Typography>
-              ) : sellerRating ? (
+              ) : reviewSummary ? (
                 <Box>
                   <Box
                     sx={{
@@ -232,11 +216,14 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
                         component='div'
                         sx={{ fontWeight: 'bold' }}
                       >
-                        {sellerRating.averageRating.toFixed(1)}
+                        {reviewSummary.averageRating.toFixed(1)}
                       </Typography>
-                      <StarRating value={sellerRating.averageRating} readOnly />
+                      <StarRating
+                        value={reviewSummary.averageRating}
+                        readOnly
+                      />
                       <Typography variant='body2' color='text.secondary'>
-                        {sellerRating.totalRatings} đánh giá
+                        {reviewSummary.totalReviews} đánh giá
                       </Typography>
                     </Box>
 
@@ -282,15 +269,15 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
                   </Box>
 
                   {/* Individual Reviews */}
-                  {sellerRating.ratings.length > 0 && (
+                  {reviewSummary.reviews.length > 0 && (
                     <Box>
                       <Typography variant='subtitle1' gutterBottom>
                         Nhận xét từ khách hàng
                       </Typography>
 
                       <Box sx={{ maxHeight: '300px', overflowY: 'auto' }}>
-                        {sellerRating.ratings.map((rating, index) => (
-                          <Box key={rating.id}>
+                        {reviewSummary.reviews.map((review, index) => (
+                          <Box key={review.id}>
                             <Box sx={{ display: 'flex', gap: 2, py: 2 }}>
                               <Avatar
                                 sx={{
@@ -313,10 +300,10 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
                                   }}
                                 >
                                   <Typography variant='subtitle2'>
-                                    Khách hàng #{rating.userId.slice(-4)}
+                                    Khách hàng #{review.reviewerId.slice(-4)}
                                   </Typography>
                                   <StarRating
-                                    value={rating.rating}
+                                    value={review.rating}
                                     readOnly
                                     size='small'
                                   />
@@ -324,9 +311,9 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
                                     variant='caption'
                                     color='text.secondary'
                                   >
-                                    {formatTimeAgo(rating.createdAt)}
+                                    {formatTimeAgo(review.createdAt)}
                                   </Typography>
-                                  {rating.userId === user?.id && (
+                                  {review.reviewerId === user?.id && (
                                     <Chip
                                       label='Đánh giá của bạn'
                                       size='small'
@@ -336,18 +323,18 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
                                   )}
                                 </Box>
 
-                                {rating.review && (
+                                {review.comment && (
                                   <Typography
                                     variant='body2'
                                     color='text.secondary'
                                   >
-                                    {rating.review}
+                                    {review.comment}
                                   </Typography>
                                 )}
                               </Box>
                             </Box>
 
-                            {index < sellerRating.ratings.length - 1 && (
+                            {index < reviewSummary.reviews.length - 1 && (
                               <Divider />
                             )}
                           </Box>
@@ -381,11 +368,11 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
         sellerId={sellerId}
         sellerName={sellerName}
         existingRating={
-          userRating
+          userReview
             ? {
-                id: userRating.id,
-                rating: userRating.rating,
-                review: userRating.review,
+                id: userReview.id,
+                rating: userReview.rating,
+                review: userReview.comment,
               }
             : undefined
         }
