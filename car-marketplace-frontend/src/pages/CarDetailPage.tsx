@@ -46,13 +46,6 @@ const CarDetailPage: React.FC = () => {
   const isAdmin = user?.role === 'admin';
   const isAuthenticated = !!user;
 
-  // Debug logging
-  console.log('CarDetailPage - User state:', {
-    isAuthenticated,
-    isAdmin,
-    user,
-  });
-
   // Conditionally call hooks based on user state to avoid unnecessary API calls
   // that would trigger 401 redirects
   const adminPostQuery = useAdminPostDetail(

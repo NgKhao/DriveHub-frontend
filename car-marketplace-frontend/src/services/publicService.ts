@@ -16,17 +16,17 @@ import type {
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
-export class PublicService {
+export const publicService = {
   /**
    * Get all public posts (không cần authentication)
    * @param page Page number (0-based)
    * @param size Number of items per page
    * @returns Promise<PaginatedResponse<SellerPost>>
    */
-  async getAllPublicPosts(
+  getAllPublicPosts: async (
     page: number = 0,
     size: number = 10
-  ): Promise<PaginatedResponse<SellerPost>> {
+  ): Promise<PaginatedResponse<SellerPost>> => {
     try {
       const response = await axios.get<BackendPublicGetPostsResponse>(
         `${API_BASE_URL}/public/posts`,
@@ -44,16 +44,16 @@ export class PublicService {
       console.error('Error fetching public posts:', error);
       throw error;
     }
-  }
+  },
 
   /**
    * Search public posts with filters (không cần authentication)
    * @param searchParams Search parameters object
    * @returns Promise<SellerPost[]>
    */
-  async searchPublicPosts(
+  searchPublicPosts: async (
     searchParams: PublicSearchParams
-  ): Promise<SellerPost[]> {
+  ): Promise<SellerPost[]> => {
     try {
       // Remove empty/undefined values from params
       const cleanParams = Object.entries(searchParams).reduce(
@@ -81,14 +81,14 @@ export class PublicService {
       console.error('Error searching public posts:', error);
       throw error;
     }
-  }
+  },
 
   /**
    * Get public post detail by ID (không cần authentication)
    * @param postId Post ID
    * @returns Promise<SellerPost>
    */
-  async getPublicPostDetail(postId: string): Promise<SellerPost> {
+  getPublicPostDetail: async (postId: string): Promise<SellerPost> => {
     try {
       const response = await axios.get<BackendPublicGetPostDetailResponse>(
         `${API_BASE_URL}/public/posts/${postId}`
@@ -102,8 +102,5 @@ export class PublicService {
       console.error('Error fetching public post detail:', error);
       throw error;
     }
-  }
-}
-
-// Export singleton instance
-export const publicService = new PublicService();
+  },
+};
