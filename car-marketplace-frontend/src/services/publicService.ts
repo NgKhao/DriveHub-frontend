@@ -1,9 +1,14 @@
 import axios from 'axios';
-import { mapBackendPublicGetPostsResponseToPaginated } from '../types';
+import {
+  mapBackendPublicGetPostsResponseToPaginated,
+  mapBackendPublicSearchPostsResponseToSellerPosts,
+} from '../types';
 import type {
   BackendPublicGetPostsResponse,
+  BackendPublicSearchPostsResponse,
   PaginatedResponse,
   SellerPost,
+  PublicSearchParams,
 } from '../types';
 
 const API_BASE_URL =
@@ -35,6 +40,43 @@ export class PublicService {
       return mapBackendPublicGetPostsResponseToPaginated(response.data.detail);
     } catch (error) {
       console.error('Error fetching public posts:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Search public posts with filters (không cần authentication)
+   * @param searchParams Search parameters object
+   * @returns Promise<SellerPost[]>
+   */
+  async searchPublicPosts(
+    searchParams: PublicSearchParams
+  ): Promise<SellerPost[]> {
+    try {
+      // Remove empty/undefined values from params
+      const cleanParams = Object.entries(searchParams).reduce(
+        (acc, [key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            acc[key] = value;
+          }
+          return acc;
+        },
+        {} as Record<string, string | number>
+      );
+
+      const response = await axios.get<BackendPublicSearchPostsResponse>(
+        `${API_BASE_URL}/public/posts/search`,
+        {
+          params: cleanParams,
+        }
+      );
+
+      // Transform backend response to frontend format
+      return mapBackendPublicSearchPostsResponseToSellerPosts(
+        response.data.detail
+      );
+    } catch (error) {
+      console.error('Error searching public posts:', error);
       throw error;
     }
   }

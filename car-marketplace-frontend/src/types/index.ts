@@ -299,6 +299,27 @@ export interface BackendPublicGetPostsResponse {
   instance: string;
 }
 
+// Public Search Posts API Types
+export interface BackendPublicSearchPostsResponse {
+  messenger: string;
+  status: number;
+  detail: BackendPostItem[];
+  instance: string;
+}
+
+// Search parameters interface
+export interface PublicSearchParams {
+  make?: string;
+  model?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  condition?: string;
+  color?: string;
+  fuelType?: string;
+  transmission?: string;
+  location?: string;
+}
+
 // Admin Posts API Types
 export interface BackendAdminGetPostsResponse {
   messenger: string;
@@ -790,6 +811,40 @@ export const mapBackendPublicGetPostsResponseToPaginated = (
     limit: backendResponse.pageSize,
     totalPages: backendResponse.totalPages,
   };
+};
+
+// Helper function to convert backend public search posts response to seller posts array
+export const mapBackendPublicSearchPostsResponseToSellerPosts = (
+  backendResponse: BackendPublicSearchPostsResponse['detail']
+): SellerPost[] => {
+  return backendResponse.map(mapBackendPostItemToSellerPost);
+};
+
+// Helper function to convert frontend filters to backend search params
+export const mapFrontendFiltersToBackendSearchParams = (
+  filters: CarFilters,
+  searchQuery?: string
+): PublicSearchParams => {
+  const params: PublicSearchParams = {};
+
+  // Map CarFilters to backend search params
+  if (filters.brand) params.make = filters.brand;
+  if (filters.model) params.model = filters.model;
+  if (filters.minPrice) params.minPrice = filters.minPrice;
+  if (filters.maxPrice) params.maxPrice = filters.maxPrice;
+  if (filters.condition) params.condition = filters.condition;
+  if (filters.fuelType) params.fuelType = filters.fuelType;
+  if (filters.transmission) params.transmission = filters.transmission;
+  if (filters.location) params.location = filters.location;
+
+  // Handle search query (could be for color or general search)
+  if (searchQuery && searchQuery.trim()) {
+    // Assume search query is for color for now
+    // You can extend this logic based on your requirements
+    params.color = searchQuery.trim();
+  }
+
+  return params;
 };
 
 // Helper function to convert SellerPost to Car format for CarCard component

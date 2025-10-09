@@ -31,7 +31,8 @@ import { useCarStore } from '../store/carStore';
 import { formatCurrency } from '../utils/helpers';
 import { CAR_BRANDS } from '../types';
 import type { CarFilters, SellerPost, Car } from '../types';
-import { usePublicPosts } from '../hooks/usePublic';
+import { usePublicPosts, usePublicPostsSearch } from '../hooks/usePublic';
+import { mapFrontendFiltersToBackendSearchParams } from '../types';
 
 // Helper function to convert SellerPost to Car format for CarCard component
 const mapSellerPostToCar = (sellerPost: SellerPost): Car => {
@@ -74,23 +75,44 @@ const mapSellerPostToCar = (sellerPost: SellerPost): Car => {
 const CarListingsPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [urlSearchParams, setUrlSearchParams] = useSearchParams();
 
   const { filters, setFilters, clearFilters } = useCarStore();
   const [localFilters, setLocalFilters] = useState<CarFilters>({});
   const [searchQuery, setSearchQuery] = useState(
-    searchParams.get('search') || ''
+    urlSearchParams.get('search') || ''
   );
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [page, setPage] = useState(1);
   const carsPerPage = 12;
 
-  // Use public posts API
+  // Determine if we should use search API or regular API
+  const hasFiltersOrSearch =
+    Object.keys(filters).length > 0 || searchQuery.trim() !== '';
+
+  // Convert frontend filters to backend search params
+  const backendSearchParams = mapFrontendFiltersToBackendSearchParams(
+    filters as CarFilters,
+    searchQuery
+  );
+
+  // Use public posts API (regular pagination)
   const {
     data: publicPostsData,
-    isLoading,
-    error,
+    isLoading: isLoadingPosts,
+    error: postsError,
   } = usePublicPosts(page - 1, carsPerPage);
+
+  // Use search API when filters or search query is present
+  const {
+    data: searchResults,
+    isLoading: isLoadingSearch,
+    error: searchError,
+  } = usePublicPostsSearch(backendSearchParams, hasFiltersOrSearch);
+
+  // Combine loading and error states
+  const isLoading = hasFiltersOrSearch ? isLoadingSearch : isLoadingPosts;
+  const error = hasFiltersOrSearch ? searchError : postsError;
 
   // Price range state
   const [priceRange, setPriceRange] = useState<number[]>([0, 5000000000]);
@@ -98,16 +120,16 @@ const CarListingsPage: React.FC = () => {
   useEffect(() => {
     // Initialize filters from URL params
     const initialFilters: CarFilters = {};
-    if (searchParams.get('brand'))
-      initialFilters.brand = searchParams.get('brand')!;
-    if (searchParams.get('minPrice'))
-      initialFilters.minPrice = Number(searchParams.get('minPrice'));
-    if (searchParams.get('maxPrice'))
-      initialFilters.maxPrice = Number(searchParams.get('maxPrice'));
+    if (urlSearchParams.get('brand'))
+      initialFilters.brand = urlSearchParams.get('brand')!;
+    if (urlSearchParams.get('minPrice'))
+      initialFilters.minPrice = Number(urlSearchParams.get('minPrice'));
+    if (urlSearchParams.get('maxPrice'))
+      initialFilters.maxPrice = Number(urlSearchParams.get('maxPrice'));
 
     setLocalFilters(initialFilters);
     setFilters(initialFilters);
-  }, [searchParams, setFilters]);
+  }, [urlSearchParams, setFilters]);
 
   const handleSearch = () => {
     const newFilters = { ...localFilters };
@@ -129,7 +151,7 @@ const CarListingsPage: React.FC = () => {
       }
     });
     if (searchQuery) params.set('search', searchQuery);
-    setSearchParams(params);
+    setUrlSearchParams(params);
   };
 
   const handleFilterChange = (
@@ -145,7 +167,7 @@ const CarListingsPage: React.FC = () => {
     setSearchQuery('');
     setPriceRange([0, 5000000000]);
     clearFilters();
-    setSearchParams({});
+    setUrlSearchParams({});
   };
 
   const handlePriceRangeChange = (
@@ -219,60 +241,6 @@ const CarListingsPage: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Year Range */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-        <TextField
-          label='Từ năm'
-          type='number'
-          size='small'
-          value={localFilters.minYear || ''}
-          onChange={(e) =>
-            handleFilterChange('minYear', Number(e.target.value))
-          }
-          inputProps={{ min: 1990, max: new Date().getFullYear() + 1 }}
-        />
-        <TextField
-          label='Đến năm'
-          type='number'
-          size='small'
-          value={localFilters.maxYear || ''}
-          onChange={(e) =>
-            handleFilterChange('maxYear', Number(e.target.value))
-          }
-          inputProps={{ min: 1990, max: new Date().getFullYear() + 1 }}
-        />
-      </Box>
-
-      {/* Fuel Type */}
-      <FormControl fullWidth sx={{ mb: 3 }}>
-        <InputLabel>Loại nhiên liệu</InputLabel>
-        <Select
-          value={localFilters.fuelType || ''}
-          label='Loại nhiên liệu'
-          onChange={(e) => handleFilterChange('fuelType', e.target.value)}
-        >
-          <MenuItem value=''>Tất cả</MenuItem>
-          <MenuItem value='gasoline'>Xăng</MenuItem>
-          <MenuItem value='diesel'>Dầu</MenuItem>
-          <MenuItem value='hybrid'>Hybrid</MenuItem>
-          <MenuItem value='electric'>Điện</MenuItem>
-        </Select>
-      </FormControl>
-
-      {/* Transmission */}
-      <FormControl fullWidth sx={{ mb: 3 }}>
-        <InputLabel>Hộp số</InputLabel>
-        <Select
-          value={localFilters.transmission || ''}
-          label='Hộp số'
-          onChange={(e) => handleFilterChange('transmission', e.target.value)}
-        >
-          <MenuItem value=''>Tất cả</MenuItem>
-          <MenuItem value='manual'>Số sàn</MenuItem>
-          <MenuItem value='automatic'>Tự động</MenuItem>
-        </Select>
-      </FormControl>
-
       {/* Condition */}
       <FormGroup sx={{ mb: 3 }}>
         <Typography gutterBottom>Tình trạng</Typography>
@@ -319,10 +287,27 @@ const CarListingsPage: React.FC = () => {
     </Box>
   );
 
-  // Calculate pagination from API data
-  const totalCars = publicPostsData?.total || 0;
-  const totalPages = publicPostsData?.totalPages || 0;
-  const displayedCars = (publicPostsData?.items || []).map(mapSellerPostToCar);
+  // Calculate pagination from API data - use search results if searching, otherwise use regular posts
+  const totalCars = hasFiltersOrSearch
+    ? searchResults?.length || 0
+    : publicPostsData?.total || 0;
+  const totalPages = hasFiltersOrSearch
+    ? Math.ceil((searchResults?.length || 0) / carsPerPage)
+    : publicPostsData?.totalPages || 0;
+
+  // Get displayed cars based on search or regular pagination
+  const allCars = hasFiltersOrSearch
+    ? searchResults || []
+    : publicPostsData?.items || [];
+
+  // For search results, handle manual pagination since API returns all results
+  const startIndex = hasFiltersOrSearch ? (page - 1) * carsPerPage : 0;
+  const endIndex = hasFiltersOrSearch
+    ? startIndex + carsPerPage
+    : allCars.length;
+  const displayedCars = allCars
+    .slice(startIndex, endIndex)
+    .map(mapSellerPostToCar);
 
   return (
     <Container maxWidth='xl' sx={{ py: 4 }}>
