@@ -17,22 +17,29 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  CircularProgress,
 } from '@mui/material';
 import { Report, Visibility, Person, Info } from '@mui/icons-material';
 import { useReportStore } from '../store/reportStore';
 import { useAuthStore } from '../store/authStore';
+import { useMyReports } from '../hooks/useReport';
 import ReportDialog from '../components/common/ReportDialog';
 import type { Report as ReportType } from '../types';
 
 const ReportsPage: React.FC = () => {
   const { user } = useAuthStore();
-  const { getUserReports, getReportReasons } = useReportStore();
+  const { getReportReasons } = useReportStore();
   const [reportDetailOpen, setReportDetailOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportType | null>(null);
 
-  // Get reports based on user role
-  const userReports = user ? getUserReports(user.id) : [];
+  // Fetch user's reports from API
+  const {
+    data: userReports = [],
+    isLoading: isLoadingReports,
+    error: reportsError,
+  } = useMyReports(!!user);
+
   const reportReasons = getReportReasons();
 
   const getStatusColor = (status: ReportType['status']) => {
@@ -55,11 +62,11 @@ const ReportsPage: React.FC = () => {
       case 'pending':
         return 'Chờ xử lý';
       case 'investigating':
-        return 'Đang xem xét';
+        return 'Tạm khóa tài khoản'; // SUSPENDED status
       case 'resolved':
-        return 'Đã giải quyết';
+        return 'Cấm vĩnh viễn'; // BANNED status
       case 'dismissed':
-        return 'Đã từ chối';
+        return 'Báo cáo bị từ chối'; // REJECTED status
       default:
         return 'Không xác định';
     }
@@ -180,7 +187,26 @@ const ReportsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {userReports.length === 0 ? (
+        {/* Loading State */}
+        {isLoadingReports ? (
+          <Card>
+            <CardContent sx={{ textAlign: 'center', py: 6 }}>
+              <CircularProgress sx={{ mb: 2 }} />
+              <Typography variant='body2' color='text.secondary'>
+                Đang tải danh sách báo cáo...
+              </Typography>
+            </CardContent>
+          </Card>
+        ) : reportsError ? (
+          /* Error State */
+          <Card>
+            <CardContent>
+              <Alert severity='error' sx={{ mb: 2 }}>
+                Không thể tải danh sách báo cáo. Vui lòng thử lại sau.
+              </Alert>
+            </CardContent>
+          </Card>
+        ) : userReports.length === 0 ? (
           <Card>
             <CardContent sx={{ textAlign: 'center', py: 6 }}>
               <Info sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />

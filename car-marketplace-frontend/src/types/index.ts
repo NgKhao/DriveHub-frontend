@@ -1601,3 +1601,61 @@ export const mapBackendCreateReportResponseToReport = (
     updatedAt: backendResponse.createdAt, // Use createdAt as updatedAt initially
   };
 };
+
+// My Reports API Types
+export interface MyReportItem {
+  id: number;
+  reporterId: number;
+  reporterName: string;
+  reportedUserId: number;
+  reportedUserName: string;
+  reason: string;
+  description: string;
+  status: 'PENDING' | 'SUSPENDED' | 'BANNED' | 'REJECTED';
+  createdAt: string;
+  handledAt: string | null;
+  handledBy: number | null;
+  handledByName: string | null;
+}
+
+export interface BackendMyReportsResponse {
+  messenger: string;
+  status: number;
+  detail: MyReportItem[];
+  instance: string;
+}
+
+// Mapping function for my reports response
+export const mapBackendMyReportsResponseToReports = (
+  backendResponse: BackendMyReportsResponse['detail']
+): Report[] => {
+  return backendResponse.map((item) => {
+    // Map backend status to frontend status
+    const mapStatus = (backendStatus: string): Report['status'] => {
+      switch (backendStatus) {
+        case 'PENDING':
+          return 'pending';
+        case 'SUSPENDED':
+          return 'investigating'; // Use investigating for suspended accounts
+        case 'BANNED':
+          return 'resolved'; // Use resolved for banned (final action taken)
+        case 'REJECTED':
+          return 'dismissed';
+        default:
+          return 'pending';
+      }
+    };
+
+    return {
+      id: item.id.toString(),
+      reporterId: item.reporterId.toString(),
+      reportedId: item.reportedUserId.toString(),
+      reportedType: 'buyer', // Since sellers report buyers in my-reports context
+      reason: item.reason,
+      description: item.description,
+      status: mapStatus(item.status),
+      createdAt: item.createdAt,
+      updatedAt: item.handledAt || item.createdAt,
+    };
+  });
+};

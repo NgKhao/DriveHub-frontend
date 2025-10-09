@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { reportService } from '../services/reportService';
 import type { CreateReportData, Report } from '../types';
 
@@ -37,7 +37,7 @@ export const useCreateReport = () => {
       return reportService.createReport(reportData);
     },
     onSuccess: () => {
-      // Invalidate any report-related queries if we add them later
+      // Invalidate report-related queries after creating a new report
       queryClient.invalidateQueries({
         queryKey: ['reports'],
       });
@@ -45,6 +45,21 @@ export const useCreateReport = () => {
     onError: (error: ReportError) => {
       console.error('Create report error:', error);
     },
+  });
+};
+
+/**
+ * Hook để lấy danh sách báo cáo đã gửi của user hiện tại
+ */
+export const useMyReports = (enabled: boolean = true) => {
+  return useQuery<Report[], ReportError>({
+    queryKey: ['reports', 'my-reports'],
+    queryFn: () => reportService.getMyReports(),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+    refetchOnWindowFocus: false,
+    enabled, // Only run if explicitly enabled
   });
 };
 
