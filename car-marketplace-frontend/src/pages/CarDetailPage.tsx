@@ -35,25 +35,48 @@ import ReportDialog from '../components/common/ReportDialog';
 import { useAuthStore } from '../store/authStore';
 import { useSellerPostDetail } from '../hooks/useSeller';
 import { useAdminPostDetail } from '../hooks/useAdmin';
+import { usePublicPostDetail } from '../hooks/usePublic';
 
 const CarDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
-  // Check if user is admin to decide which API to use
+  // Determine which API to use based on user authentication and role
   const isAdmin = user?.role === 'admin';
+  const isAuthenticated = !!user;
 
-  // Always call both hooks but only use the appropriate one
-  const adminPostQuery = useAdminPostDetail(id || '');
-  const sellerPostQuery = useSellerPostDetail(id || '');
+  // Debug logging
+  console.log('CarDetailPage - User state:', {
+    isAuthenticated,
+    isAdmin,
+    user,
+  });
 
-  // Use appropriate data based on user role
-  const {
-    data: sellerPost,
-    isLoading: loading,
-    error,
-  } = isAdmin ? adminPostQuery : sellerPostQuery;
+  // Conditionally call hooks based on user state to avoid unnecessary API calls
+  // that would trigger 401 redirects
+  const adminPostQuery = useAdminPostDetail(
+    id || '',
+    isAuthenticated && isAdmin
+  );
+  const sellerPostQuery = useSellerPostDetail(
+    id || '',
+    isAuthenticated && !isAdmin
+  );
+  const publicPostQuery = usePublicPostDetail(id || '', !isAuthenticated);
+
+  // Use appropriate data based on user authentication status and role
+  let sellerPost, loading, error;
+  if (!isAuthenticated) {
+    // Use public API for non-authenticated users
+    ({ data: sellerPost, isLoading: loading, error } = publicPostQuery);
+  } else if (isAdmin) {
+    // Use admin API for admin users
+    ({ data: sellerPost, isLoading: loading, error } = adminPostQuery);
+  } else {
+    // Use seller API for authenticated non-admin users
+    ({ data: sellerPost, isLoading: loading, error } = sellerPostQuery);
+  }
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -134,7 +157,7 @@ const CarDetailPage: React.FC = () => {
 
         <Box sx={{ display: 'flex', gap: 1 }}>
           {/* Chỉ buyer mới có thể favorite */}
-          {user?.role === 'buyer' && (
+          {isAuthenticated && user?.role === 'buyer' && (
             <IconButton onClick={() => setIsFavorite(!isFavorite)}>
               {isFavorite ? <Favorite color='error' /> : <FavoriteBorder />}
             </IconButton>
@@ -357,8 +380,21 @@ const CarDetailPage: React.FC = () => {
                 Gọi {sellerPost.phoneContact}
               </Button>
 
+              {/* Show login prompt for unauthenticated users */}
+              {!isAuthenticated && (
+                <Button
+                  variant='outlined'
+                  size='large'
+                  onClick={() => navigate('/auth/login')}
+                  fullWidth
+                  sx={{ mt: 1 }}
+                >
+                  Đăng nhập để xem thêm tính năng
+                </Button>
+              )}
+
               {/* Chỉ buyer mới có thể báo cáo */}
-              {user?.role === 'buyer' && (
+              {isAuthenticated && user?.role === 'buyer' && (
                 <Button
                   variant='text'
                   size='small'

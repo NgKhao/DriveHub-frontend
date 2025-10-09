@@ -2,10 +2,12 @@ import axios from 'axios';
 import {
   mapBackendPublicGetPostsResponseToPaginated,
   mapBackendPublicSearchPostsResponseToSellerPosts,
+  mapBackendPublicGetPostDetailResponseToSellerPost,
 } from '../types';
 import type {
   BackendPublicGetPostsResponse,
   BackendPublicSearchPostsResponse,
+  BackendPublicGetPostDetailResponse,
   PaginatedResponse,
   SellerPost,
   PublicSearchParams,
@@ -77,6 +79,27 @@ export class PublicService {
       );
     } catch (error) {
       console.error('Error searching public posts:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get public post detail by ID (không cần authentication)
+   * @param postId Post ID
+   * @returns Promise<SellerPost>
+   */
+  async getPublicPostDetail(postId: string): Promise<SellerPost> {
+    try {
+      const response = await axios.get<BackendPublicGetPostDetailResponse>(
+        `${API_BASE_URL}/public/posts/${postId}`
+      );
+
+      // Transform backend response to frontend format
+      return mapBackendPublicGetPostDetailResponseToSellerPost(
+        response.data.detail
+      );
+    } catch (error) {
+      console.error('Error fetching public post detail:', error);
       throw error;
     }
   }

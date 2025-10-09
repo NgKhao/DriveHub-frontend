@@ -51,13 +51,13 @@ export const useAdminPosts = (page = 0, size = 10) => {
 };
 
 // Hook for fetching single post detail
-export const useAdminPostDetail = (postId: string) => {
+export const useAdminPostDetail = (postId: string, enabled: boolean = true) => {
   return useQuery<SellerPost, AdminError>({
     queryKey: ['admin', 'posts', postId],
     queryFn: () => adminService.getPostById(postId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
-    enabled: !!postId, // Only run query if postId is provided
+    enabled: !!postId && enabled, // Only run query if postId is provided and explicitly enabled
   });
 };
 

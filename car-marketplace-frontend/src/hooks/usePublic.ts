@@ -37,3 +37,21 @@ export const usePublicPostsSearch = (
     enabled: enabled && Object.keys(searchParams).length > 0, // Only run if there are search params
   });
 };
+
+/**
+ * Hook để lấy chi tiết public post (không cần authentication)
+ */
+export const usePublicPostDetail = (
+  postId: string,
+  enabled: boolean = true
+) => {
+  return useQuery<SellerPost, Error>({
+    queryKey: ['publicPostDetail', postId],
+    queryFn: () => publicService.getPublicPostDetail(postId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 3,
+    refetchOnWindowFocus: false,
+    enabled: !!postId && enabled, // Only run if postId is provided and explicitly enabled
+  });
+};

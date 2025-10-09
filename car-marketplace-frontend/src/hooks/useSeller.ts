@@ -52,13 +52,16 @@ export const useSellerPosts = () => {
 };
 
 // Hook for fetching single post detail
-export const useSellerPostDetail = (postId: string) => {
+export const useSellerPostDetail = (
+  postId: string,
+  enabled: boolean = true
+) => {
   return useQuery<SellerPost, SellerError>({
     queryKey: ['seller', 'posts', postId],
     queryFn: () => sellerService.getPostById(postId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
-    enabled: !!postId, // Only run query if postId is provided
+    enabled: !!postId && enabled, // Only run query if postId is provided and explicitly enabled
   });
 };
 

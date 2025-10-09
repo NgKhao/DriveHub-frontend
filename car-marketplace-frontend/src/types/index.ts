@@ -307,6 +307,14 @@ export interface BackendPublicSearchPostsResponse {
   instance: string;
 }
 
+// Public Get Post Detail API Types
+export interface BackendPublicGetPostDetailResponse {
+  messenger: string;
+  status: number;
+  detail: BackendPostItem;
+  instance: string;
+}
+
 // Search parameters interface
 export interface PublicSearchParams {
   make?: string;
@@ -818,6 +826,13 @@ export const mapBackendPublicSearchPostsResponseToSellerPosts = (
   backendResponse: BackendPublicSearchPostsResponse['detail']
 ): SellerPost[] => {
   return backendResponse.map(mapBackendPostItemToSellerPost);
+};
+
+// Helper function to convert backend public get post detail response to seller post
+export const mapBackendPublicGetPostDetailResponseToSellerPost = (
+  backendResponse: BackendPublicGetPostDetailResponse['detail']
+): SellerPost => {
+  return mapBackendPostItemToSellerPost(backendResponse);
 };
 
 // Helper function to convert frontend filters to backend search params
