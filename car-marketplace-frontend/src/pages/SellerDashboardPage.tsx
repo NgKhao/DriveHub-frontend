@@ -39,7 +39,7 @@ import { useAuthStore } from '../store/authStore';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import { validateCarForm } from '../utils/validation';
 import { useSellerPosts, useSeller } from '../hooks/useSeller';
-import type { SellerPost } from '../types';
+import type { SellerPost, CreatePostData } from '../types';
 import type { ValidationError } from '../utils/validation';
 
 const CAR_BRANDS = [
@@ -69,7 +69,8 @@ const SellerDashboardPage: React.FC = () => {
 
   // API hooks
   const { data: sellerPosts, isLoading, error, refetch } = useSellerPosts();
-  const { deletePost } = useSeller();
+  const { deletePost, updatePost, updatePostError, isUpdatePostLoading } =
+    useSeller();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -132,6 +133,16 @@ const SellerDashboardPage: React.FC = () => {
 
   const handleEdit = () => {
     if (selectedListing) {
+      // Check if post status is APPROVED
+      if (selectedListing.status === 'approved') {
+        setSnackbarMessage(
+          'Bài đăng ở trạng thái APPROVED không thể chỉnh sửa'
+        );
+        setSnackbarOpen(true);
+        handleMenuClose();
+        return;
+      }
+
       setEditForm({
         title: selectedListing.title,
         brand: selectedListing.carDetail.make, // Map from carDetail.make
@@ -162,7 +173,8 @@ const SellerDashboardPage: React.FC = () => {
       setEditErrors([]); // Clear previous errors
       setEditDialogOpen(true);
     }
-    handleMenuClose();
+    // Only close menu without resetting selectedListing
+    setAnchorEl(null);
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -266,11 +278,54 @@ const SellerDashboardPage: React.FC = () => {
     // Clear errors if validation passes
     setEditErrors([]);
 
-    // TODO: Implement API call to update listing
-    console.log('Saving edit:', editForm);
-    setSnackbarMessage('Bài đăng đã được cập nhật thành công!');
-    setSnackbarOpen(true);
-    setEditDialogOpen(false);
+    if (!selectedListing) return;
+
+    // Map form data to CreatePostData format
+    const updateData: CreatePostData = {
+      title: editForm.title,
+      description: editForm.description,
+      price: parseInt(editForm.price),
+      location: editForm.location,
+      phoneContact: editForm.sellerPhone,
+      sellerType: editForm.sellerType === 'dealer' ? 'agency' : 'individual',
+      make: editForm.brand,
+      model: editForm.model,
+      year: editForm.year,
+      mileage: parseInt(editForm.mileage),
+      fuelType: editForm.fuelType,
+      transmission: editForm.transmission,
+      color: editForm.color,
+      condition: editForm.condition,
+      images: editForm.images,
+    };
+
+    // Call the API to update the post
+    updatePost(
+      { postId: selectedListing.id, postData: updateData },
+      {
+        onSuccess: () => {
+          setSnackbarMessage('Bài đăng đã được cập nhật thành công!');
+          setSnackbarOpen(true);
+          setEditDialogOpen(false);
+          setSelectedListing(null);
+          refetch(); // Refresh the posts list
+        },
+        onError: (error) => {
+          // Handle specific error for APPROVED posts
+          if (error?.response?.status === 400) {
+            setSnackbarMessage(
+              error?.message ||
+                'Bài đăng ở trạng thái APPROVED không thể chỉnh sửa'
+            );
+          } else {
+            setSnackbarMessage(
+              error?.message || 'Có lỗi xảy ra khi cập nhật bài đăng'
+            );
+          }
+          setSnackbarOpen(true);
+        },
+      }
+    );
   };
 
   const handleView = () => {
@@ -505,7 +560,10 @@ const SellerDashboardPage: React.FC = () => {
           <Visibility sx={{ mr: 1 }} />
           Xem chi tiết
         </MenuItem>
-        <MenuItem onClick={handleEdit}>
+        <MenuItem
+          onClick={handleEdit}
+          disabled={selectedListing?.status === 'approved'}
+        >
           <Edit sx={{ mr: 1 }} />
           Chỉnh sửa
         </MenuItem>
@@ -519,13 +577,31 @@ const SellerDashboardPage: React.FC = () => {
       {/* Edit Dialog */}
       <Dialog
         open={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
+        onClose={() => {
+          setEditDialogOpen(false);
+          setSelectedListing(null);
+        }}
         maxWidth='lg'
         fullWidth
+        disableRestoreFocus
+        disableAutoFocus
+        sx={{
+          '& .MuiDialog-paper': {
+            maxHeight: '90vh',
+          },
+        }}
       >
         <DialogTitle>Chỉnh sửa bài đăng</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+          <Box
+            component='form'
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSaveEdit();
+            }}
+            sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}
+          >
             {/* Tiêu đề */}
             <TextField
               fullWidth
@@ -861,19 +937,32 @@ const SellerDashboardPage: React.FC = () => {
             </Box>
           </Box>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ p: 3, gap: 2 }}>
           <Button
-            onClick={() => setEditDialogOpen(false)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setEditDialogOpen(false);
+              setSelectedListing(null);
+            }}
             startIcon={<Cancel />}
+            size='large'
           >
             Hủy
           </Button>
           <Button
-            onClick={handleSaveEdit}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSaveEdit();
+            }}
             variant='contained'
             startIcon={<Save />}
+            disabled={isUpdatePostLoading}
+            size='large'
+            type='button'
           >
-            Lưu thay đổi
+            {isUpdatePostLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -885,6 +974,8 @@ const SellerDashboardPage: React.FC = () => {
           setDeleteDialogOpen(false);
           setSelectedListing(null);
         }}
+        disableRestoreFocus
+        disableAutoFocus
       >
         <DialogTitle>Xác nhận xóa</DialogTitle>
         <DialogContent>
@@ -895,16 +986,29 @@ const SellerDashboardPage: React.FC = () => {
             Hành động này không thể hoàn tác.
           </Typography>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ p: 3, gap: 2 }}>
           <Button
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               setDeleteDialogOpen(false);
               setSelectedListing(null);
             }}
+            size='large'
           >
             Hủy
           </Button>
-          <Button onClick={confirmDelete} color='error' variant='contained'>
+          <Button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              confirmDelete();
+            }}
+            color='error'
+            variant='contained'
+            size='large'
+            type='button'
+          >
             Xóa
           </Button>
         </DialogActions>

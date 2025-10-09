@@ -3,13 +3,16 @@ import type {
   CreatePostData,
   SellerPost,
   BackendCreatePostResponse,
+  BackendUpdatePostResponse,
   BackendGetPostsResponse,
   BackendGetPostDetailResponse,
   BackendDeletePostResponse,
 } from '../types';
 import {
   mapFrontendCreatePostToBackend,
+  mapFrontendCreatePostToBackendUpdate,
   mapBackendCreatePostResponseToSellerPost,
+  mapBackendUpdatePostResponseToSellerPost,
   mapBackendGetPostsResponseToSellerPosts,
   mapBackendGetPostDetailResponseToSellerPost,
 } from '../types';
@@ -65,18 +68,42 @@ export const sellerService = {
     return mapBackendGetPostsResponseToSellerPosts(response.data.detail);
   },
 
-  // Update post
+  // Update post with FormData
   updatePost: async (
     postId: string,
-    postData: Partial<CreatePostData>
+    postData: CreatePostData
   ): Promise<SellerPost> => {
-    // TODO: Implement when API is available
-    const response = await api.put<BackendCreatePostResponse>(
-      `/seller/posts/${postId}`,
-      postData
-    );
+    try {
+      // Convert frontend data to backend format
+      const backendPostData = mapFrontendCreatePostToBackendUpdate(postData);
 
-    return mapBackendCreatePostResponseToSellerPost(response.data.detail.post);
+      // Create FormData
+      const formData = new FormData();
+
+      // Add postDTO as JSON string
+      formData.append('postDTO', JSON.stringify(backendPostData));
+
+      // Add image files
+      postData.images.forEach((file) => {
+        formData.append('imageFile', file);
+      });
+
+      const response = await api.put<BackendUpdatePostResponse>(
+        `/seller/posts/${postId}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      // Transform backend response to frontend format
+      return mapBackendUpdatePostResponseToSellerPost(response.data.detail);
+    } catch (error) {
+      console.error('Error updating post:', error);
+      throw error;
+    }
   },
 
   // Delete post

@@ -72,7 +72,7 @@ export const useUpdatePost = () => {
   return useMutation<
     SellerPost,
     SellerError,
-    { postId: string; postData: Partial<CreatePostData> }
+    { postId: string; postData: CreatePostData }
   >({
     mutationFn: ({ postId, postData }) => {
       return sellerService.updatePost(postId, postData);

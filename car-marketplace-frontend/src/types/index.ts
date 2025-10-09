@@ -276,6 +276,54 @@ export interface BackendGetPostDetailResponse {
   instance: string;
 }
 
+export interface BackendUpdatePostRequest {
+  title: string;
+  description: string;
+  price: number;
+  location: string;
+  phoneContact: string;
+  sellerType: 'INDIVIDUAL' | 'AGENCY';
+  carDetailDTO: {
+    make: string;
+    model: string;
+    year: number;
+    mileage: number;
+    fuelType: string;
+    transmission: string;
+    color: string;
+    condition: string;
+  };
+}
+
+export interface BackendUpdatePostResponse {
+  messenger: string;
+  status: number;
+  detail: {
+    postId: number;
+    title: string;
+    description: string;
+    price: number;
+    status: string;
+    location: string;
+    phoneContact: string;
+    sellerType: string;
+    images: string[];
+    carDetailDTO: {
+      make: string;
+      model: string;
+      year: number;
+      mileage: number;
+      fuelType: string;
+      transmission: string;
+      color: string;
+      condition: string;
+    };
+    createdAt: string;
+    updatedAt: string;
+  };
+  instance: string;
+}
+
 export interface BackendDeletePostResponse {
   messenger: string;
   status: number;
@@ -716,6 +764,134 @@ export const mapBackendCreatePostResponseToSellerPost = (
 export const convertImageUrls = (images: string[]): string[] => {
   const baseUrl = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8080';
   return images.map((imagePath) => `${baseUrl}${imagePath}`);
+};
+
+// Helper function to convert frontend create post data to backend update format
+export const mapFrontendCreatePostToBackendUpdate = (
+  postData: CreatePostData
+): BackendUpdatePostRequest => {
+  const sellerTypeMap: Record<
+    'individual' | 'agency',
+    'INDIVIDUAL' | 'AGENCY'
+  > = {
+    individual: 'INDIVIDUAL',
+    agency: 'AGENCY',
+  };
+
+  const fuelTypeMap: Record<string, string> = {
+    gasoline: 'Xăng',
+    diesel: 'Dầu',
+    hybrid: 'Hybrid',
+    electric: 'Điện',
+  };
+
+  const transmissionMap: Record<string, string> = {
+    manual: 'Số sàn',
+    automatic: 'Số tự động',
+  };
+
+  const conditionMap: Record<string, string> = {
+    new: 'Mới',
+    used: 'Cũ',
+  };
+
+  return {
+    title: postData.title,
+    description: postData.description,
+    price: postData.price,
+    location: postData.location,
+    phoneContact: postData.phoneContact,
+    sellerType: sellerTypeMap[postData.sellerType],
+    carDetailDTO: {
+      make: postData.make,
+      model: postData.model,
+      year: postData.year,
+      mileage: postData.mileage,
+      fuelType: fuelTypeMap[postData.fuelType] || postData.fuelType,
+      transmission:
+        transmissionMap[postData.transmission] || postData.transmission,
+      color: postData.color,
+      condition: conditionMap[postData.condition] || postData.condition,
+    },
+  };
+};
+
+// Helper function to convert backend update post response to frontend format
+export const mapBackendUpdatePostResponseToSellerPost = (
+  backendResponse: BackendUpdatePostResponse['detail']
+): SellerPost => {
+  const sellerTypeMap: Record<
+    'INDIVIDUAL' | 'AGENCY',
+    'individual' | 'agency'
+  > = {
+    INDIVIDUAL: 'individual',
+    AGENCY: 'agency',
+  };
+
+  const statusMap: Record<string, 'approved' | 'pending' | 'rejected'> = {
+    APPROVED: 'approved',
+    PENDING: 'pending',
+    REJECTED: 'rejected',
+    DRAFT: 'pending',
+    BLOCKED: 'rejected',
+    HIDDEN: 'rejected',
+  };
+
+  const fuelTypeMap: Record<
+    string,
+    'gasoline' | 'diesel' | 'hybrid' | 'electric'
+  > = {
+    gasoline: 'gasoline',
+    diesel: 'diesel',
+    hybrid: 'hybrid',
+    electric: 'electric',
+    Xăng: 'gasoline',
+    Dầu: 'diesel',
+    Hybrid: 'hybrid',
+    Điện: 'electric',
+  };
+
+  const transmissionMap: Record<string, 'manual' | 'automatic'> = {
+    automatic: 'automatic',
+    manual: 'manual',
+    'Số tự động': 'automatic',
+    'Số sàn': 'manual',
+  };
+
+  const conditionMap: Record<string, 'new' | 'used'> = {
+    new: 'new',
+    used: 'used',
+    Mới: 'new',
+    Cũ: 'used',
+  };
+
+  return {
+    id: backendResponse.postId.toString(),
+    title: backendResponse.title,
+    description: backendResponse.description,
+    price: backendResponse.price,
+    status: statusMap[backendResponse.status] || 'pending',
+    location: backendResponse.location,
+    phoneContact: backendResponse.phoneContact,
+    sellerType:
+      sellerTypeMap[backendResponse.sellerType as 'INDIVIDUAL' | 'AGENCY'],
+    images: convertImageUrls(backendResponse.images),
+    carDetail: {
+      make: backendResponse.carDetailDTO.make,
+      model: backendResponse.carDetailDTO.model,
+      year: backendResponse.carDetailDTO.year,
+      mileage: backendResponse.carDetailDTO.mileage,
+      fuelType:
+        fuelTypeMap[backendResponse.carDetailDTO.fuelType] || 'gasoline',
+      transmission:
+        transmissionMap[backendResponse.carDetailDTO.transmission] ||
+        'automatic',
+      color: backendResponse.carDetailDTO.color,
+      condition: conditionMap[backendResponse.carDetailDTO.condition] || 'used',
+    },
+    createdAt: backendResponse.createdAt,
+    updatedAt: backendResponse.updatedAt,
+  };
 };
 
 // Helper function to convert backend post item to seller post
