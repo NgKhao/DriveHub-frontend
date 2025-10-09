@@ -13,6 +13,7 @@ import type {
   BackendAdminGetPostsResponse,
   BackendAdminGetPostDetailResponse,
   BackendAdminUpdatePostStatusResponse,
+  BackendAdminDeletePostResponse,
 } from '../types';
 import {
   mapBackendGetUsersResponseToPaginated,
@@ -229,5 +230,11 @@ export const adminService = {
     return mapBackendAdminUpdatePostStatusResponseToSellerPost(
       response.data.detail
     );
+  },
+
+  // Delete post
+  deletePost: async (id: string): Promise<void> => {
+    await api.delete<BackendAdminDeletePostResponse>(`/admin/posts/${id}`);
+    // API returns 204 status with null detail, no need to transform response
   },
 };

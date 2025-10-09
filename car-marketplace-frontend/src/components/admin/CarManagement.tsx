@@ -39,7 +39,11 @@ import {
   Cancel,
   Delete,
 } from '@mui/icons-material';
-import { useAdminPosts, useUpdatePostStatus } from '../../hooks/useAdmin';
+import {
+  useAdminPosts,
+  useUpdatePostStatus,
+  useDeletePost,
+} from '../../hooks/useAdmin';
 import { formatCurrency, formatRelativeTime } from '../../utils/helpers';
 import type { SellerPost } from '../../types';
 
@@ -62,6 +66,9 @@ const CarManagement: React.FC = () => {
 
   // Update post status mutation
   const updatePostStatusMutation = useUpdatePostStatus();
+
+  // Delete post mutation
+  const deletePostMutation = useDeletePost();
 
   // Menu states
   const [selectedListing, setSelectedListing] = useState<SellerPost | null>(
@@ -171,10 +178,19 @@ const CarManagement: React.FC = () => {
 
   const handleDelete = () => {
     if (selectedListing) {
-      // TODO: Implement API call to delete post
-      setSnackbarMessage('Đã xóa bài đăng');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
+      deletePostMutation.mutate(selectedListing.id, {
+        onSuccess: () => {
+          setSnackbarMessage('Đã xóa bài đăng thành công');
+          setSnackbarSeverity('success');
+          setSnackbarOpen(true);
+          refetch(); // Refresh data
+        },
+        onError: () => {
+          setSnackbarMessage('Có lỗi xảy ra khi xóa bài đăng');
+          setSnackbarSeverity('error');
+          setSnackbarOpen(true);
+        },
+      });
     }
     handleMenuClose();
   };
@@ -495,9 +511,13 @@ const CarManagement: React.FC = () => {
             </MenuItem>
           </>
         )}
-        <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+        <MenuItem
+          onClick={handleDelete}
+          sx={{ color: 'error.main' }}
+          disabled={deletePostMutation.isPending}
+        >
           <Delete sx={{ mr: 1 }} />
-          Xóa bài đăng
+          {deletePostMutation.isPending ? 'Đang xóa...' : 'Xóa bài đăng'}
         </MenuItem>
       </Menu>
 

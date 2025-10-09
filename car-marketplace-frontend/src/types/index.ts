@@ -313,6 +313,13 @@ export interface BackendAdminUpdatePostStatusResponse {
   instance: string;
 }
 
+export interface BackendAdminDeletePostResponse {
+  messenger: string;
+  status: number;
+  detail: null;
+  instance: string;
+}
+
 // User Types
 export interface User {
   id: string;

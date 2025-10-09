@@ -191,6 +191,24 @@ export const useUpdatePostStatus = () => {
   });
 };
 
+// Hook for deleting post
+export const useDeletePost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => {
+      return adminService.deletePost(id);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch posts queries
+      queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] });
+    },
+    onError: (error: AdminError) => {
+      console.error('Delete post error:', error);
+    },
+  });
+};
+
 // Main admin hook that combines all admin operations
 export const useAdmin = () => {
   const updateUserMutation = useUpdateUser();
@@ -199,6 +217,7 @@ export const useAdmin = () => {
   const deleteUserMutation = useDeleteUser();
   const toggleUserStatusMutation = useToggleUserStatus();
   const updatePostStatusMutation = useUpdatePostStatus();
+  const deletePostMutation = useDeletePost();
 
   return {
     // User management (old method)
@@ -247,6 +266,14 @@ export const useAdmin = () => {
       ? getErrorMessage(updatePostStatusMutation.error)
       : null,
 
+    // Post delete management
+    deletePost: deletePostMutation.mutate,
+    deletePostAsync: deletePostMutation.mutateAsync,
+    isDeletePostLoading: deletePostMutation.isPending,
+    deletePostError: deletePostMutation.error
+      ? getErrorMessage(deletePostMutation.error)
+      : null,
+
     // Reset mutations
     resetUpdateUserError: updateUserMutation.reset,
     resetUpdateUserAdminError: updateUserAdminMutation.reset,
@@ -254,5 +281,6 @@ export const useAdmin = () => {
     resetDeleteUserError: deleteUserMutation.reset,
     resetToggleUserStatusError: toggleUserStatusMutation.reset,
     resetUpdatePostStatusError: updatePostStatusMutation.reset,
+    resetDeletePostError: deletePostMutation.reset,
   };
 };
