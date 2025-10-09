@@ -141,28 +141,82 @@ const CarDetailPage: React.FC = () => {
     );
   }
 
+  // Dynamic breadcrumbs based on context
+  const getBreadcrumbs = () => {
+    if (isAdminContext) {
+      return (
+        <Breadcrumbs
+          separator={<NavigateNext fontSize='small' />}
+          sx={{ mb: 3 }}
+        >
+          <Link
+            component='button'
+            onClick={() => navigate('/admin')}
+            underline='hover'
+            color='inherit'
+          >
+            Admin Dashboard
+          </Link>
+          <Link
+            component='button'
+            onClick={() => navigate('/admin/cars')}
+            underline='hover'
+            color='inherit'
+          >
+            Quản lý xe
+          </Link>
+          <Typography color='text.primary'>Chi tiết xe</Typography>
+        </Breadcrumbs>
+      );
+    } else if (isSellerContext) {
+      return (
+        <Breadcrumbs
+          separator={<NavigateNext fontSize='small' />}
+          sx={{ mb: 3 }}
+        >
+          <Link
+            component='button'
+            onClick={() => navigate('/seller-dashboard')}
+            underline='hover'
+            color='inherit'
+          >
+            Seller Dashboard
+          </Link>
+          <Typography color='text.primary'>Chi tiết xe</Typography>
+        </Breadcrumbs>
+      );
+    } else {
+      return (
+        <Breadcrumbs
+          separator={<NavigateNext fontSize='small' />}
+          sx={{ mb: 3 }}
+        >
+          <Link
+            component='button'
+            onClick={() => navigate('/')}
+            underline='hover'
+            color='inherit'
+          >
+            Trang chủ
+          </Link>
+          <Link
+            component='button'
+            onClick={() => navigate('/cars')}
+            underline='hover'
+            color='inherit'
+          >
+            Danh sách xe
+          </Link>
+          <Typography color='text.primary'>Chi tiết xe</Typography>
+        </Breadcrumbs>
+      );
+    }
+  };
+
   return (
     <Container maxWidth='lg' sx={{ py: 4 }}>
-      {/* Breadcrumbs */}
-      <Breadcrumbs separator={<NavigateNext fontSize='small' />} sx={{ mb: 3 }}>
-        <Link
-          component='button'
-          onClick={() => navigate('/')}
-          underline='hover'
-          color='inherit'
-        >
-          Trang chủ
-        </Link>
-        <Link
-          component='button'
-          onClick={() => navigate('/cars')}
-          underline='hover'
-          color='inherit'
-        >
-          Danh sách xe
-        </Link>
-        <Typography color='text.primary'>Chi tiết xe</Typography>
-      </Breadcrumbs>
+      {/* Dynamic Breadcrumbs */}
+      {getBreadcrumbs()}
 
       {/* Header Actions */}
       <Box

@@ -69,6 +69,10 @@ function App() {
                 element={<SellerDashboardPage />}
               />
               <Route
+                path='seller-dashboard/cars/:id'
+                element={<CarDetailPage />}
+              />
+              <Route
                 path='admin'
                 element={
                   <ProtectedRoute requiredRole='admin'>
@@ -89,6 +93,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole='admin'>
                     <AdminCarsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path='admin/cars/:id'
+                element={
+                  <ProtectedRoute requiredRole='admin'>
+                    <CarDetailPage />
                   </ProtectedRoute>
                 }
               />

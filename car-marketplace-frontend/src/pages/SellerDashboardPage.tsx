@@ -330,7 +330,7 @@ const SellerDashboardPage: React.FC = () => {
 
   const handleView = () => {
     if (selectedListing) {
-      navigate(`/cars/${selectedListing.id}`);
+      navigate(`/seller-dashboard/cars/${selectedListing.id}`);
     }
     handleMenuClose();
   };

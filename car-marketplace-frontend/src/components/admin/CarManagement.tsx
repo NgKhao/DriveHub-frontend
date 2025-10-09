@@ -121,7 +121,7 @@ const CarManagement: React.FC = () => {
 
   const handleViewDetail = () => {
     if (selectedListing) {
-      navigate(`/cars/${selectedListing.id}`);
+      navigate(`/admin/cars/${selectedListing.id}`);
     }
     handleMenuClose();
   };
