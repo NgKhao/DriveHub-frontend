@@ -1523,3 +1523,78 @@ export const mapBackendGetSellerReviewsResponseToReviewSummary = (
     reviews,
   };
 };
+
+// Report API Types
+export interface CreateReportData {
+  reportedUserId: number;
+  reason: string;
+  description: string;
+}
+
+// Backend Report API Types
+export interface BackendCreateReportRequest {
+  reportedUserId: number;
+  reason: string;
+  description: string;
+}
+
+export interface BackendCreateReportResponse {
+  messenger: string;
+  status: number;
+  detail: {
+    id: number;
+    reporterId: number;
+    reporterName: string;
+    reportedUserId: number;
+    reportedUserName: string;
+    reason: string;
+    description: string;
+    status: 'PENDING' | 'RESOLVED' | 'REJECTED';
+    createdAt: string;
+    handledAt: string | null;
+    handledBy: number | null;
+    handledByName: string | null;
+  };
+  instance: string;
+}
+
+// Report mapping functions
+export const mapFrontendCreateReportToBackend = (
+  reportData: CreateReportData
+): BackendCreateReportRequest => {
+  return {
+    reportedUserId: reportData.reportedUserId,
+    reason: reportData.reason,
+    description: reportData.description,
+  };
+};
+
+export const mapBackendCreateReportResponseToReport = (
+  backendResponse: BackendCreateReportResponse['detail']
+): Report => {
+  // Map backend status to frontend status
+  const mapStatus = (backendStatus: string): Report['status'] => {
+    switch (backendStatus) {
+      case 'PENDING':
+        return 'pending';
+      case 'RESOLVED':
+        return 'resolved';
+      case 'REJECTED':
+        return 'dismissed';
+      default:
+        return 'pending';
+    }
+  };
+
+  return {
+    id: backendResponse.id.toString(),
+    reporterId: backendResponse.reporterId.toString(),
+    reportedId: backendResponse.reportedUserId.toString(),
+    reportedType: 'seller', // Assuming we're reporting sellers from this context
+    reason: backendResponse.reason,
+    description: backendResponse.description,
+    status: mapStatus(backendResponse.status),
+    createdAt: backendResponse.createdAt,
+    updatedAt: backendResponse.createdAt, // Use createdAt as updatedAt initially
+  };
+};

@@ -18,6 +18,7 @@ import {
 import { Warning } from '@mui/icons-material';
 import { useReportStore } from '../../store/reportStore';
 import { useAuthStore } from '../../store/authStore';
+import { useReportManager } from '../../hooks/useReport';
 
 interface ReportDialogProps {
   open: boolean;
@@ -35,7 +36,14 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
   reportedType,
 }) => {
   const { user } = useAuthStore();
-  const { submitReport, getReportReasons } = useReportStore();
+  const { getReportReasons } = useReportStore();
+  const {
+    createReportAsync,
+    isCreatingReport,
+    createReportError,
+    isCreateReportSuccess,
+    resetCreateReportError,
+  } = useReportManager();
 
   const [selectedReason, setSelectedReason] = useState('');
   const [description, setDescription] = useState('');
@@ -44,80 +52,88 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
     phone: '',
     email: '',
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  // Use hook states
+  const isSubmitting = isCreatingReport;
+  const error = createReportError || localError;
+  const success = isCreateReportSuccess;
 
   const reportReasons = getReportReasons();
 
   const handleSubmit = async () => {
     if (!user) {
-      setError('Bạn cần đăng nhập để báo cáo');
+      setLocalError('Bạn cần đăng nhập để báo cáo');
       return;
     }
 
     // Kiểm tra quyền báo cáo
     if (reportedType === 'seller' && user.role !== 'buyer') {
-      setError('Chỉ người mua mới có thể báo cáo người bán');
+      setLocalError('Chỉ người mua mới có thể báo cáo người bán');
       return;
     }
 
     if (reportedType === 'buyer' && user.role !== 'seller') {
-      setError('Chỉ người bán mới có thể báo cáo người mua');
+      setLocalError('Chỉ người bán mới có thể báo cáo người mua');
       return;
     }
 
     // Kiểm tra thông tin người bị báo cáo cho trường hợp manual input
     if (reportedType === 'buyer' && !reportedId) {
       if (!buyerInfo.name.trim()) {
-        setError('Vui lòng nhập tên người mua');
+        setLocalError('Vui lòng nhập tên người mua');
         return;
       }
       if (!buyerInfo.phone.trim()) {
-        setError('Vui lòng nhập số điện thoại người mua');
+        setLocalError('Vui lòng nhập số điện thoại người mua');
         return;
       }
     }
 
     if (!selectedReason) {
-      setError('Vui lòng chọn lý do báo cáo');
+      setLocalError('Vui lòng chọn lý do báo cáo');
       return;
     }
 
     if (!description.trim()) {
-      setError('Vui lòng mô tả chi tiết vấn đề');
+      setLocalError('Vui lòng mô tả chi tiết vấn đề');
       return;
     }
 
-    setIsSubmitting(true);
-    setError(null);
+    setLocalError(null);
+    resetCreateReportError();
 
     try {
-      // For manual buyer reporting, use buyer info as reported data
-      const finalReportedId = reportedId || `buyer_${Date.now()}`;
+      // For now, we assume reportedId is the user ID we want to report
+      // In real scenario, you might need to map seller post ID to user ID
+      const reportedUserId = parseInt(reportedId);
 
-      await submitReport(
-        finalReportedId,
-        reportedType,
-        selectedReason,
+      if (isNaN(reportedUserId)) {
+        setLocalError('ID người dùng không hợp lệ');
+        return;
+      }
+
+      const finalDescription =
         description.trim() +
-          (reportedType === 'buyer' && !reportedId
-            ? `\n\nThông tin người mua:\nTên: ${buyerInfo.name}\nSĐT: ${
-                buyerInfo.phone
-              }${buyerInfo.email ? `\nEmail: ${buyerInfo.email}` : ''}`
-            : '')
-      );
-      setSuccess(true);
+        (reportedType === 'buyer' && !reportedId
+          ? `\n\nThông tin người mua:\nTên: ${buyerInfo.name}\nSĐT: ${
+              buyerInfo.phone
+            }${buyerInfo.email ? `\nEmail: ${buyerInfo.email}` : ''}`
+          : '');
 
-      // Auto close after success
+      await createReportAsync({
+        reportedUserId,
+        reason: selectedReason,
+        description: finalDescription,
+      });
+
+      // Auto close after success - success state will be managed by the hook
       setTimeout(() => {
         handleClose();
       }, 2000);
     } catch (err) {
-      setError('Có lỗi xảy ra khi gửi báo cáo');
       console.error('Report error:', err);
-    } finally {
-      setIsSubmitting(false);
+      // Error is handled by the hook, but we can set additional local error if needed
     }
   };
 
@@ -125,8 +141,8 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
     setSelectedReason('');
     setDescription('');
     setBuyerInfo({ name: '', phone: '', email: '' });
-    setError(null);
-    setSuccess(false);
+    setLocalError(null);
+    resetCreateReportError();
     onClose();
   };
 
