@@ -30,43 +30,53 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import { useCarStore } from '../store/carStore';
 import { formatCurrency } from '../utils/helpers';
 import { CAR_BRANDS } from '../types';
-import type { CarFilters } from '../types';
+import type { CarFilters, SellerPost, Car } from '../types';
+import { usePublicPosts } from '../hooks/usePublic';
 
-// Mock data - replace with actual API call
-const mockCars = [
-  {
-    id: '1',
-    title: 'Toyota Camry 2022 - Xe gia đình sang trọng',
-    brand: 'Toyota',
-    model: 'Camry',
-    year: 2022,
-    price: 1200000000,
-    mileage: 15000,
-    fuelType: 'gasoline' as const,
-    transmission: 'automatic' as const,
-    color: 'Đen',
-    description: 'Xe gia đình 5 chỗ, bảo dưỡng định kỳ...',
-    images: ['/api/placeholder/400/300'],
-    sellerId: '1',
-    sellerName: 'Nguyễn Văn A',
-    sellerPhone: '0901234567',
-    sellerType: 'individual' as const,
-    location: 'Hồ Chí Minh',
-    status: 'active' as const,
-    features: ['ABS', 'Airbag', 'Điều hòa'],
-    condition: 'used' as const,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  },
-  // Add more mock cars...
-];
+// Helper function to convert SellerPost to Car format for CarCard component
+const mapSellerPostToCar = (sellerPost: SellerPost): Car => {
+  return {
+    id: sellerPost.id,
+    title: sellerPost.title,
+    brand: sellerPost.carDetail.make,
+    model: sellerPost.carDetail.model,
+    year: sellerPost.carDetail.year,
+    price: sellerPost.price,
+    mileage: sellerPost.carDetail.mileage,
+    fuelType: sellerPost.carDetail.fuelType.toLowerCase() as
+      | 'gasoline'
+      | 'diesel'
+      | 'hybrid'
+      | 'electric',
+    transmission: sellerPost.carDetail.transmission.toLowerCase() as
+      | 'manual'
+      | 'automatic',
+    color: sellerPost.carDetail.color,
+    description: sellerPost.description,
+    images: sellerPost.images,
+    sellerId: sellerPost.id, // Using post id as seller id for now
+    sellerName: 'Seller', // Default name since not available in SellerPost
+    sellerPhone: sellerPost.phoneContact,
+    sellerType: sellerPost.sellerType === 'agency' ? 'dealer' : 'individual',
+    location: sellerPost.location,
+    status:
+      sellerPost.status === 'approved'
+        ? 'active'
+        : (sellerPost.status as 'pending' | 'sold' | 'rejected'),
+    condition: sellerPost.carDetail.condition.toLowerCase() as 'new' | 'used',
+    createdAt: sellerPost.createdAt,
+    updatedAt: sellerPost.updatedAt || sellerPost.createdAt,
+  };
+};
+
+// Remove mock data - using real API now
 
 const CarListingsPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { cars, loading, filters, setFilters, clearFilters } = useCarStore();
+  const { filters, setFilters, clearFilters } = useCarStore();
   const [localFilters, setLocalFilters] = useState<CarFilters>({});
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get('search') || ''
@@ -74,6 +84,13 @@ const CarListingsPage: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [page, setPage] = useState(1);
   const carsPerPage = 12;
+
+  // Use public posts API
+  const {
+    data: publicPostsData,
+    isLoading,
+    error,
+  } = usePublicPosts(page - 1, carsPerPage);
 
   // Price range state
   const [priceRange, setPriceRange] = useState<number[]>([0, 5000000000]);
@@ -302,11 +319,10 @@ const CarListingsPage: React.FC = () => {
     </Box>
   );
 
-  // Calculate pagination
-  const totalCars = mockCars.length; // Replace with actual filtered data length
-  const totalPages = Math.ceil(totalCars / carsPerPage);
-  const startIndex = (page - 1) * carsPerPage;
-  const displayedCars = mockCars.slice(startIndex, startIndex + carsPerPage);
+  // Calculate pagination from API data
+  const totalCars = publicPostsData?.total || 0;
+  const totalPages = publicPostsData?.totalPages || 0;
+  const displayedCars = (publicPostsData?.items || []).map(mapSellerPostToCar);
 
   return (
     <Container maxWidth='xl' sx={{ py: 4 }}>
@@ -414,8 +430,17 @@ const CarListingsPage: React.FC = () => {
 
         {/* Cars Grid */}
         <Box sx={{ flex: 1 }}>
-          {loading ? (
+          {isLoading ? (
             <LoadingSpinner />
+          ) : error ? (
+            <Paper sx={{ p: 4, textAlign: 'center' }}>
+              <Typography variant='h6' gutterBottom color='error'>
+                Có lỗi xảy ra khi tải dữ liệu
+              </Typography>
+              <Typography variant='body2' color='text.secondary'>
+                Vui lòng thử lại sau
+              </Typography>
+            </Paper>
           ) : displayedCars.length > 0 ? (
             <>
               <Box
@@ -431,7 +456,7 @@ const CarListingsPage: React.FC = () => {
                   mb: 4,
                 }}
               >
-                {displayedCars.map((car) => (
+                {displayedCars.map((car: Car) => (
                   <CarCard key={car.id} car={car} />
                 ))}
               </Box>

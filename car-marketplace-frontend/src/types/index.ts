@@ -283,6 +283,22 @@ export interface BackendDeletePostResponse {
   instance: string;
 }
 
+// Public Posts API Types
+export interface BackendPublicGetPostsResponse {
+  messenger: string;
+  status: number;
+  detail: {
+    content: BackendPostItem[];
+    pageNumber: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+    first: boolean;
+    last: boolean;
+  };
+  instance: string;
+}
+
 // Admin Posts API Types
 export interface BackendAdminGetPostsResponse {
   messenger: string;
@@ -761,6 +777,55 @@ export const mapBackendAdminUpdatePostStatusResponseToSellerPost = (
   backendResponse: BackendAdminUpdatePostStatusResponse['detail']
 ): SellerPost => {
   return mapBackendPostItemToSellerPost(backendResponse);
+};
+
+// Helper function to convert backend public get posts response to paginated seller posts
+export const mapBackendPublicGetPostsResponseToPaginated = (
+  backendResponse: BackendPublicGetPostsResponse['detail']
+): PaginatedResponse<SellerPost> => {
+  return {
+    items: backendResponse.content.map(mapBackendPostItemToSellerPost),
+    total: backendResponse.totalElements,
+    page: backendResponse.pageNumber,
+    limit: backendResponse.pageSize,
+    totalPages: backendResponse.totalPages,
+  };
+};
+
+// Helper function to convert SellerPost to Car format for CarCard component
+export const mapSellerPostToCar = (sellerPost: SellerPost): Car => {
+  return {
+    id: sellerPost.id,
+    title: sellerPost.title,
+    brand: sellerPost.carDetail.make,
+    model: sellerPost.carDetail.model,
+    year: sellerPost.carDetail.year,
+    price: sellerPost.price,
+    mileage: sellerPost.carDetail.mileage,
+    fuelType: sellerPost.carDetail.fuelType.toLowerCase() as
+      | 'gasoline'
+      | 'diesel'
+      | 'hybrid'
+      | 'electric',
+    transmission: sellerPost.carDetail.transmission.toLowerCase() as
+      | 'manual'
+      | 'automatic',
+    color: sellerPost.carDetail.color,
+    description: sellerPost.description,
+    images: sellerPost.images,
+    sellerId: sellerPost.id, // Using post id as seller id for now
+    sellerName: 'Seller', // Default name since not available in SellerPost
+    sellerPhone: sellerPost.phoneContact,
+    sellerType: sellerPost.sellerType === 'agency' ? 'dealer' : 'individual',
+    location: sellerPost.location,
+    status:
+      sellerPost.status === 'approved'
+        ? 'active'
+        : (sellerPost.status as 'pending' | 'sold' | 'rejected'),
+    condition: sellerPost.carDetail.condition.toLowerCase() as 'new' | 'used',
+    createdAt: sellerPost.createdAt,
+    updatedAt: sellerPost.updatedAt || sellerPost.createdAt,
+  };
 };
 
 // Car Types
