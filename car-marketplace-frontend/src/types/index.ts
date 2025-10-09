@@ -359,7 +359,15 @@ export interface BackendPublicSearchPostsResponse {
 export interface BackendPublicGetPostDetailResponse {
   messenger: string;
   status: number;
-  detail: BackendPostItem;
+  detail: {
+    post: BackendPostItem;
+    sellerInfo: {
+      sellerId: number;
+      sellerName: string;
+      sellerEmail: string;
+      sellerPhone: string;
+    };
+  };
   instance: string;
 }
 
@@ -655,6 +663,14 @@ export interface CreatePostData {
   images: File[];
 }
 
+// Seller Info interface for public API response
+export interface SellerInfo {
+  sellerId: number;
+  sellerName: string;
+  sellerEmail: string;
+  sellerPhone: string;
+}
+
 export interface SellerPost {
   id: string;
   title: string;
@@ -677,6 +693,8 @@ export interface SellerPost {
   };
   createdAt: string;
   updatedAt: string | null;
+  // Optional seller info (available when fetched from public detail API)
+  sellerInfo?: SellerInfo;
 }
 
 // Helper function to convert frontend create post data to backend format
@@ -1008,7 +1026,17 @@ export const mapBackendPublicSearchPostsResponseToSellerPosts = (
 export const mapBackendPublicGetPostDetailResponseToSellerPost = (
   backendResponse: BackendPublicGetPostDetailResponse['detail']
 ): SellerPost => {
-  return mapBackendPostItemToSellerPost(backendResponse);
+  const sellerPost = mapBackendPostItemToSellerPost(backendResponse.post);
+
+  // Add seller info if available
+  sellerPost.sellerInfo = {
+    sellerId: backendResponse.sellerInfo.sellerId,
+    sellerName: backendResponse.sellerInfo.sellerName,
+    sellerEmail: backendResponse.sellerInfo.sellerEmail,
+    sellerPhone: backendResponse.sellerInfo.sellerPhone,
+  };
+
+  return sellerPost;
 };
 
 // Helper function to convert frontend filters to backend search params

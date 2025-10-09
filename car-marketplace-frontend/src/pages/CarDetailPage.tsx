@@ -12,6 +12,8 @@ import {
   Breadcrumbs,
   Link,
   Alert,
+  Card,
+  CardContent,
 } from '@mui/material';
 import {
   Phone,
@@ -27,10 +29,11 @@ import {
   FavoriteBorder,
   NavigateNext,
   Report,
+  Person,
 } from '@mui/icons-material';
 import { formatCurrency, formatRelativeTime } from '../utils/helpers';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import SellerRatings from '../components/common/SellerRatings';
+import SellerInfoDialog from '../components/common/SellerInfoDialog';
 import ReportDialog from '../components/common/ReportDialog';
 import { useAuthStore } from '../store/authStore';
 import { useSellerPostDetail } from '../hooks/useSeller';
@@ -95,6 +98,7 @@ const CarDetailPage: React.FC = () => {
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [sellerInfoDialogOpen, setSellerInfoDialogOpen] = useState(false);
 
   // Favorites management
   const {
@@ -452,7 +456,7 @@ const CarDetailPage: React.FC = () => {
 
             <Box sx={{ mb: 3 }}>
               <Typography variant='body1' fontWeight='medium'>
-                Người bán
+                {sellerPost.sellerInfo?.sellerName || 'Người bán'}
               </Typography>
               <Typography variant='body2' color='text.secondary'>
                 {sellerPost.sellerType === 'individual' ? 'Cá nhân' : 'Đại lý'}
@@ -509,13 +513,56 @@ const CarDetailPage: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Seller Ratings Section */}
+      {/* Seller Info Section */}
       <Box sx={{ mt: 4 }}>
-        <SellerRatings
-          sellerId={sellerPost.id}
-          sellerName={`Người bán bài đăng ${sellerPost.id}`}
-        />
+        <Card
+          sx={{
+            border: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <CardContent sx={{ p: 3 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 2,
+              }}
+            >
+              <Box>
+                <Typography variant='h6' gutterBottom>
+                  👤 Thông tin người bán
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  Xem chi tiết và đánh giá từ khách hàng khác
+                </Typography>
+              </Box>
+              <Button
+                variant='contained'
+                size='large'
+                startIcon={<Person />}
+                onClick={() => setSellerInfoDialogOpen(true)}
+                sx={{
+                  borderRadius: 2,
+                  px: 3,
+                  py: 1.5,
+                }}
+              >
+                Xem thông tin & đánh giá
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
       </Box>
+
+      {/* Seller Info Dialog */}
+      <SellerInfoDialog
+        open={sellerInfoDialogOpen}
+        onClose={() => setSellerInfoDialogOpen(false)}
+        sellerPost={sellerPost}
+      />
 
       {/* Report Dialog */}
       <ReportDialog
