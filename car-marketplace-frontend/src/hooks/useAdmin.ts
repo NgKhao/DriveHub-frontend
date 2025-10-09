@@ -167,6 +167,30 @@ export const useToggleUserStatus = () => {
   });
 };
 
+// Hook for updating post status (approve/reject)
+export const useUpdatePostStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      status,
+    }: {
+      id: string;
+      status: 'APPROVED' | 'REJECTED';
+    }) => {
+      return adminService.updatePostStatus(id, status);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch posts queries
+      queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] });
+    },
+    onError: (error: AdminError) => {
+      console.error('Update post status error:', error);
+    },
+  });
+};
+
 // Main admin hook that combines all admin operations
 export const useAdmin = () => {
   const updateUserMutation = useUpdateUser();
@@ -174,6 +198,7 @@ export const useAdmin = () => {
   const createUserMutation = useCreateUser();
   const deleteUserMutation = useDeleteUser();
   const toggleUserStatusMutation = useToggleUserStatus();
+  const updatePostStatusMutation = useUpdatePostStatus();
 
   return {
     // User management (old method)
@@ -214,11 +239,20 @@ export const useAdmin = () => {
       ? getErrorMessage(toggleUserStatusMutation.error)
       : null,
 
+    // Post status management
+    updatePostStatus: updatePostStatusMutation.mutate,
+    updatePostStatusAsync: updatePostStatusMutation.mutateAsync,
+    isUpdatePostStatusLoading: updatePostStatusMutation.isPending,
+    updatePostStatusError: updatePostStatusMutation.error
+      ? getErrorMessage(updatePostStatusMutation.error)
+      : null,
+
     // Reset mutations
     resetUpdateUserError: updateUserMutation.reset,
     resetUpdateUserAdminError: updateUserAdminMutation.reset,
     resetCreateUserError: createUserMutation.reset,
     resetDeleteUserError: deleteUserMutation.reset,
     resetToggleUserStatusError: toggleUserStatusMutation.reset,
+    resetUpdatePostStatusError: updatePostStatusMutation.reset,
   };
 };

@@ -306,6 +306,13 @@ export interface BackendAdminGetPostDetailResponse {
   instance: string;
 }
 
+export interface BackendAdminUpdatePostStatusResponse {
+  messenger: string;
+  status: number;
+  detail: BackendPostItem;
+  instance: string;
+}
+
 // User Types
 export interface User {
   id: string;
@@ -738,6 +745,13 @@ export const mapBackendAdminGetPostsResponseToPaginated = (
 // Helper function to convert backend admin get post detail response to seller post
 export const mapBackendAdminGetPostDetailResponseToSellerPost = (
   backendResponse: BackendAdminGetPostDetailResponse['detail']
+): SellerPost => {
+  return mapBackendPostItemToSellerPost(backendResponse);
+};
+
+// Helper function to convert backend admin update post status response to seller post
+export const mapBackendAdminUpdatePostStatusResponseToSellerPost = (
+  backendResponse: BackendAdminUpdatePostStatusResponse['detail']
 ): SellerPost => {
   return mapBackendPostItemToSellerPost(backendResponse);
 };

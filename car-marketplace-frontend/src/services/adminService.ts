@@ -12,6 +12,7 @@ import type {
   BackendDeleteUserResponse,
   BackendAdminGetPostsResponse,
   BackendAdminGetPostDetailResponse,
+  BackendAdminUpdatePostStatusResponse,
 } from '../types';
 import {
   mapBackendGetUsersResponseToPaginated,
@@ -21,6 +22,7 @@ import {
   mapBackendCreateUserResponseToUser,
   mapBackendAdminGetPostsResponseToPaginated,
   mapBackendAdminGetPostDetailResponseToSellerPost,
+  mapBackendAdminUpdatePostStatusResponseToSellerPost,
 } from '../types';
 
 export const adminService = {
@@ -210,6 +212,21 @@ export const adminService = {
 
     // Transform backend response to frontend format
     return mapBackendAdminGetPostDetailResponseToSellerPost(
+      response.data.detail
+    );
+  },
+
+  // Update post status (approve/reject)
+  updatePostStatus: async (
+    id: string,
+    status: 'APPROVED' | 'REJECTED'
+  ): Promise<SellerPost> => {
+    const response = await api.patch<BackendAdminUpdatePostStatusResponse>(
+      `/admin/posts/${id}/status?status=${status}`
+    );
+
+    // Transform backend response to frontend format
+    return mapBackendAdminUpdatePostStatusResponseToSellerPost(
       response.data.detail
     );
   },

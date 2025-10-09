@@ -39,7 +39,7 @@ import {
   Cancel,
   Delete,
 } from '@mui/icons-material';
-import { useAdminPosts } from '../../hooks/useAdmin';
+import { useAdminPosts, useUpdatePostStatus } from '../../hooks/useAdmin';
 import { formatCurrency, formatRelativeTime } from '../../utils/helpers';
 import type { SellerPost } from '../../types';
 
@@ -57,7 +57,11 @@ const CarManagement: React.FC = () => {
     data: postsData,
     isLoading,
     error,
+    refetch,
   } = useAdminPosts(page, rowsPerPage);
+
+  // Update post status mutation
+  const updatePostStatusMutation = useUpdatePostStatus();
 
   // Menu states
   const [selectedListing, setSelectedListing] = useState<SellerPost | null>(
@@ -117,20 +121,50 @@ const CarManagement: React.FC = () => {
 
   const handleApprove = () => {
     if (selectedListing) {
-      // TODO: Implement API call to approve post
-      setSnackbarMessage('Đã duyệt bài đăng thành công');
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
+      updatePostStatusMutation.mutate(
+        {
+          id: selectedListing.id,
+          status: 'APPROVED',
+        },
+        {
+          onSuccess: () => {
+            setSnackbarMessage('Đã duyệt bài đăng thành công');
+            setSnackbarSeverity('success');
+            setSnackbarOpen(true);
+            refetch(); // Refresh data
+          },
+          onError: () => {
+            setSnackbarMessage('Có lỗi xảy ra khi duyệt bài đăng');
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+          },
+        }
+      );
     }
     handleMenuClose();
   };
 
   const handleReject = () => {
     if (selectedListing) {
-      // TODO: Implement API call to reject post
-      setSnackbarMessage('Đã từ chối bài đăng');
-      setSnackbarSeverity('warning');
-      setSnackbarOpen(true);
+      updatePostStatusMutation.mutate(
+        {
+          id: selectedListing.id,
+          status: 'REJECTED',
+        },
+        {
+          onSuccess: () => {
+            setSnackbarMessage('Đã từ chối bài đăng');
+            setSnackbarSeverity('warning');
+            setSnackbarOpen(true);
+            refetch(); // Refresh data
+          },
+          onError: () => {
+            setSnackbarMessage('Có lỗi xảy ra khi từ chối bài đăng');
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+          },
+        }
+      );
     }
     handleMenuClose();
   };
@@ -441,13 +475,23 @@ const CarManagement: React.FC = () => {
         </MenuItem>
         {selectedListing?.status === 'pending' && (
           <>
-            <MenuItem onClick={handleApprove}>
+            <MenuItem
+              onClick={handleApprove}
+              disabled={updatePostStatusMutation.isPending}
+            >
               <CheckCircle sx={{ mr: 1, color: 'success.main' }} />
-              Duyệt bài đăng
+              {updatePostStatusMutation.isPending
+                ? 'Đang duyệt...'
+                : 'Duyệt bài đăng'}
             </MenuItem>
-            <MenuItem onClick={handleReject}>
+            <MenuItem
+              onClick={handleReject}
+              disabled={updatePostStatusMutation.isPending}
+            >
               <Cancel sx={{ mr: 1, color: 'warning.main' }} />
-              Từ chối
+              {updatePostStatusMutation.isPending
+                ? 'Đang từ chối...'
+                : 'Từ chối'}
             </MenuItem>
           </>
         )}
