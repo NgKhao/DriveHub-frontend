@@ -1524,16 +1524,18 @@ export const mapBackendGetSellerReviewsResponseToReviewSummary = (
   };
 };
 
-// Report API Types
+// Report API Types - Updated for new phone/email based API
 export interface CreateReportData {
-  reportedUserId: number;
+  reportedUserphone?: string;
+  reportedUserEmail?: string;
   reason: string;
   description: string;
 }
 
 // Backend Report API Types
 export interface BackendCreateReportRequest {
-  reportedUserId: number;
+  reportedUserphone?: string;
+  reportedUserEmail?: string;
   reason: string;
   description: string;
 }
@@ -1563,7 +1565,8 @@ export const mapFrontendCreateReportToBackend = (
   reportData: CreateReportData
 ): BackendCreateReportRequest => {
   return {
-    reportedUserId: reportData.reportedUserId,
+    reportedUserphone: reportData.reportedUserphone,
+    reportedUserEmail: reportData.reportedUserEmail,
     reason: reportData.reason,
     description: reportData.description,
   };

@@ -569,7 +569,7 @@ const CarDetailPage: React.FC = () => {
         open={reportDialogOpen}
         onClose={() => setReportDialogOpen(false)}
         reportedId={
-          sellerPost.sellerInfo?.sellerId?.toString() || sellerPost.id
+          sellerPost.sellerInfo?.sellerPhone || sellerPost.phoneContact
         }
         reportedName={sellerPost.sellerInfo?.sellerName || 'Người bán'}
         reportedType='seller'

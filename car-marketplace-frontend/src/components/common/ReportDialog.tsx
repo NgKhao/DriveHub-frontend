@@ -110,28 +110,31 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
     resetCreateReportError();
 
     try {
-      // For now, we assume reportedId is the user ID we want to report
-      // In real scenario, you might need to map seller post ID to user ID
-      const reportedUserId = parseInt(reportedId);
-
-      if (isNaN(reportedUserId)) {
-        setLocalError('ID người dùng không hợp lệ');
-        return;
-      }
-
-      const finalDescription =
-        description.trim() +
-        (reportedType === 'buyer' && !reportedId
-          ? `\n\nThông tin người mua:${
-              buyerInfo.email ? `\nEmail: ${buyerInfo.email}` : ''
-            }${buyerInfo.phone ? `\nSĐT: ${buyerInfo.phone}` : ''}`
-          : '');
-
-      await createReportAsync({
-        reportedUserId,
+      const baseReportData = {
         reason: selectedReason,
-        description: finalDescription,
-      });
+        description: description.trim(),
+      };
+
+      if (reportedType === 'seller' && reportedId) {
+        // For seller reports, reportedId should contain phone number
+        await createReportAsync({
+          ...baseReportData,
+          reportedUserphone: reportedId,
+        });
+      } else if (reportedType === 'buyer' && !reportedId) {
+        // For buyer reports, use manual input
+        if (buyerInfo.email.trim()) {
+          await createReportAsync({
+            ...baseReportData,
+            reportedUserEmail: buyerInfo.email.trim(),
+          });
+        } else if (buyerInfo.phone.trim()) {
+          await createReportAsync({
+            ...baseReportData,
+            reportedUserphone: buyerInfo.phone.trim(),
+          });
+        }
+      }
 
       // Auto close after success - success state will be managed by the hook
       setTimeout(() => {
