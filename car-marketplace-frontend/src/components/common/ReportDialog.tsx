@@ -48,7 +48,6 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
   const [selectedReason, setSelectedReason] = useState('');
   const [description, setDescription] = useState('');
   const [buyerInfo, setBuyerInfo] = useState({
-    name: '',
     phone: '',
     email: '',
   });
@@ -59,7 +58,18 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
   const error = createReportError || localError;
   const success = isCreateReportSuccess;
 
-  const reportReasons = getReportReasons();
+  const allReportReasons = getReportReasons();
+
+  // Filter reasons based on report type
+  const reportReasons = allReportReasons.filter((reason) => {
+    if (reportedType === 'seller') {
+      // Buyer reporting seller - show seller reasons and other
+      return reason.id.startsWith('seller_') || reason.id === 'other';
+    } else {
+      // Seller reporting buyer - show buyer reasons and other
+      return reason.id.startsWith('buyer_') || reason.id === 'other';
+    }
+  });
 
   const handleSubmit = async () => {
     if (!user) {
@@ -80,12 +90,8 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
 
     // Kiểm tra thông tin người bị báo cáo cho trường hợp manual input
     if (reportedType === 'buyer' && !reportedId) {
-      if (!buyerInfo.name.trim()) {
-        setLocalError('Vui lòng nhập tên người mua');
-        return;
-      }
-      if (!buyerInfo.phone.trim()) {
-        setLocalError('Vui lòng nhập số điện thoại người mua');
+      if (!buyerInfo.email.trim() && !buyerInfo.phone.trim()) {
+        setLocalError('Vui lòng nhập email hoặc số điện thoại người mua');
         return;
       }
     }
@@ -116,9 +122,9 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
       const finalDescription =
         description.trim() +
         (reportedType === 'buyer' && !reportedId
-          ? `\n\nThông tin người mua:\nTên: ${buyerInfo.name}\nSĐT: ${
-              buyerInfo.phone
-            }${buyerInfo.email ? `\nEmail: ${buyerInfo.email}` : ''}`
+          ? `\n\nThông tin người mua:${
+              buyerInfo.email ? `\nEmail: ${buyerInfo.email}` : ''
+            }${buyerInfo.phone ? `\nSĐT: ${buyerInfo.phone}` : ''}`
           : '');
 
       await createReportAsync({
@@ -140,7 +146,7 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
   const handleClose = () => {
     setSelectedReason('');
     setDescription('');
-    setBuyerInfo({ name: '', phone: '', email: '' });
+    setBuyerInfo({ phone: '', email: '' });
     setLocalError(null);
     resetCreateReportError();
     onClose();
@@ -176,33 +182,17 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
                 <Typography variant='body1' gutterBottom>
                   Thông tin người mua cần báo cáo:
                 </Typography>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                  sx={{ mb: 2 }}
+                >
+                  Vui lòng nhập email hoặc số điện thoại của người mua (chọn 1
+                  trong 2)
+                </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <TextField
-                    label='Tên người mua *'
-                    value={buyerInfo.name}
-                    onChange={(e) =>
-                      setBuyerInfo((prev) => ({
-                        ...prev,
-                        name: e.target.value,
-                      }))
-                    }
-                    fullWidth
-                    size='small'
-                  />
-                  <TextField
-                    label='Số điện thoại *'
-                    value={buyerInfo.phone}
-                    onChange={(e) =>
-                      setBuyerInfo((prev) => ({
-                        ...prev,
-                        phone: e.target.value,
-                      }))
-                    }
-                    fullWidth
-                    size='small'
-                  />
-                  <TextField
-                    label='Email (tùy chọn)'
+                    label='Email người mua'
                     value={buyerInfo.email}
                     onChange={(e) =>
                       setBuyerInfo((prev) => ({
@@ -212,6 +202,27 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
                     }
                     fullWidth
                     size='small'
+                    placeholder='example@email.com'
+                  />
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ textAlign: 'center' }}
+                  >
+                    hoặc
+                  </Typography>
+                  <TextField
+                    label='Số điện thoại người mua'
+                    value={buyerInfo.phone}
+                    onChange={(e) =>
+                      setBuyerInfo((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
+                    fullWidth
+                    size='small'
+                    placeholder='0901234567'
                   />
                 </Box>
               </Box>

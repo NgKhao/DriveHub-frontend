@@ -24,46 +24,86 @@ interface ReportState {
 
 // Default report reasons
 const defaultReportReasons: ReportReason[] = [
+  // Reasons for reporting sellers (used by buyers)
   {
-    id: '1',
+    id: 'seller_fraud',
     label: 'Lừa đảo',
     description:
-      'Người này có hành vi lừa đảo, không giao xe sau khi nhận tiền',
+      'Người bán có hành vi lừa đảo, không giao xe sau khi nhận tiền',
     category: 'fraud',
   },
   {
-    id: '2',
-    label: 'Thông tin sai lệch',
+    id: 'seller_wrong_info',
+    label: 'Thông tin xe sai lệch',
     description: 'Thông tin xe không đúng với thực tế',
     category: 'content',
   },
   {
-    id: '3',
-    label: 'Giá cả không minh bạch',
+    id: 'seller_price_change',
+    label: 'Thay đổi giá bán',
     description: 'Thay đổi giá bán sau khi thỏa thuận',
     category: 'fraud',
   },
   {
-    id: '4',
-    label: 'Hành vi không phù hợp',
+    id: 'seller_bad_attitude',
+    label: 'Thái độ không phù hợp',
     description: 'Có thái độ xấu, không tôn trọng khách hàng',
     category: 'behavior',
   },
   {
-    id: '5',
+    id: 'seller_no_response',
     label: 'Không phản hồi',
     description: 'Không trả lời tin nhắn hoặc cuộc gọi sau khi liên hệ',
     category: 'behavior',
   },
   {
-    id: '6',
+    id: 'seller_technical_issue',
     label: 'Xe có vấn đề kỹ thuật',
     description: 'Xe có lỗi kỹ thuật nhưng không thông báo trước',
     category: 'content',
   },
+
+  // Reasons for reporting buyers (used by sellers)
   {
-    id: '7',
-    label: 'Khác',
+    id: 'buyer_no_show',
+    label: 'Không đến xem xe',
+    description: 'Hẹn xem xe nhưng không đến và không báo trước',
+    category: 'behavior',
+  },
+  {
+    id: 'buyer_no_response',
+    label: 'Không phản hồi',
+    description: 'Liên hệ nhưng không trả lời tin nhắn hoặc cuộc gọi',
+    category: 'behavior',
+  },
+  {
+    id: 'buyer_bargain_unreasonable',
+    label: 'Trả giá không hợp lý',
+    description: 'Trả giá quá thấp hoặc không nghiêm túc trong việc mua xe',
+    category: 'behavior',
+  },
+  {
+    id: 'buyer_time_wasting',
+    label: 'Làm mất thời gian',
+    description: 'Hẹn nhiều lần nhưng không có ý định mua thực sự',
+    category: 'behavior',
+  },
+  {
+    id: 'buyer_bad_attitude',
+    label: 'Thái độ không phù hợp',
+    description: 'Có thái độ xấu, không tôn trọng người bán',
+    category: 'behavior',
+  },
+  {
+    id: 'buyer_fraud_attempt',
+    label: 'Nghi vấn lừa đảo',
+    description: 'Có dấu hiệu lừa đảo hoặc hành vi đáng ngờ',
+    category: 'fraud',
+  },
+
+  {
+    id: 'other',
+    label: 'Lý do khác',
     description: 'Lý do khác (vui lòng mô tả chi tiết)',
     category: 'other',
   },
