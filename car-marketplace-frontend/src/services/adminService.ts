@@ -5,10 +5,13 @@ import type {
   Car,
   User,
   AdminStats,
+  SellerPost,
   BackendGetUsersResponse,
   BackendAdminUpdateUserResponse,
   BackendCreateUserResponse,
   BackendDeleteUserResponse,
+  BackendAdminGetPostsResponse,
+  BackendAdminGetPostDetailResponse,
 } from '../types';
 import {
   mapBackendGetUsersResponseToPaginated,
@@ -16,6 +19,8 @@ import {
   mapBackendAdminUpdateResponseToUser,
   mapFrontendCreateUserToBackend,
   mapBackendCreateUserResponseToUser,
+  mapBackendAdminGetPostsResponseToPaginated,
+  mapBackendAdminGetPostDetailResponseToSellerPost,
 } from '../types';
 
 export const adminService = {
@@ -182,5 +187,30 @@ export const adminService = {
       responseType: 'blob',
     });
     return response.data;
+  },
+
+  // Get all posts for admin management
+  getAllPosts: async (
+    page = 0,
+    size = 10
+  ): Promise<PaginatedResponse<SellerPost>> => {
+    const response = await api.get<BackendAdminGetPostsResponse>(
+      `/admin/posts?page=${page}&size=${size}`
+    );
+
+    // Transform backend response to frontend format
+    return mapBackendAdminGetPostsResponseToPaginated(response.data.detail);
+  },
+
+  // Get post by ID for admin
+  getPostById: async (id: string): Promise<SellerPost> => {
+    const response = await api.get<BackendAdminGetPostDetailResponse>(
+      `/admin/posts/${id}`
+    );
+
+    // Transform backend response to frontend format
+    return mapBackendAdminGetPostDetailResponseToSellerPost(
+      response.data.detail
+    );
   },
 };

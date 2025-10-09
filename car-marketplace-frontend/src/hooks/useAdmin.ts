@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminService } from '../services/adminService';
-import type { PaginatedResponse, User, AdminStats } from '../types';
+import type { PaginatedResponse, User, AdminStats, SellerPost } from '../types';
 
 interface AdminError {
   response?: { status: number };
@@ -37,6 +37,27 @@ export const useAdminStats = () => {
     queryFn: () => adminService.getStats(),
     staleTime: 10 * 60 * 1000, // 10 minutes
     retry: 1,
+  });
+};
+
+// Hook for fetching all posts with pagination
+export const useAdminPosts = (page = 0, size = 10) => {
+  return useQuery<PaginatedResponse<SellerPost>, AdminError>({
+    queryKey: ['admin', 'posts', page, size],
+    queryFn: () => adminService.getAllPosts(page, size),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+  });
+};
+
+// Hook for fetching single post detail
+export const useAdminPostDetail = (postId: string) => {
+  return useQuery<SellerPost, AdminError>({
+    queryKey: ['admin', 'posts', postId],
+    queryFn: () => adminService.getPostById(postId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+    enabled: !!postId, // Only run query if postId is provided
   });
 };
 

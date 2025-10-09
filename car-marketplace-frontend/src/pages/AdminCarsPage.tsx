@@ -23,7 +23,7 @@ const AdminCarsPage: React.FC = () => {
           </Typography>
         </Box>
 
-        {/* Content */}
+        {/* Car Management Component - Uses Real API Data */}
         <CarManagement />
       </Box>
     </Box>

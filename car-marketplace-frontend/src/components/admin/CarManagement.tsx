@@ -24,6 +24,7 @@ import {
   Menu,
   Snackbar,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
   People,
@@ -38,122 +39,28 @@ import {
   Cancel,
   Delete,
 } from '@mui/icons-material';
+import { useAdminPosts } from '../../hooks/useAdmin';
+import { formatCurrency, formatRelativeTime } from '../../utils/helpers';
+import type { SellerPost } from '../../types';
 
-interface CarListing {
-  id: string;
-  title: string;
-  brand: string;
-  model: string;
-  year: number;
-  price: number;
-  mileage: number;
-  transmission: 'manual' | 'automatic';
-  fuelType: 'gasoline' | 'diesel' | 'electric' | 'hybrid';
-  condition: 'new' | 'used';
-  status: 'pending' | 'approved' | 'rejected';
-  images: string[];
-  description: string;
-  location: string;
-  seller: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-    avatar?: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Mock data for car listings
-const mockCarListings: CarListing[] = [
-  {
-    id: '1',
-    title: 'Toyota Camry 2022 - Xe gia đình đẹp',
-    brand: 'Toyota',
-    model: 'Camry',
-    year: 2022,
-    price: 1200000000,
-    mileage: 15000,
-    transmission: 'automatic',
-    fuelType: 'gasoline',
-    condition: 'used',
-    status: 'pending',
-    images: ['/api/placeholder/300/200', '/api/placeholder/300/200'],
-    description: 'Xe gia đình sử dụng ít, bảo dưỡng định kỳ tại hãng',
-    location: 'Hồ Chí Minh',
-    seller: {
-      id: '1',
-      name: 'Nguyễn Văn A',
-      email: 'nguyen.van.a@gmail.com',
-      phone: '0901234567',
-      avatar: '/api/placeholder/40/40',
-    },
-    createdAt: '2024-01-15T08:00:00Z',
-    updatedAt: '2024-01-15T08:00:00Z',
-  },
-  {
-    id: '2',
-    title: 'Honda Civic 2023 - Xe mới 99%',
-    brand: 'Honda',
-    model: 'Civic',
-    year: 2023,
-    price: 850000000,
-    mileage: 5000,
-    transmission: 'automatic',
-    fuelType: 'gasoline',
-    condition: 'used',
-    status: 'approved',
-    images: ['/api/placeholder/300/200'],
-    description: 'Xe mới mua, cần bán gấp do chuyển công tác',
-    location: 'Hà Nội',
-    seller: {
-      id: '2',
-      name: 'Trần Thị B',
-      email: 'tran.thi.b@gmail.com',
-      phone: '0987654321',
-    },
-    createdAt: '2024-02-10T16:20:00Z',
-    updatedAt: '2024-02-10T16:20:00Z',
-  },
-  {
-    id: '3',
-    title: 'Mercedes C200 2021 - Sang trọng',
-    brand: 'Mercedes',
-    model: 'C200',
-    year: 2021,
-    price: 1800000000,
-    mileage: 25000,
-    transmission: 'automatic',
-    fuelType: 'gasoline',
-    condition: 'used',
-    status: 'rejected',
-    images: ['/api/placeholder/300/200'],
-    description: 'Xe sang trọng, đầy đủ tiện nghi',
-    location: 'Đà Nẵng',
-    seller: {
-      id: '3',
-      name: 'Lê Văn C',
-      email: 'le.van.c@gmail.com',
-      phone: '0912345678',
-    },
-    createdAt: '2024-02-05T09:45:00Z',
-    updatedAt: '2024-02-05T09:45:00Z',
-  },
-];
+// Component sử dụng SellerPost từ API thay vì interface riêng
 
 const CarManagement: React.FC = () => {
   const navigate = useNavigate();
-  const [carListings, setCarListings] = useState<CarListing[]>(mockCarListings);
-  const [filteredListings, setFilteredListings] =
-    useState<CarListing[]>(mockCarListings);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // API data
+  const {
+    data: postsData,
+    isLoading,
+    error,
+  } = useAdminPosts(page, rowsPerPage);
+
   // Menu states
-  const [selectedListing, setSelectedListing] = useState<CarListing | null>(
+  const [selectedListing, setSelectedListing] = useState<SellerPost | null>(
     null
   );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -163,28 +70,34 @@ const CarManagement: React.FC = () => {
     'success' | 'error' | 'warning' | 'info'
   >('success');
 
-  // Filter listings
-  React.useEffect(() => {
-    const filtered = carListings.filter((listing) => {
+  // Filter listings (client-side filtering for now)
+  const filteredListings = React.useMemo(() => {
+    if (!postsData?.items) return [];
+
+    return postsData.items.filter((listing) => {
       const matchesSearch =
+        searchQuery.trim() === '' ||
         listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        listing.seller.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        listing.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        listing.model.toLowerCase().includes(searchQuery.toLowerCase());
+        listing.phoneContact
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        listing.carDetail.make
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        listing.carDetail.model
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
 
       const matchesStatus =
         statusFilter === 'all' || listing.status === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
-
-    setFilteredListings(filtered);
-    setPage(0);
-  }, [searchQuery, statusFilter, carListings]);
+  }, [postsData?.items, searchQuery, statusFilter]);
 
   const handleMenuClick = (
     event: React.MouseEvent<HTMLElement>,
-    listing: CarListing
+    listing: SellerPost
   ) => {
     setAnchorEl(event.currentTarget);
     setSelectedListing(listing);
@@ -204,16 +117,7 @@ const CarManagement: React.FC = () => {
 
   const handleApprove = () => {
     if (selectedListing) {
-      const updatedListings = carListings.map((listing) =>
-        listing.id === selectedListing.id
-          ? {
-              ...listing,
-              status: 'approved' as const,
-              updatedAt: new Date().toISOString(),
-            }
-          : listing
-      );
-      setCarListings(updatedListings);
+      // TODO: Implement API call to approve post
       setSnackbarMessage('Đã duyệt bài đăng thành công');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
@@ -223,16 +127,7 @@ const CarManagement: React.FC = () => {
 
   const handleReject = () => {
     if (selectedListing) {
-      const updatedListings = carListings.map((listing) =>
-        listing.id === selectedListing.id
-          ? {
-              ...listing,
-              status: 'rejected' as const,
-              updatedAt: new Date().toISOString(),
-            }
-          : listing
-      );
-      setCarListings(updatedListings);
+      // TODO: Implement API call to reject post
       setSnackbarMessage('Đã từ chối bài đăng');
       setSnackbarSeverity('warning');
       setSnackbarOpen(true);
@@ -242,28 +137,12 @@ const CarManagement: React.FC = () => {
 
   const handleDelete = () => {
     if (selectedListing) {
-      const updatedListings = carListings.filter(
-        (listing) => listing.id !== selectedListing.id
-      );
-      setCarListings(updatedListings);
+      // TODO: Implement API call to delete post
       setSnackbarMessage('Đã xóa bài đăng');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
     handleMenuClose();
-  };
-
-  const formatPrice = (price: number) => {
-    if (price >= 1000000000) {
-      return `${(price / 1000000000).toFixed(1)} tỷ`;
-    } else if (price >= 1000000) {
-      return `${(price / 1000000).toFixed(0)} triệu`;
-    }
-    return price.toLocaleString('vi-VN') + ' VNĐ';
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN');
   };
 
   const getStatusChip = (status: string) => {
@@ -274,6 +153,12 @@ const CarManagement: React.FC = () => {
         return <Chip label='Đã duyệt' color='success' size='small' />;
       case 'rejected':
         return <Chip label='Bị từ chối' color='error' size='small' />;
+      case 'draft':
+        return <Chip label='Nháp' color='info' size='small' />;
+      case 'blocked':
+        return <Chip label='Bị chặn' color='error' size='small' />;
+      case 'hidden':
+        return <Chip label='Đã ẩn' color='default' size='small' />;
       default:
         return <Chip label={status} color='default' size='small' />;
     }
@@ -295,15 +180,14 @@ const CarManagement: React.FC = () => {
     setStatusFilter('all');
   };
 
-  // Statistics
-  const totalListings = carListings.length;
-  const pendingListings = carListings.filter(
-    (l) => l.status === 'pending'
-  ).length;
-  const approvedListings = carListings.filter(
+  // Statistics from API data
+  const totalListings = postsData?.total || 0;
+  const allPosts = postsData?.items || [];
+  const pendingListings = allPosts.filter((l) => l.status === 'pending').length;
+  const approvedListings = allPosts.filter(
     (l) => l.status === 'approved'
   ).length;
-  const rejectedListings = carListings.filter(
+  const rejectedListings = allPosts.filter(
     (l) => l.status === 'rejected'
   ).length;
 
@@ -431,9 +315,30 @@ const CarManagement: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredListings
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((listing) => (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} align='center'>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={7} align='center'>
+                    <Alert severity='error'>
+                      Có lỗi xảy ra khi tải dữ liệu: {error.message}
+                    </Alert>
+                  </TableCell>
+                </TableRow>
+              ) : filteredListings.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} align='center'>
+                    <Typography color='text.secondary'>
+                      Không có dữ liệu
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredListings.map((listing) => (
                   <TableRow key={listing.id}>
                     <TableCell>
                       <Box
@@ -444,7 +349,7 @@ const CarManagement: React.FC = () => {
                           objectFit: 'cover',
                           borderRadius: 1,
                         }}
-                        src={listing.images[0]}
+                        src={listing.images[0] || '/placeholder-car.jpg'}
                         alt={listing.title}
                       />
                     </TableCell>
@@ -454,40 +359,43 @@ const CarManagement: React.FC = () => {
                           {listing.title}
                         </Typography>
                         <Typography variant='caption' color='text.secondary'>
-                          {listing.transmission === 'automatic'
+                          {listing.carDetail.transmission === 'automatic'
                             ? 'Tự động'
                             : 'Số sàn'}{' '}
                           •
-                          {listing.fuelType === 'gasoline'
+                          {listing.carDetail.fuelType === 'gasoline'
                             ? ' Xăng'
-                            : listing.fuelType === 'diesel'
+                            : listing.carDetail.fuelType === 'diesel'
                             ? ' Dầu'
-                            : listing.fuelType === 'electric'
+                            : listing.carDetail.fuelType === 'electric'
                             ? ' Điện'
                             : ' Hybrid'}{' '}
-                          • {listing.mileage.toLocaleString()} km
+                          • {listing.carDetail.mileage?.toLocaleString() || 0}{' '}
+                          km
                         </Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
                       <Box>
                         <Typography variant='body2'>
-                          {listing.seller.name}
+                          {listing.sellerType === 'individual'
+                            ? 'Cá nhân'
+                            : 'Đại lý'}
                         </Typography>
                         <Typography variant='caption' color='text.secondary'>
-                          {listing.seller.phone}
+                          {listing.phoneContact || 'N/A'}
                         </Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
                       <Typography variant='body2' fontWeight='medium'>
-                        {formatPrice(listing.price)}
+                        {formatCurrency(listing.price)}
                       </Typography>
                     </TableCell>
                     <TableCell>{getStatusChip(listing.status)}</TableCell>
                     <TableCell>
                       <Typography variant='body2'>
-                        {formatDate(listing.createdAt)}
+                        {formatRelativeTime(listing.createdAt)}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -499,7 +407,8 @@ const CarManagement: React.FC = () => {
                       </IconButton>
                     </TableCell>
                   </TableRow>
-                ))}
+                ))
+              )}
             </TableBody>
           </Table>
         </TableContainer>
@@ -508,7 +417,7 @@ const CarManagement: React.FC = () => {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component='div'
-          count={filteredListings.length}
+          count={postsData?.total || 0}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}

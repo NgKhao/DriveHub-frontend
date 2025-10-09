@@ -34,18 +34,26 @@ import SellerRatings from '../components/common/SellerRatings';
 import ReportDialog from '../components/common/ReportDialog';
 import { useAuthStore } from '../store/authStore';
 import { useSellerPostDetail } from '../hooks/useSeller';
+import { useAdminPostDetail } from '../hooks/useAdmin';
 
 const CarDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
-  // Use API hook instead of manual state management
+  // Check if user is admin to decide which API to use
+  const isAdmin = user?.role === 'admin';
+
+  // Always call both hooks but only use the appropriate one
+  const adminPostQuery = useAdminPostDetail(id || '');
+  const sellerPostQuery = useSellerPostDetail(id || '');
+
+  // Use appropriate data based on user role
   const {
     data: sellerPost,
     isLoading: loading,
     error,
-  } = useSellerPostDetail(id || '');
+  } = isAdmin ? adminPostQuery : sellerPostQuery;
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);

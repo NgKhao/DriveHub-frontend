@@ -283,6 +283,29 @@ export interface BackendDeletePostResponse {
   instance: string;
 }
 
+// Admin Posts API Types
+export interface BackendAdminGetPostsResponse {
+  messenger: string;
+  status: number;
+  detail: {
+    content: BackendPostItem[];
+    pageNumber: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+    first: boolean;
+    last: boolean;
+  };
+  instance: string;
+}
+
+export interface BackendAdminGetPostDetailResponse {
+  messenger: string;
+  status: number;
+  detail: BackendPostItem;
+  instance: string;
+}
+
 // User Types
 export interface User {
   id: string;
@@ -695,6 +718,26 @@ export const mapBackendGetPostsResponseToSellerPosts = (
 // Helper function to convert backend get post detail response to seller post
 export const mapBackendGetPostDetailResponseToSellerPost = (
   backendResponse: BackendGetPostDetailResponse['detail']
+): SellerPost => {
+  return mapBackendPostItemToSellerPost(backendResponse);
+};
+
+// Helper function to convert backend admin get posts response to paginated seller posts
+export const mapBackendAdminGetPostsResponseToPaginated = (
+  backendResponse: BackendAdminGetPostsResponse['detail']
+): PaginatedResponse<SellerPost> => {
+  return {
+    items: backendResponse.content.map(mapBackendPostItemToSellerPost),
+    total: backendResponse.totalElements,
+    page: backendResponse.pageNumber,
+    limit: backendResponse.pageSize,
+    totalPages: backendResponse.totalPages,
+  };
+};
+
+// Helper function to convert backend admin get post detail response to seller post
+export const mapBackendAdminGetPostDetailResponseToSellerPost = (
+  backendResponse: BackendAdminGetPostDetailResponse['detail']
 ): SellerPost => {
   return mapBackendPostItemToSellerPost(backendResponse);
 };
