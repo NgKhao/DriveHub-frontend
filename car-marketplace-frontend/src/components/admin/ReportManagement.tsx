@@ -44,7 +44,7 @@ import {
   Description,
   Schedule,
 } from '@mui/icons-material';
-import { useAdminReports } from '../../hooks/useAdmin';
+import { useAdminReports, useUpdateReportStatus } from '../../hooks/useAdmin';
 import type { AdminReport } from '../../types';
 
 const ReportManagement: React.FC = () => {
@@ -55,6 +55,9 @@ const ReportManagement: React.FC = () => {
     error,
     refetch,
   } = useAdminReports();
+
+  const { mutate: updateReportStatus, isPending: isUpdating } =
+    useUpdateReportStatus();
 
   const [filteredReports, setFilteredReports] = useState<AdminReport[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,31 +122,70 @@ const ReportManagement: React.FC = () => {
   };
 
   const handleSuspend = () => {
-    // TODO: Implement API call to suspend user
-    if (selectedReport) {
-      setSnackbarMessage('Tính năng tạm khóa tài khoản sẽ được triển khai');
-      setSnackbarSeverity('info');
-      setSnackbarOpen(true);
+    if (selectedReport && !isUpdating) {
+      updateReportStatus(
+        { id: selectedReport.id, status: 'SUSPENDED' },
+        {
+          onSuccess: () => {
+            setSnackbarMessage('Đã tạm khóa tài khoản thành công');
+            setSnackbarSeverity('success');
+            setSnackbarOpen(true);
+            setDetailDialogOpen(false); // Close dialog
+            refetch(); // Refresh the reports list
+          },
+          onError: (error) => {
+            setSnackbarMessage(`Lỗi khi tạm khóa tài khoản: ${error.message}`);
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+          },
+        }
+      );
     }
     handleMenuClose();
   };
 
   const handleBan = () => {
-    // TODO: Implement API call to ban user
-    if (selectedReport) {
-      setSnackbarMessage('Tính năng cấm vĩnh viễn sẽ được triển khai');
-      setSnackbarSeverity('info');
-      setSnackbarOpen(true);
+    if (selectedReport && !isUpdating) {
+      updateReportStatus(
+        { id: selectedReport.id, status: 'BANNED' },
+        {
+          onSuccess: () => {
+            setSnackbarMessage('Đã cấm tài khoản vĩnh viễn thành công');
+            setSnackbarSeverity('success');
+            setSnackbarOpen(true);
+            setDetailDialogOpen(false); // Close dialog
+            refetch(); // Refresh the reports list
+          },
+          onError: (error) => {
+            setSnackbarMessage(`Lỗi khi cấm tài khoản: ${error.message}`);
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+          },
+        }
+      );
     }
     handleMenuClose();
   };
 
   const handleReject = () => {
-    // TODO: Implement API call to reject report
-    if (selectedReport) {
-      setSnackbarMessage('Tính năng từ chối báo cáo sẽ được triển khai');
-      setSnackbarSeverity('info');
-      setSnackbarOpen(true);
+    if (selectedReport && !isUpdating) {
+      updateReportStatus(
+        { id: selectedReport.id, status: 'REJECTED' },
+        {
+          onSuccess: () => {
+            setSnackbarMessage('Đã từ chối báo cáo thành công');
+            setSnackbarSeverity('success');
+            setSnackbarOpen(true);
+            setDetailDialogOpen(false); // Close dialog
+            refetch(); // Refresh the reports list
+          },
+          onError: (error) => {
+            setSnackbarMessage(`Lỗi khi từ chối báo cáo: ${error.message}`);
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+          },
+        }
+      );
     }
     handleMenuClose();
   };
@@ -443,19 +485,27 @@ const ReportManagement: React.FC = () => {
           Xem chi tiết
         </MenuItem>
         {selectedReport?.status === 'pending' && (
-          <MenuItem onClick={handleSuspend} sx={{ color: 'warning.main' }}>
+          <MenuItem
+            onClick={handleSuspend}
+            disabled={isUpdating}
+            sx={{ color: 'warning.main' }}
+          >
             <Block sx={{ mr: 1 }} />
             Tạm khóa tài khoản
           </MenuItem>
         )}
         {selectedReport?.status === 'pending' && (
-          <MenuItem onClick={handleBan} sx={{ color: 'error.main' }}>
+          <MenuItem
+            onClick={handleBan}
+            disabled={isUpdating}
+            sx={{ color: 'error.main' }}
+          >
             <Cancel sx={{ mr: 1 }} />
             Cấm vĩnh viễn
           </MenuItem>
         )}
         {selectedReport?.status === 'pending' && (
-          <MenuItem onClick={handleReject}>
+          <MenuItem onClick={handleReject} disabled={isUpdating}>
             <Close sx={{ mr: 1 }} />
             Từ chối báo cáo
           </MenuItem>
@@ -817,6 +867,7 @@ const ReportManagement: React.FC = () => {
                 variant='outlined'
                 color='warning'
                 onClick={handleSuspend}
+                disabled={isUpdating}
                 startIcon={<Block />}
               >
                 Tạm khóa
@@ -825,6 +876,7 @@ const ReportManagement: React.FC = () => {
                 variant='outlined'
                 color='error'
                 onClick={handleBan}
+                disabled={isUpdating}
                 startIcon={<Cancel />}
               >
                 Cấm vĩnh viễn
@@ -833,6 +885,7 @@ const ReportManagement: React.FC = () => {
                 variant='outlined'
                 color='inherit'
                 onClick={handleReject}
+                disabled={isUpdating}
                 startIcon={<Close />}
               >
                 Từ chối

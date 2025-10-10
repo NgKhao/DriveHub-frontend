@@ -16,6 +16,7 @@ import type {
   BackendAdminDeletePostResponse,
   AdminReport,
   BackendAdminGetReportsResponse,
+  BackendAdminUpdateReportStatusResponse,
 } from '../types';
 import {
   mapBackendGetUsersResponseToPaginated,
@@ -27,6 +28,7 @@ import {
   mapBackendAdminGetPostDetailResponseToSellerPost,
   mapBackendAdminUpdatePostStatusResponseToSellerPost,
   mapBackendAdminReportsResponseToAdminReports,
+  mapBackendAdminUpdateReportStatusResponseToAdminReport,
 } from '../types';
 
 export const adminService = {
@@ -249,5 +251,20 @@ export const adminService = {
 
     // Transform backend response to frontend format
     return mapBackendAdminReportsResponseToAdminReports(response.data.detail);
+  },
+
+  // Update report status (suspend, ban, reject)
+  updateReportStatus: async (
+    id: string,
+    status: 'PENDING' | 'SUSPENDED' | 'BANNED' | 'REJECTED'
+  ): Promise<AdminReport> => {
+    const response = await api.put<BackendAdminUpdateReportStatusResponse>(
+      `/admin/reports/${id}/handle?status=${status}`
+    );
+
+    // Transform backend response to frontend format
+    return mapBackendAdminUpdateReportStatusResponseToAdminReport(
+      response.data.detail
+    );
   },
 };

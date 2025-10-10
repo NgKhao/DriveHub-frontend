@@ -78,6 +78,30 @@ export const useAdminReports = () => {
   });
 };
 
+// Hook for updating report status (suspend/ban/reject)
+export const useUpdateReportStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      status,
+    }: {
+      id: string;
+      status: 'PENDING' | 'SUSPENDED' | 'BANNED' | 'REJECTED';
+    }) => {
+      return adminService.updateReportStatus(id, status);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch reports queries
+      queryClient.invalidateQueries({ queryKey: ['admin', 'reports'] });
+    },
+    onError: (error: AdminError) => {
+      console.error('Update report status error:', error);
+    },
+  });
+};
+
 // Hook for updating user (old method)
 export const useUpdateUser = () => {
   const queryClient = useQueryClient();
@@ -235,6 +259,7 @@ export const useAdmin = () => {
   const toggleUserStatusMutation = useToggleUserStatus();
   const updatePostStatusMutation = useUpdatePostStatus();
   const deletePostMutation = useDeletePost();
+  const updateReportStatusMutation = useUpdateReportStatus();
 
   return {
     // User management (old method)
@@ -291,6 +316,14 @@ export const useAdmin = () => {
       ? getErrorMessage(deletePostMutation.error)
       : null,
 
+    // Report status management
+    updateReportStatus: updateReportStatusMutation.mutate,
+    updateReportStatusAsync: updateReportStatusMutation.mutateAsync,
+    isUpdateReportStatusLoading: updateReportStatusMutation.isPending,
+    updateReportStatusError: updateReportStatusMutation.error
+      ? getErrorMessage(updateReportStatusMutation.error)
+      : null,
+
     // Reset mutations
     resetUpdateUserError: updateUserMutation.reset,
     resetUpdateUserAdminError: updateUserAdminMutation.reset,
@@ -299,5 +332,6 @@ export const useAdmin = () => {
     resetToggleUserStatusError: toggleUserStatusMutation.reset,
     resetUpdatePostStatusError: updatePostStatusMutation.reset,
     resetDeletePostError: deletePostMutation.reset,
+    resetUpdateReportStatusError: updateReportStatusMutation.reset,
   };
 };

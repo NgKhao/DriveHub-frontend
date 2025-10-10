@@ -1674,6 +1674,14 @@ export interface BackendAdminGetReportsResponse {
   instance: string;
 }
 
+// Admin Update Report Status API Types
+export interface BackendAdminUpdateReportStatusResponse {
+  messenger: string;
+  status: number;
+  detail: AdminReportItem;
+  instance: string;
+}
+
 // Frontend Admin Report interface for UI
 export interface AdminReport {
   id: string;
@@ -1776,4 +1784,49 @@ export const mapBackendAdminReportsResponseToAdminReports = (
           : undefined,
     };
   });
+};
+
+// Mapping function for admin update report status response
+export const mapBackendAdminUpdateReportStatusResponseToAdminReport = (
+  backendResponse: BackendAdminUpdateReportStatusResponse['detail']
+): AdminReport => {
+  // Map backend status to frontend status
+  const mapStatus = (backendStatus: string): AdminReport['status'] => {
+    switch (backendStatus) {
+      case 'PENDING':
+        return 'pending';
+      case 'SUSPENDED':
+        return 'suspended';
+      case 'BANNED':
+        return 'banned';
+      case 'REJECTED':
+        return 'rejected';
+      default:
+        return 'pending';
+    }
+  };
+
+  return {
+    id: backendResponse.id.toString(),
+    reporter: {
+      id: backendResponse.reporterId.toString(),
+      name: backendResponse.reporterName,
+    },
+    reported: {
+      id: backendResponse.reportedUserId.toString(),
+      name: backendResponse.reportedUserName,
+    },
+    reason: backendResponse.reason,
+    description: backendResponse.description,
+    status: mapStatus(backendResponse.status),
+    createdAt: backendResponse.createdAt,
+    handledAt: backendResponse.handledAt,
+    handledBy:
+      backendResponse.handledBy && backendResponse.handledByName
+        ? {
+            id: backendResponse.handledBy.toString(),
+            name: backendResponse.handledByName,
+          }
+        : undefined,
+  };
 };
