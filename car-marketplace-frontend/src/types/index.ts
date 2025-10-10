@@ -1651,6 +1651,51 @@ export interface BackendMyReportsResponse {
   instance: string;
 }
 
+// Admin Reports API Types
+export interface AdminReportItem {
+  id: number;
+  reporterId: number;
+  reporterName: string;
+  reportedUserId: number;
+  reportedUserName: string;
+  reason: string;
+  description: string;
+  status: 'PENDING' | 'SUSPENDED' | 'BANNED' | 'REJECTED';
+  createdAt: string;
+  handledAt: string | null;
+  handledBy: number | null;
+  handledByName: string | null;
+}
+
+export interface BackendAdminGetReportsResponse {
+  messenger: string;
+  status: number;
+  detail: AdminReportItem[];
+  instance: string;
+}
+
+// Frontend Admin Report interface for UI
+export interface AdminReport {
+  id: string;
+  reporter: {
+    id: string;
+    name: string;
+  };
+  reported: {
+    id: string;
+    name: string;
+  };
+  reason: string;
+  description: string;
+  status: 'pending' | 'suspended' | 'banned' | 'rejected';
+  createdAt: string;
+  handledAt: string | null;
+  handledBy?: {
+    id: string;
+    name: string;
+  };
+}
+
 // Mapping function for my reports response
 export const mapBackendMyReportsResponseToReports = (
   backendResponse: BackendMyReportsResponse['detail']
@@ -1682,6 +1727,53 @@ export const mapBackendMyReportsResponseToReports = (
       status: mapStatus(item.status),
       createdAt: item.createdAt,
       updatedAt: item.handledAt || item.createdAt,
+    };
+  });
+};
+
+// Mapping function for admin reports response
+export const mapBackendAdminReportsResponseToAdminReports = (
+  backendResponse: BackendAdminGetReportsResponse['detail']
+): AdminReport[] => {
+  return backendResponse.map((item) => {
+    // Map backend status to frontend status
+    const mapStatus = (backendStatus: string): AdminReport['status'] => {
+      switch (backendStatus) {
+        case 'PENDING':
+          return 'pending';
+        case 'SUSPENDED':
+          return 'suspended';
+        case 'BANNED':
+          return 'banned';
+        case 'REJECTED':
+          return 'rejected';
+        default:
+          return 'pending';
+      }
+    };
+
+    return {
+      id: item.id.toString(),
+      reporter: {
+        id: item.reporterId.toString(),
+        name: item.reporterName,
+      },
+      reported: {
+        id: item.reportedUserId.toString(),
+        name: item.reportedUserName,
+      },
+      reason: item.reason,
+      description: item.description,
+      status: mapStatus(item.status),
+      createdAt: item.createdAt,
+      handledAt: item.handledAt,
+      handledBy:
+        item.handledBy && item.handledByName
+          ? {
+              id: item.handledBy.toString(),
+              name: item.handledByName,
+            }
+          : undefined,
     };
   });
 };

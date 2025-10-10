@@ -1,6 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminService } from '../services/adminService';
-import type { PaginatedResponse, User, AdminStats, SellerPost } from '../types';
+import type {
+  PaginatedResponse,
+  User,
+  AdminStats,
+  SellerPost,
+  AdminReport,
+} from '../types';
 
 interface AdminError {
   response?: { status: number };
@@ -58,6 +64,17 @@ export const useAdminPostDetail = (postId: string, enabled: boolean = true) => {
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
     enabled: !!postId && enabled, // Only run query if postId is provided and explicitly enabled
+  });
+};
+
+// Hook for fetching all reports
+export const useAdminReports = () => {
+  return useQuery<AdminReport[], AdminError>({
+    queryKey: ['admin', 'reports'],
+    queryFn: () => adminService.getAllReports(),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
   });
 };
 

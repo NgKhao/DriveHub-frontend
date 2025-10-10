@@ -14,6 +14,8 @@ import type {
   BackendAdminGetPostDetailResponse,
   BackendAdminUpdatePostStatusResponse,
   BackendAdminDeletePostResponse,
+  AdminReport,
+  BackendAdminGetReportsResponse,
 } from '../types';
 import {
   mapBackendGetUsersResponseToPaginated,
@@ -24,6 +26,7 @@ import {
   mapBackendAdminGetPostsResponseToPaginated,
   mapBackendAdminGetPostDetailResponseToSellerPost,
   mapBackendAdminUpdatePostStatusResponseToSellerPost,
+  mapBackendAdminReportsResponseToAdminReports,
 } from '../types';
 
 export const adminService = {
@@ -236,5 +239,15 @@ export const adminService = {
   deletePost: async (id: string): Promise<void> => {
     await api.delete<BackendAdminDeletePostResponse>(`/admin/posts/${id}`);
     // API returns 204 status with null detail, no need to transform response
+  },
+
+  // Get all reports
+  getAllReports: async (): Promise<AdminReport[]> => {
+    const response = await api.get<BackendAdminGetReportsResponse>(
+      '/admin/reports/all'
+    );
+
+    // Transform backend response to frontend format
+    return mapBackendAdminReportsResponseToAdminReports(response.data.detail);
   },
 };

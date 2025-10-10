@@ -28,9 +28,9 @@ import {
   Avatar,
   Snackbar,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
-  CheckCircle,
   Cancel,
   Search,
   Refresh,
@@ -38,166 +38,34 @@ import {
   Visibility,
   Close,
   Block,
-  Gavel,
-  DirectionsCar,
   AssignmentInd,
   PersonOutline,
   GpsFixed,
   Description,
   Schedule,
-  Note,
 } from '@mui/icons-material';
-
-interface ReportItem {
-  id: string;
-  reporter: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-    avatar?: string;
-    role: 'buyer' | 'seller';
-  };
-  reported: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-    avatar?: string;
-    role: 'buyer' | 'seller';
-  };
-  reportedType: 'seller' | 'buyer';
-  reason: string;
-  category: 'fraud' | 'behavior' | 'content' | 'other';
-  description: string;
-  status: 'pending' | 'investigating' | 'resolved' | 'dismissed';
-  carId?: string;
-  carTitle?: string;
-  createdAt: string;
-  updatedAt: string;
-  adminNotes?: string;
-}
-
-// Mock data for reports
-const mockReports: ReportItem[] = [
-  {
-    id: '1',
-    reporter: {
-      id: '1',
-      name: 'Nguyễn Văn A',
-      email: 'nguyen.van.a@gmail.com',
-      phone: '0901234567',
-      role: 'buyer',
-    },
-    reported: {
-      id: '2',
-      name: 'Trần Thị B',
-      email: 'tran.thi.b@gmail.com',
-      phone: '0987654321',
-      role: 'seller',
-    },
-    reportedType: 'seller',
-    reason: 'Gian lận',
-    category: 'fraud',
-    description:
-      'Người bán cung cấp thông tin sai về tình trạng xe, che giấu tai nạn',
-    status: 'pending',
-    carId: '1',
-    carTitle: 'Toyota Camry 2022',
-    createdAt: '2024-01-15T08:00:00Z',
-    updatedAt: '2024-01-15T08:00:00Z',
-  },
-  {
-    id: '2',
-    reporter: {
-      id: '3',
-      name: 'Lê Văn C',
-      email: 'le.van.c@gmail.com',
-      phone: '0912345678',
-      role: 'seller',
-    },
-    reported: {
-      id: '4',
-      name: 'Phạm Thị D',
-      email: 'pham.thi.d@gmail.com',
-      phone: '0923456789',
-      role: 'buyer',
-    },
-    reportedType: 'buyer',
-    reason: 'Hành vi không phù hợp',
-    category: 'behavior',
-    description:
-      'Người mua liên tục gọi điện quấy rối, sử dụng ngôn từ không phù hợp',
-    status: 'investigating',
-    createdAt: '2024-02-10T16:20:00Z',
-    updatedAt: '2024-02-12T10:30:00Z',
-  },
-  {
-    id: '3',
-    reporter: {
-      id: '5',
-      name: 'Hoàng Văn E',
-      email: 'hoang.van.e@gmail.com',
-      phone: '0934567890',
-      role: 'buyer',
-    },
-    reported: {
-      id: '6',
-      name: 'Vũ Thị F',
-      email: 'vu.thi.f@gmail.com',
-      phone: '0945678901',
-      role: 'seller',
-    },
-    reportedType: 'seller',
-    reason: 'Nội dung không phù hợp',
-    category: 'content',
-    description: 'Bài đăng chứa hình ảnh không liên quan, thông tin sai lệch',
-    status: 'resolved',
-    carId: '3',
-    carTitle: 'Honda Civic 2023',
-    createdAt: '2024-02-05T09:45:00Z',
-    updatedAt: '2024-02-15T14:20:00Z',
-    adminNotes: 'Đã xử lý và cảnh báo người bán. Yêu cầu chỉnh sửa bài đăng.',
-  },
-  {
-    id: '4',
-    reporter: {
-      id: '7',
-      name: 'Đinh Văn G',
-      email: 'dinh.van.g@gmail.com',
-      phone: '0956789012',
-      role: 'seller',
-    },
-    reported: {
-      id: '8',
-      name: 'Bùi Thị H',
-      email: 'bui.thi.h@gmail.com',
-      phone: '0967890123',
-      role: 'buyer',
-    },
-    reportedType: 'buyer',
-    reason: 'Khác',
-    category: 'other',
-    description: 'Người mua hẹn gặp nhưng không đến, lặp lại nhiều lần',
-    status: 'dismissed',
-    createdAt: '2024-01-20T11:15:00Z',
-    updatedAt: '2024-01-25T16:45:00Z',
-    adminNotes: 'Không đủ bằng chứng để xử lý. Khuyến cáo cả hai bên.',
-  },
-];
+import { useAdminReports } from '../../hooks/useAdmin';
+import type { AdminReport } from '../../types';
 
 const ReportManagement: React.FC = () => {
-  const [reports, setReports] = useState<ReportItem[]>(mockReports);
-  const [filteredReports, setFilteredReports] =
-    useState<ReportItem[]>(mockReports);
+  // Use real API instead of mock data
+  const {
+    data: apiReports = [],
+    isLoading,
+    error,
+    refetch,
+  } = useAdminReports();
+
+  const [filteredReports, setFilteredReports] = useState<AdminReport[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Dialog states
-  const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
+  const [selectedReport, setSelectedReport] = useState<AdminReport | null>(
+    null
+  );
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -208,7 +76,7 @@ const ReportManagement: React.FC = () => {
 
   // Filter reports
   React.useEffect(() => {
-    const filtered = reports.filter((report) => {
+    const filtered = apiReports.filter((report) => {
       const matchesSearch =
         report.reporter.name
           .toLowerCase()
@@ -217,25 +85,21 @@ const ReportManagement: React.FC = () => {
           .toLowerCase()
           .includes(searchQuery.toLowerCase()) ||
         report.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        report.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (report.carTitle &&
-          report.carTitle.toLowerCase().includes(searchQuery.toLowerCase()));
+        report.description.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesStatus =
         statusFilter === 'all' || report.status === statusFilter;
-      const matchesCategory =
-        categoryFilter === 'all' || report.category === categoryFilter;
 
-      return matchesSearch && matchesStatus && matchesCategory;
+      return matchesSearch && matchesStatus;
     });
 
     setFilteredReports(filtered);
     setPage(0);
-  }, [searchQuery, statusFilter, categoryFilter, reports]);
+  }, [searchQuery, statusFilter, apiReports]);
 
   const handleMenuClick = (
     event: React.MouseEvent<HTMLElement>,
-    report: ReportItem
+    report: AdminReport
   ) => {
     setAnchorEl(event.currentTarget);
     setSelectedReport(report);
@@ -254,67 +118,31 @@ const ReportManagement: React.FC = () => {
     handleMenuClose();
   };
 
-  const handleInvestigate = () => {
+  const handleSuspend = () => {
+    // TODO: Implement API call to suspend user
     if (selectedReport) {
-      const updatedReports = reports.map((report) =>
-        report.id === selectedReport.id
-          ? {
-              ...report,
-              status: 'investigating' as const,
-              updatedAt: new Date().toISOString(),
-            }
-          : report
-      );
-      setReports(updatedReports);
-      setSnackbarMessage('Đã chuyển báo cáo sang trạng thái điều tra');
+      setSnackbarMessage('Tính năng tạm khóa tài khoản sẽ được triển khai');
       setSnackbarSeverity('info');
       setSnackbarOpen(true);
     }
     handleMenuClose();
   };
 
-  const handleResolve = () => {
+  const handleBan = () => {
+    // TODO: Implement API call to ban user
     if (selectedReport) {
-      const updatedReports = reports.map((report) =>
-        report.id === selectedReport.id
-          ? {
-              ...report,
-              status: 'resolved' as const,
-              updatedAt: new Date().toISOString(),
-            }
-          : report
-      );
-      setReports(updatedReports);
-      setSnackbarMessage('Đã giải quyết báo cáo');
-      setSnackbarSeverity('success');
+      setSnackbarMessage('Tính năng cấm vĩnh viễn sẽ được triển khai');
+      setSnackbarSeverity('info');
       setSnackbarOpen(true);
     }
     handleMenuClose();
   };
 
-  const handleDismiss = () => {
+  const handleReject = () => {
+    // TODO: Implement API call to reject report
     if (selectedReport) {
-      const updatedReports = reports.map((report) =>
-        report.id === selectedReport.id
-          ? {
-              ...report,
-              status: 'dismissed' as const,
-              updatedAt: new Date().toISOString(),
-            }
-          : report
-      );
-      setReports(updatedReports);
-      setSnackbarMessage('Đã bỏ qua báo cáo');
-      setSnackbarSeverity('warning');
-      setSnackbarOpen(true);
-    }
-    handleMenuClose();
-  };
-
-  const handleBlockUser = () => {
-    if (selectedReport) {
-      setSnackbarMessage(`Đã khóa tài khoản ${selectedReport.reported.name}`);
-      setSnackbarSeverity('error');
+      setSnackbarMessage('Tính năng từ chối báo cáo sẽ được triển khai');
+      setSnackbarSeverity('info');
       setSnackbarOpen(true);
     }
     handleMenuClose();
@@ -334,29 +162,14 @@ const ReportManagement: React.FC = () => {
     switch (status) {
       case 'pending':
         return <Chip label='Chờ xử lý' color='warning' size='small' />;
-      case 'investigating':
-        return <Chip label='Đang điều tra' color='info' size='small' />;
-      case 'resolved':
-        return <Chip label='Đã giải quyết' color='success' size='small' />;
-      case 'dismissed':
-        return <Chip label='Bỏ qua' color='default' size='small' />;
+      case 'suspended':
+        return <Chip label='Tạm khóa' color='error' size='small' />;
+      case 'banned':
+        return <Chip label='Cấm vĩnh viễn' color='error' size='small' />;
+      case 'rejected':
+        return <Chip label='Từ chối' color='default' size='small' />;
       default:
         return <Chip label={status} color='default' size='small' />;
-    }
-  };
-
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case 'fraud':
-        return 'Gian lận';
-      case 'behavior':
-        return 'Hành vi không phù hợp';
-      case 'content':
-        return 'Nội dung không phù hợp';
-      case 'other':
-        return 'Khác';
-      default:
-        return category;
     }
   };
 
@@ -374,16 +187,21 @@ const ReportManagement: React.FC = () => {
   const handleReset = () => {
     setSearchQuery('');
     setStatusFilter('all');
-    setCategoryFilter('all');
+    refetch(); // Refresh data from API
   };
 
   // Statistics
-  const totalReports = reports.length;
-  const pendingReports = reports.filter((r) => r.status === 'pending').length;
-  const investigatingReports = reports.filter(
-    (r) => r.status === 'investigating'
+  const totalReports = apiReports.length;
+  const pendingReports = apiReports.filter(
+    (r) => r.status === 'pending'
   ).length;
-  const resolvedReports = reports.filter((r) => r.status === 'resolved').length;
+  const suspendedReports = apiReports.filter(
+    (r) => r.status === 'suspended'
+  ).length;
+  const bannedReports = apiReports.filter((r) => r.status === 'banned').length;
+  const rejectedReports = apiReports.filter(
+    (r) => r.status === 'rejected'
+  ).length;
 
   return (
     <Box>
@@ -413,22 +231,33 @@ const ReportManagement: React.FC = () => {
 
         <Card sx={{ minWidth: 200, flex: 1 }}>
           <CardContent sx={{ textAlign: 'center' }}>
-            <Typography variant='h4' color='info.main' fontWeight='bold'>
-              {investigatingReports}
+            <Typography variant='h4' color='error.main' fontWeight='bold'>
+              {suspendedReports}
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              Đang điều tra
+              Tạm khóa
             </Typography>
           </CardContent>
         </Card>
 
         <Card sx={{ minWidth: 200, flex: 1 }}>
           <CardContent sx={{ textAlign: 'center' }}>
-            <Typography variant='h4' color='success.main' fontWeight='bold'>
-              {resolvedReports}
+            <Typography variant='h4' color='error.main' fontWeight='bold'>
+              {bannedReports}
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              Đã giải quyết
+              Cấm vĩnh viễn
+            </Typography>
+          </CardContent>
+        </Card>
+
+        <Card sx={{ minWidth: 200, flex: 1 }}>
+          <CardContent sx={{ textAlign: 'center' }}>
+            <Typography variant='h4' color='default' fontWeight='bold'>
+              {rejectedReports}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              Từ chối
             </Typography>
           </CardContent>
         </Card>
@@ -436,9 +265,26 @@ const ReportManagement: React.FC = () => {
 
       {/* Reports Management */}
       <Paper sx={{ p: 3 }}>
-        <Typography variant='h5' fontWeight='bold' gutterBottom>
-          Quản lý báo cáo
-        </Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mb: 2,
+          }}
+        >
+          <Typography variant='h5' fontWeight='bold'>
+            Quản lý báo cáo
+          </Typography>
+          {isLoading && <CircularProgress size={24} />}
+        </Box>
+
+        {/* Error State */}
+        {error && (
+          <Alert severity='error' sx={{ mb: 3 }}>
+            Có lỗi xảy ra khi tải dữ liệu báo cáo. Vui lòng thử lại.
+          </Alert>
+        )}
 
         {/* Filters */}
         <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
@@ -463,24 +309,9 @@ const ReportManagement: React.FC = () => {
             >
               <MenuItem value='all'>Tất cả</MenuItem>
               <MenuItem value='pending'>Chờ xử lý</MenuItem>
-              <MenuItem value='investigating'>Đang điều tra</MenuItem>
-              <MenuItem value='resolved'>Đã giải quyết</MenuItem>
-              <MenuItem value='dismissed'>Bỏ qua</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl sx={{ minWidth: 150 }}>
-            <InputLabel>Danh mục</InputLabel>
-            <Select
-              value={categoryFilter}
-              label='Danh mục'
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
-              <MenuItem value='all'>Tất cả</MenuItem>
-              <MenuItem value='fraud'>Gian lận</MenuItem>
-              <MenuItem value='behavior'>Hành vi</MenuItem>
-              <MenuItem value='content'>Nội dung</MenuItem>
-              <MenuItem value='other'>Khác</MenuItem>
+              <MenuItem value='suspended'>Tạm khóa</MenuItem>
+              <MenuItem value='banned'>Cấm vĩnh viễn</MenuItem>
+              <MenuItem value='rejected'>Từ chối</MenuItem>
             </Select>
           </FormControl>
 
@@ -504,7 +335,7 @@ const ReportManagement: React.FC = () => {
                 <TableCell>Người báo cáo</TableCell>
                 <TableCell>Người bị báo cáo</TableCell>
                 <TableCell>Lý do</TableCell>
-                <TableCell>Danh mục</TableCell>
+                <TableCell>Mô tả</TableCell>
                 <TableCell>Trạng thái</TableCell>
                 <TableCell>Ngày tạo</TableCell>
                 <TableCell align='center'>Thao tác</TableCell>
@@ -527,9 +358,7 @@ const ReportManagement: React.FC = () => {
                             {report.reporter.name}
                           </Typography>
                           <Typography variant='caption' color='text.secondary'>
-                            {report.reporter.role === 'buyer'
-                              ? 'Người mua'
-                              : 'Người bán'}
+                            ID: {report.reporter.id}
                           </Typography>
                         </Box>
                       </Box>
@@ -546,40 +375,26 @@ const ReportManagement: React.FC = () => {
                             {report.reported.name}
                           </Typography>
                           <Typography variant='caption' color='text.secondary'>
-                            {report.reported.role === 'buyer'
-                              ? 'Người mua'
-                              : 'Người bán'}
+                            ID: {report.reported.id}
                           </Typography>
                         </Box>
                       </Box>
                     </TableCell>
                     <TableCell>
                       <Typography variant='body2'>{report.reason}</Typography>
-                      {report.carTitle && (
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                          display='block'
-                        >
-                          Xe: {report.carTitle}
-                        </Typography>
-                      )}
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={getCategoryLabel(report.category)}
-                        color={
-                          report.category === 'fraud'
-                            ? 'error'
-                            : report.category === 'behavior'
-                            ? 'warning'
-                            : report.category === 'content'
-                            ? 'info'
-                            : 'default'
-                        }
-                        variant='outlined'
-                        size='small'
-                      />
+                      <Typography
+                        variant='body2'
+                        sx={{
+                          maxWidth: 200,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {report.description || 'Không có mô tả'}
+                      </Typography>
                     </TableCell>
                     <TableCell>{getStatusChip(report.status)}</TableCell>
                     <TableCell>
@@ -628,39 +443,23 @@ const ReportManagement: React.FC = () => {
           Xem chi tiết
         </MenuItem>
         {selectedReport?.status === 'pending' && (
-          <MenuItem onClick={handleInvestigate}>
-            <Gavel sx={{ mr: 1 }} />
-            Bắt đầu điều tra
+          <MenuItem onClick={handleSuspend} sx={{ color: 'warning.main' }}>
+            <Block sx={{ mr: 1 }} />
+            Tạm khóa tài khoản
           </MenuItem>
         )}
         {selectedReport?.status === 'pending' && (
-          <MenuItem onClick={handleResolve} sx={{ color: 'success.main' }}>
-            <CheckCircle sx={{ mr: 1 }} />
-            Giải quyết
+          <MenuItem onClick={handleBan} sx={{ color: 'error.main' }}>
+            <Cancel sx={{ mr: 1 }} />
+            Cấm vĩnh viễn
           </MenuItem>
         )}
         {selectedReport?.status === 'pending' && (
-          <MenuItem onClick={handleDismiss} sx={{ color: 'warning.main' }}>
-            <Cancel sx={{ mr: 1 }} />
-            Bỏ qua
+          <MenuItem onClick={handleReject}>
+            <Close sx={{ mr: 1 }} />
+            Từ chối báo cáo
           </MenuItem>
         )}
-        {selectedReport?.status === 'investigating' && (
-          <MenuItem onClick={handleResolve} sx={{ color: 'success.main' }}>
-            <CheckCircle sx={{ mr: 1 }} />
-            Giải quyết
-          </MenuItem>
-        )}
-        {selectedReport?.status === 'investigating' && (
-          <MenuItem onClick={handleDismiss} sx={{ color: 'warning.main' }}>
-            <Cancel sx={{ mr: 1 }} />
-            Bỏ qua
-          </MenuItem>
-        )}
-        <MenuItem onClick={handleBlockUser} sx={{ color: 'error.main' }}>
-          <Block sx={{ mr: 1 }} />
-          Khóa tài khoản
-        </MenuItem>
       </Menu>
 
       {/* Detail Dialog */}
@@ -738,27 +537,19 @@ const ReportManagement: React.FC = () => {
                         {selectedReport.reason}
                       </Typography>
                     </Box>
-                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <Box
+                      sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}
+                    >
                       <Typography
                         variant='body2'
                         color='text.secondary'
                         sx={{ minWidth: 100, fontWeight: 'medium' }}
                       >
-                        Danh mục:
+                        Mô tả:
                       </Typography>
-                      <Chip
-                        label={getCategoryLabel(selectedReport.category)}
-                        color={
-                          selectedReport.category === 'fraud'
-                            ? 'error'
-                            : selectedReport.category === 'behavior'
-                            ? 'warning'
-                            : selectedReport.category === 'content'
-                            ? 'info'
-                            : 'default'
-                        }
-                        size='small'
-                      />
+                      <Typography variant='body2'>
+                        {selectedReport.description || 'Không có mô tả'}
+                      </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                       <Typography
@@ -806,32 +597,8 @@ const ReportManagement: React.FC = () => {
                         }}
                       >
                         <Typography variant='body2' color='text.secondary'>
-                          Email: {selectedReport.reporter.email}
+                          ID: {selectedReport.reporter.id}
                         </Typography>
-                        <Typography variant='body2' color='text.secondary'>
-                          Điện thoại: {selectedReport.reporter.phone}
-                        </Typography>
-                        <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                        >
-                          <Typography variant='body2' color='text.secondary'>
-                            Vai trò:
-                          </Typography>
-                          <Chip
-                            label={
-                              selectedReport.reporter.role === 'buyer'
-                                ? 'Người mua'
-                                : 'Người bán'
-                            }
-                            size='small'
-                            color={
-                              selectedReport.reporter.role === 'buyer'
-                                ? 'info'
-                                : 'warning'
-                            }
-                            variant='outlined'
-                          />
-                        </Box>
                       </Box>
                     </Box>
                   </Box>
@@ -870,32 +637,8 @@ const ReportManagement: React.FC = () => {
                         }}
                       >
                         <Typography variant='body2' color='text.secondary'>
-                          Email: {selectedReport.reported.email}
+                          ID: {selectedReport.reported.id}
                         </Typography>
-                        <Typography variant='body2' color='text.secondary'>
-                          Điện thoại: {selectedReport.reported.phone}
-                        </Typography>
-                        <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                        >
-                          <Typography variant='body2' color='text.secondary'>
-                            Vai trò:
-                          </Typography>
-                          <Chip
-                            label={
-                              selectedReport.reported.role === 'buyer'
-                                ? 'Người mua'
-                                : 'Người bán'
-                            }
-                            size='small'
-                            color={
-                              selectedReport.reported.role === 'buyer'
-                                ? 'info'
-                                : 'warning'
-                            }
-                            variant='outlined'
-                          />
-                        </Box>
                       </Box>
                     </Box>
                   </Box>
@@ -937,58 +680,8 @@ const ReportManagement: React.FC = () => {
                 </CardContent>
               </Card>
 
-              {/* Xe liên quan (nếu có) */}
-              {selectedReport.carTitle && (
-                <Card variant='outlined'>
-                  <CardContent>
-                    <Typography
-                      variant='subtitle1'
-                      fontWeight='bold'
-                      gutterBottom
-                      color='info.main'
-                      sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                    >
-                      <DirectionsCar /> Xe liên quan
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 2,
-                        p: 2,
-                        backgroundColor: 'info.50',
-                        borderRadius: 1,
-                        border: '1px solid',
-                        borderColor: 'info.200',
-                      }}
-                    >
-                      <DirectionsCar color='info' sx={{ fontSize: 32 }} />
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant='body1' fontWeight='bold'>
-                          {selectedReport.carTitle}
-                        </Typography>
-                        <Typography variant='body2' color='text.secondary'>
-                          ID: {selectedReport.carId}
-                        </Typography>
-                      </Box>
-                      <Button
-                        size='small'
-                        variant='outlined'
-                        color='info'
-                        startIcon={<Visibility />}
-                        onClick={() =>
-                          window.open(`/cars/${selectedReport.carId}`, '_blank')
-                        }
-                      >
-                        Xem bài đăng
-                      </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Ghi chú admin */}
-              {selectedReport.adminNotes && (
+              {/* Thông tin xử lý */}
+              {selectedReport.handledBy && (
                 <Card variant='outlined'>
                   <CardContent>
                     <Typography
@@ -998,22 +691,42 @@ const ReportManagement: React.FC = () => {
                       color='success.main'
                       sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                     >
-                      <Note /> Ghi chú admin
+                      <AssignmentInd /> Thông tin xử lý
                     </Typography>
-                    <Paper
-                      elevation={0}
-                      sx={{
-                        p: 2,
-                        backgroundColor: 'success.50',
-                        border: '1px solid',
-                        borderColor: 'success.200',
-                        borderRadius: 1,
-                      }}
+                    <Box
+                      sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
                     >
-                      <Typography variant='body2' sx={{ lineHeight: 1.6 }}>
-                        {selectedReport.adminNotes}
-                      </Typography>
-                    </Paper>
+                      <Box
+                        sx={{ display: 'flex', gap: 2, alignItems: 'center' }}
+                      >
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                          sx={{ minWidth: 120, fontWeight: 'medium' }}
+                        >
+                          Người xử lý:
+                        </Typography>
+                        <Typography variant='body2' fontWeight='medium'>
+                          {selectedReport.handledBy.name}
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{ display: 'flex', gap: 2, alignItems: 'center' }}
+                      >
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                          sx={{ minWidth: 120, fontWeight: 'medium' }}
+                        >
+                          Thời gian xử lý:
+                        </Typography>
+                        <Typography variant='body2'>
+                          {selectedReport.handledAt
+                            ? formatDate(selectedReport.handledAt)
+                            : 'Chưa xử lý'}
+                        </Typography>
+                      </Box>
+                    </Box>
                   </CardContent>
                 </Card>
               )}
@@ -1049,18 +762,20 @@ const ReportManagement: React.FC = () => {
                         {formatDate(selectedReport.createdAt)}
                       </Typography>
                     </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                        gutterBottom
-                      >
-                        Cập nhật lần cuối
-                      </Typography>
-                      <Typography variant='body1' fontWeight='medium'>
-                        {formatDate(selectedReport.updatedAt)}
-                      </Typography>
-                    </Box>
+                    {selectedReport.handledAt && (
+                      <Box sx={{ flex: 1 }}>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                          gutterBottom
+                        >
+                          Thời gian xử lý
+                        </Typography>
+                        <Typography variant='body1' fontWeight='medium'>
+                          {formatDate(selectedReport.handledAt)}
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
                 </CardContent>
               </Card>
@@ -1097,44 +812,33 @@ const ReportManagement: React.FC = () => {
             Đóng
           </Button>
           {selectedReport?.status === 'pending' && (
-            <Button
-              variant='outlined'
-              color='info'
-              onClick={handleInvestigate}
-              startIcon={<Gavel />}
-            >
-              Bắt đầu điều tra
-            </Button>
-          )}
-          {(selectedReport?.status === 'pending' ||
-            selectedReport?.status === 'investigating') && (
             <>
-              <Button
-                variant='contained'
-                color='success'
-                onClick={handleResolve}
-                startIcon={<CheckCircle />}
-              >
-                Giải quyết
-              </Button>
               <Button
                 variant='outlined'
                 color='warning'
-                onClick={handleDismiss}
+                onClick={handleSuspend}
+                startIcon={<Block />}
+              >
+                Tạm khóa
+              </Button>
+              <Button
+                variant='outlined'
+                color='error'
+                onClick={handleBan}
                 startIcon={<Cancel />}
               >
-                Bỏ qua
+                Cấm vĩnh viễn
+              </Button>
+              <Button
+                variant='outlined'
+                color='inherit'
+                onClick={handleReject}
+                startIcon={<Close />}
+              >
+                Từ chối
               </Button>
             </>
           )}
-          <Button
-            variant='outlined'
-            color='error'
-            onClick={handleBlockUser}
-            startIcon={<Block />}
-          >
-            Khóa tài khoản
-          </Button>
         </DialogActions>
       </Dialog>
 
