@@ -24,6 +24,7 @@ import AdminReportsPage from './pages/AdminReportsPage';
 import CreateListingPage from './pages/CreateListingPage';
 import FavoritesPage from './pages/FavoritesPage';
 import ReportsPage from './pages/ReportsPage';
+import ReturnUrlPage from './pages/ReturnUrlPage';
 
 import './App.css';
 
@@ -117,6 +118,9 @@ function App() {
             {/* Auth routes without main layout */}
             <Route path='login' element={<LoginPage />} />
             <Route path='register' element={<RegisterPage />} />
+
+            {/* Payment return URL - outside main layout for clean UI */}
+            <Route path='ReturnUrl' element={<ReturnUrlPage />} />
           </Routes>
         </Router>
       </ThemeProvider>
