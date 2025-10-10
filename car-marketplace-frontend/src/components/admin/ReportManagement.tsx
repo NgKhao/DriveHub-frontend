@@ -45,6 +45,7 @@ import {
   Schedule,
 } from '@mui/icons-material';
 import { useAdminReports, useUpdateReportStatus } from '../../hooks/useAdmin';
+import { useReportStore } from '../../store/reportStore';
 import type { AdminReport } from '../../types';
 
 const ReportManagement: React.FC = () => {
@@ -58,6 +59,9 @@ const ReportManagement: React.FC = () => {
 
   const { mutate: updateReportStatus, isPending: isUpdating } =
     useUpdateReportStatus();
+
+  const { getReportReasons } = useReportStore();
+  const reportReasons = getReportReasons();
 
   const [filteredReports, setFilteredReports] = useState<AdminReport[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -77,6 +81,15 @@ const ReportManagement: React.FC = () => {
     'success' | 'error' | 'warning' | 'info'
   >('success');
 
+  // Helper function to get formatted reason label
+  const getReasonLabel = React.useCallback(
+    (reasonId: string) => {
+      const reason = reportReasons.find((r) => r.id === reasonId);
+      return reason ? reason.label : reasonId;
+    },
+    [reportReasons]
+  );
+
   // Filter reports
   React.useEffect(() => {
     const filtered = apiReports.filter((report) => {
@@ -87,7 +100,9 @@ const ReportManagement: React.FC = () => {
         report.reported.name
           .toLowerCase()
           .includes(searchQuery.toLowerCase()) ||
-        report.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        getReasonLabel(report.reason)
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
         report.description.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesStatus =
@@ -98,7 +113,7 @@ const ReportManagement: React.FC = () => {
 
     setFilteredReports(filtered);
     setPage(0);
-  }, [searchQuery, statusFilter, apiReports]);
+  }, [searchQuery, statusFilter, apiReports, getReasonLabel]);
 
   const handleMenuClick = (
     event: React.MouseEvent<HTMLElement>,
@@ -423,7 +438,9 @@ const ReportManagement: React.FC = () => {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Typography variant='body2'>{report.reason}</Typography>
+                      <Typography variant='body2'>
+                        {getReasonLabel(report.reason)}
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography
@@ -584,7 +601,7 @@ const ReportManagement: React.FC = () => {
                         Lý do:
                       </Typography>
                       <Typography variant='body2' fontWeight='medium'>
-                        {selectedReport.reason}
+                        {getReasonLabel(selectedReport.reason)}
                       </Typography>
                     </Box>
                     <Box
