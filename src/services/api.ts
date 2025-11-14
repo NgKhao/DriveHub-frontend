@@ -1,5 +1,4 @@
 import axios, { type AxiosResponse } from 'axios';
-import { useAuthStore } from '../store/authStore';
 
 // Create axios instance
 const api = axios.create({
@@ -10,13 +9,12 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token from Clerk
 api.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+  async (config) => {
+    // Token sẽ được lấy từ Clerk khi cần
+    // Các component/hooks sẽ tự inject token khi gọi API
+    // Hoặc có thể dùng getAuthToken() từ useAuth hook
     return config;
   },
   (error) => {
@@ -31,9 +29,9 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      useAuthStore.getState().logout();
-      window.location.href = '/login';
+      // Token expired or invalid - Clerk sẽ tự động handle
+      // Có thể redirect hoặc show notification
+      console.error('Unauthorized access - please sign in again');
     }
     return Promise.reject(error);
   }

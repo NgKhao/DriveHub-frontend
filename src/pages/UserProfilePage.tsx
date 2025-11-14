@@ -18,7 +18,6 @@ import {
 } from '@mui/material';
 import { Person, Security, Edit, Save, Cancel } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
-import { useAuthStore } from '../store/authStore';
 import { useAuth } from '../hooks/useAuth';
 import {
   validateRegisterForm,
@@ -50,7 +49,7 @@ function TabPanel(props: TabPanelProps) {
 
 const UserProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const {
     updateProfile,
     isUpdateProfileLoading,
@@ -123,18 +122,16 @@ const UserProfilePage: React.FC = () => {
     }
 
     // Call update profile mutation
-    updateProfile(
-      {
+    try {
+      await updateProfile({
         name: data.name,
         phone: data.phone,
-      },
-      {
-        onSuccess: () => {
-          setSuccess('Cập nhật thông tin thành công!');
-          setIsEditing(false);
-        },
-      }
-    );
+      });
+      setSuccess('Cập nhật thông tin thành công!');
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Update profile error:', error);
+    }
   };
 
   const handleCancel = () => {
@@ -147,7 +144,7 @@ const UserProfilePage: React.FC = () => {
     resetUpdateProfileError();
   };
 
-  const onPasswordSubmit = (data: {
+  const onPasswordSubmit = async (data: {
     currentPassword: string;
     newPassword: string;
     confirmNewPassword: string;
@@ -169,18 +166,16 @@ const UserProfilePage: React.FC = () => {
     }
 
     // Call reset password mutation
-    resetPassword(
-      {
+    try {
+      await resetPassword({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
-      },
-      {
-        onSuccess: () => {
-          setPasswordSuccess('Đổi mật khẩu thành công!');
-          resetPasswordForm();
-        },
-      }
-    );
+      });
+      setPasswordSuccess('Đổi mật khẩu thành công!');
+      resetPasswordForm();
+    } catch (error) {
+      console.error('Reset password error:', error);
+    }
   };
 
   if (!user) {

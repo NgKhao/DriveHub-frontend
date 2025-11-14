@@ -13,7 +13,7 @@ import { Person, RateReview } from '@mui/icons-material';
 import StarRating from './StarRating';
 import RatingDialog from './RatingDialog';
 import { useRatingStore } from '../../store/ratingStore';
-import { useAuthStore } from '../../store/authStore';
+import { useAuth } from '../../hooks/useAuth';
 
 interface SellerRatingsProps {
   sellerId: string;
@@ -24,7 +24,7 @@ const SellerRatings: React.FC<SellerRatingsProps> = ({
   sellerId,
   sellerName,
 }) => {
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated } = useAuth();
   const { getSellerRating, getUserRatingForSeller, fetchSellerRatings } =
     useRatingStore();
 

@@ -8,7 +8,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Favorite } from '@mui/icons-material';
-import { useAuthStore } from '../store/authStore';
+import { useAuth } from '../hooks/useAuth';
 import { useFavoritesManager } from '../hooks/useFavorites';
 import CarCard from '../components/car/CarCard';
 import type { Car, SellerPost } from '../types';
@@ -51,7 +51,7 @@ const mapSellerPostToCar = (sellerPost: SellerPost): Car => {
 
 const FavoritesPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth();
   const { favorites, isLoadingFavorites, favoritesError } =
     useFavoritesManager();
 

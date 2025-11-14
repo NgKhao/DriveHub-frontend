@@ -25,7 +25,7 @@ import {
 import StarRating from './StarRating';
 import RatingDialog from './RatingDialog';
 import { useUserReviewForSeller } from '../../hooks/useReviews';
-import { useAuthStore } from '../../store/authStore';
+import { useAuth } from '../../hooks/useAuth';
 import type { SellerPost } from '../../types';
 
 interface SellerInfoDialogProps {
@@ -39,7 +39,7 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
   onClose,
   sellerPost,
 }) => {
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated } = useAuth();
   const [showRatingDialog, setShowRatingDialog] = useState(false);
 
   // Use actual seller info if available, otherwise fallback to post info

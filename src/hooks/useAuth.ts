@@ -1,215 +1,142 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useUser, useClerk, useAuth as useClerkAuth } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { authService } from '../services/authService';
-import type { LoginRequest, RegisterRequest } from '../types';
+import { useEffect } from 'react';
 
-interface LoginError {
-  response?: { status: number };
-  message?: string;
-}
-
-// Helper function to get user-friendly error message
-const getErrorMessage = (error: LoginError): string => {
-  if (error.response?.status === 401) {
-    return 'Email hoặc mật khẩu không đúng';
-  } else if (error.response?.status === 400) {
-    return 'Thông tin đăng nhập không hợp lệ';
-  } else if (error.message?.includes('Network')) {
-    return 'Không thể kết nối đến server';
-  } else {
-    return 'Đăng nhập thất bại. Vui lòng thử lại.';
-  }
-};
-
-// Hook for login mutation
-export const useLoginMutation = () => {
+// Custom hook wrapper để tích hợp Clerk với app logic
+export const useAuth = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { login: setAuth } = useAuthStore();
+  const { user, isLoaded: isUserLoaded, isSignedIn } = useUser();
+  const { signOut } = useClerk();
+  const { getToken } = useClerkAuth();
+  const { userRole, setUserRole, clearUserRole } = useAuthStore();
 
-  return useMutation({
-    mutationFn: async (credentials: LoginRequest) => {
-      return await authService.login(credentials);
-    },
-    onSuccess: (data) => {
-      // Update auth store
-      setAuth(data.user, data.token);
+  // Sync user role từ Clerk metadata khi user thay đổi
+  useEffect(() => {
+    if (isSignedIn && user) {
+      // Lấy role từ publicMetadata hoặc unsafeMetadata
+      const role =
+        (user.publicMetadata?.role as 'buyer' | 'seller' | 'admin') || 'buyer';
+      if (role !== userRole) {
+        setUserRole(role);
+      }
+    } else if (!isSignedIn) {
+      clearUserRole();
+    }
+  }, [isSignedIn, user, userRole, setUserRole, clearUserRole]);
 
-      // Invalidate and refetch any user-related queries
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+  // Helper function để lấy token cho API calls
+  const getAuthToken = async () => {
+    try {
+      return await getToken();
+    } catch (error) {
+      console.error('Error getting auth token:', error);
+      return null;
+    }
+  };
 
-      // Redirect based on user role
-      if (data.user.role === 'admin') {
-        navigate('/admin');
-      } else if (data.user.role === 'seller') {
-        navigate('/seller-dashboard');
-      } else {
-        navigate('/');
+  // Logout function
+  const logout = async () => {
+    try {
+      await signOut();
+      clearUserRole();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Clear local state even if signOut fails
+      clearUserRole();
+      navigate('/');
+    }
+  };
+
+  // Redirect based on role (có thể gọi sau khi đăng nhập thành công)
+  const redirectByRole = (role: 'buyer' | 'seller' | 'admin') => {
+    if (role === 'admin') {
+      navigate('/admin');
+    } else if (role === 'seller') {
+      navigate('/seller-dashboard');
+    } else {
+      navigate('/');
+    }
+  };
+
+  return {
+    // User info
+    user:
+      isSignedIn && user
+        ? {
+            id: user.id,
+            email: user.primaryEmailAddress?.emailAddress || '',
+            name: user.fullName || user.username || '',
+            phone: user.primaryPhoneNumber?.phoneNumber || '',
+            role: userRole || 'buyer',
+            isVerified: (user.publicMetadata?.isVerified as boolean) || false,
+            avatar: user.imageUrl,
+            createdAt:
+              user.createdAt?.toISOString() || new Date().toISOString(),
+            updatedAt:
+              user.updatedAt?.toISOString() || new Date().toISOString(),
+          }
+        : null,
+
+    // Auth state
+    isAuthenticated: isSignedIn || false,
+    isLoaded: isUserLoaded,
+    userRole,
+
+    // Auth methods
+    logout,
+    getAuthToken,
+    redirectByRole,
+    setUserRole,
+
+    // Clerk user object (nếu cần access thêm methods)
+    clerkUser: user,
+
+    // Legacy compatibility (để không break existing code)
+    token: null, // Clerk sử dụng getAuthToken() thay vì token trực tiếp
+    isLoginLoading: false,
+    loginError: null,
+    resetLoginError: () => {},
+    isRegisterLoading: false,
+    registerError: null,
+    resetRegisterError: () => {},
+
+    // Profile update methods (Clerk handles via user.update())
+    updateProfile: async (data: { name?: string; phone?: string }) => {
+      if (user) {
+        try {
+          await user.update({
+            firstName: data.name?.split(' ')[0],
+            lastName: data.name?.split(' ').slice(1).join(' '),
+          });
+        } catch (error) {
+          console.error('Update profile error:', error);
+        }
       }
     },
-    onError: (error: LoginError) => {
-      console.error('Login error:', error);
-    },
-  });
-};
+    isUpdateProfileLoading: false,
+    updateProfileError: null,
+    resetUpdateProfileError: () => {},
 
-// Hook for logout mutation
-export const useLogoutMutation = () => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { token, logout: clearAuth } = useAuthStore();
-
-  return useMutation({
-    mutationFn: async () => {
-      if (token) {
-        await authService.logout(token);
-      }
-    },
-    onSuccess: () => {
-      // Clear auth store
-      clearAuth();
-
-      // Clear all cached queries
-      queryClient.clear();
-
-      // Navigate to home
-      navigate('/');
-    },
-    onError: (error) => {
-      console.error('Logout API error:', error);
-      // Even if logout fails, still clear local state
-      clearAuth();
-      queryClient.clear();
-      navigate('/');
-    },
-  });
-};
-
-// Hook for register mutation
-export const useRegisterMutation = () => {
-  const navigate = useNavigate();
-
-  return useMutation({
-    mutationFn: async (registerData: RegisterRequest) => {
-      return await authService.register(registerData);
-    },
-    onSuccess: (user) => {
-      // Registration successful, but no token returned
-      // User needs to login manually
-      console.log('Registration successful:', user);
-
-      // Navigate to login page with success message
-      navigate('/login?registered=true');
-    },
-    onError: (error) => {
-      console.error('Register error:', error);
-    },
-  });
-};
-
-// Hook for update profile mutation
-export const useUpdateProfileMutation = () => {
-  const queryClient = useQueryClient();
-  const { updateUser } = useAuthStore();
-
-  return useMutation({
-    mutationFn: async (userData: { name?: string; phone?: string }) => {
-      return await authService.updateProfile(userData);
-    },
-    onSuccess: (updatedUser) => {
-      // Update auth store with new user data
-      updateUser(updatedUser);
-
-      // Invalidate and refetch any user-related queries
-      queryClient.invalidateQueries({ queryKey: ['user'] });
-
-      console.log('Profile updated successfully:', updatedUser);
-    },
-    onError: (error) => {
-      console.error('Update profile error:', error);
-    },
-  });
-};
-
-// Hook for reset password mutation
-export const useResetPasswordMutation = () => {
-  return useMutation({
-    mutationFn: async (passwordData: {
+    // Password reset (Clerk handles differently)
+    resetPassword: async (passwordData: {
       currentPassword: string;
       newPassword: string;
     }) => {
-      return await authService.resetPassword(
-        passwordData.currentPassword,
-        passwordData.newPassword
-      );
+      if (user) {
+        try {
+          await user.updatePassword({
+            currentPassword: passwordData.currentPassword,
+            newPassword: passwordData.newPassword,
+          });
+        } catch (error) {
+          console.error('Reset password error:', error);
+        }
+      }
     },
-    onSuccess: () => {
-      console.log('Password reset successfully');
-    },
-    onError: (error) => {
-      console.error('Reset password error:', error);
-    },
-  });
-};
-
-// Main auth hook that combines auth state and mutations
-export const useAuth = () => {
-  const { user, isAuthenticated, token } = useAuthStore();
-  const loginMutation = useLoginMutation();
-  const logoutMutation = useLogoutMutation();
-  const registerMutation = useRegisterMutation();
-  const updateProfileMutation = useUpdateProfileMutation();
-  const resetPasswordMutation = useResetPasswordMutation();
-
-  return {
-    // Auth state
-    user,
-    isAuthenticated,
-    token,
-
-    // Login
-    login: loginMutation.mutate,
-    loginAsync: loginMutation.mutateAsync,
-    isLoginLoading: loginMutation.isPending,
-    loginError: loginMutation.error
-      ? getErrorMessage(loginMutation.error)
-      : null,
-
-    // Register
-    register: registerMutation.mutate,
-    registerAsync: registerMutation.mutateAsync,
-    isRegisterLoading: registerMutation.isPending,
-    registerError: registerMutation.error
-      ? getErrorMessage(registerMutation.error)
-      : null,
-
-    // Update Profile
-    updateProfile: updateProfileMutation.mutate,
-    updateProfileAsync: updateProfileMutation.mutateAsync,
-    isUpdateProfileLoading: updateProfileMutation.isPending,
-    updateProfileError: updateProfileMutation.error
-      ? getErrorMessage(updateProfileMutation.error)
-      : null,
-
-    // Reset Password
-    resetPassword: resetPasswordMutation.mutate,
-    resetPasswordAsync: resetPasswordMutation.mutateAsync,
-    isResetPasswordLoading: resetPasswordMutation.isPending,
-    resetPasswordError: resetPasswordMutation.error
-      ? getErrorMessage(resetPasswordMutation.error)
-      : null,
-
-    // Logout
-    logout: logoutMutation.mutate,
-    logoutAsync: logoutMutation.mutateAsync,
-    isLogoutLoading: logoutMutation.isPending,
-
-    // Reset mutations
-    resetLoginError: loginMutation.reset,
-    resetLogoutError: logoutMutation.reset,
-    resetRegisterError: registerMutation.reset,
-    resetUpdateProfileError: updateProfileMutation.reset,
-    resetResetPasswordError: resetPasswordMutation.reset,
+    isResetPasswordLoading: false,
+    resetPasswordError: null,
+    resetResetPasswordError: () => {},
   };
 };

@@ -35,7 +35,7 @@ import {
   CloudUpload,
 } from '@mui/icons-material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import { useAuth } from '../hooks/useAuth';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import { validateCarForm } from '../utils/validation';
 import { useSellerPosts, useSeller } from '../hooks/useSeller';
@@ -65,12 +65,11 @@ const CAR_BRANDS = [
 const SellerDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   // API hooks
   const { data: sellerPosts, isLoading, error, refetch } = useSellerPosts();
-  const { deletePost, updatePost, updatePostError, isUpdatePostLoading } =
-    useSeller();
+  const { deletePost, updatePost, isUpdatePostLoading } = useSeller();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);

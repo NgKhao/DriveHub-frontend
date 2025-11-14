@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import StarRating from './StarRating';
 import ReportDialog from './ReportDialog';
-import { useAuthStore } from '../../store/authStore';
+import { useAuth } from '../../hooks/useAuth';
 import { useCreateReview } from '../../hooks/useReviews';
 
 interface RatingDialogProps {
@@ -34,7 +34,7 @@ const RatingDialog: React.FC<RatingDialogProps> = ({
   sellerName,
   existingRating,
 }) => {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const createReviewMutation = useCreateReview();
 
   const [rating, setRating] = useState(existingRating?.rating || 0);

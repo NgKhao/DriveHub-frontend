@@ -35,7 +35,7 @@ import { formatCurrency, formatRelativeTime } from '../utils/helpers';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import SellerInfoDialog from '../components/common/SellerInfoDialog';
 import ReportDialog from '../components/common/ReportDialog';
-import { useAuthStore } from '../store/authStore';
+import { useAuth } from '../hooks/useAuth';
 import { useSellerPostDetail } from '../hooks/useSeller';
 import { useAdminPostDetail } from '../hooks/useAdmin';
 import { usePublicPostDetail } from '../hooks/usePublic';
@@ -44,7 +44,7 @@ import { useFavoritesManager } from '../hooks/useFavorites';
 const CarDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   // Determine which API to use based on URL context
   const isAdmin = user?.role === 'admin';

@@ -18,7 +18,7 @@ import {
   FavoriteBorder,
 } from '@mui/icons-material';
 import { formatCurrency } from '../../utils/helpers';
-import { useAuthStore } from '../../store/authStore';
+import { useAuth } from '../../hooks/useAuth';
 import { useFavoritesManager } from '../../hooks/useFavorites';
 import type { Car } from '../../types';
 
@@ -29,7 +29,7 @@ interface CarCardProps {
 
 const CarCard: React.FC<CarCardProps> = ({ car, showFavorite = true }) => {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth();
   const { isFavorite, toggleFavorite, isTogglingFavorite } =
     useFavoritesManager();
 

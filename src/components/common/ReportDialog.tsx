@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { Warning } from '@mui/icons-material';
 import { useReportStore } from '../../store/reportStore';
-import { useAuthStore } from '../../store/authStore';
+import { useAuth } from '../../hooks/useAuth';
 import { useReportManager } from '../../hooks/useReport';
 
 interface ReportDialogProps {
@@ -35,7 +35,7 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
   reportedName,
   reportedType,
 }) => {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const { getReportReasons } = useReportStore();
   const {
     createReportAsync,

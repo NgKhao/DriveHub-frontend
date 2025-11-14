@@ -21,13 +21,13 @@ import {
 } from '@mui/material';
 import { Report, Visibility, Person, Info } from '@mui/icons-material';
 import { useReportStore } from '../store/reportStore';
-import { useAuthStore } from '../store/authStore';
+import { useAuth } from '../hooks/useAuth';
 import { useMyReports } from '../hooks/useReport';
 import ReportDialog from '../components/common/ReportDialog';
 import type { Report as ReportType } from '../types';
 
 const ReportsPage: React.FC = () => {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const { getReportReasons } = useReportStore();
   const [reportDetailOpen, setReportDetailOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);

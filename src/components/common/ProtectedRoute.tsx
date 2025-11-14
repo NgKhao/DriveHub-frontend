@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuthStore } from '../../store/authStore';
-import { Box, Typography, Button } from '@mui/material';
+import { useAuth } from '../../hooks/useAuth';
+import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import { Lock } from '@mui/icons-material';
 
 interface ProtectedRouteProps {
@@ -15,7 +15,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole,
   allowedRoles,
 }) => {
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, isLoaded } = useAuth();
+
+  // Show loading while Clerk is initializing
+  if (!isLoaded) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   // If not authenticated, redirect to login
   if (!isAuthenticated || !user) {

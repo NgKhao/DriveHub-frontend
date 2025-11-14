@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { CloudUpload, Delete, Save, Cancel } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import { useAuth } from '../hooks/useAuth';
 import { validateCarForm } from '../utils/validation';
 import { formatCurrency } from '../utils/helpers';
 import { useSeller } from '../hooks/useSeller';
@@ -83,7 +83,7 @@ const CAR_BRANDS = [
 
 const CreateListingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const { createPost, isCreatePostLoading, createPostError } = useSeller();
 
   const [formData, setFormData] = useState<CarFormData>(INITIAL_FORM_DATA);

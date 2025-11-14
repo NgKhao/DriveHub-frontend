@@ -7,7 +7,7 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { useAuthStore } from '../store/authStore';
+import { useAuth } from '../hooks/useAuth';
 import PaymentResultComponent from '../components/common/PaymentResult';
 import {
   parseVNPayParams,
@@ -19,7 +19,7 @@ import type { PaymentResult } from '../types';
 const ReturnUrlPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(
     null
