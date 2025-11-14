@@ -1,9 +1,0 @@
-	Xe				Hãng		Dòng xe 
-BMW 330i M Sport                 | BMW   	| 3 Series  |
-Ford Territory Titanium X 1.5 AT | Ford  	| Territory |
-Hyundai Kona 2021 2.0 ATH 	 | Hyundai	| Kona      |
-MADAZ CX30 Premium 		 | Mazda | CX-30
-Mercedes-Benz C300 AMG 		 | Mercedes-Benz| C Class
-VF5 Plus 			 | Vinfast	| VF5
-
-
