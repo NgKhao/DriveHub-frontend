@@ -27,8 +27,8 @@ export const authService = {
     });
 
     // Transform backend response to frontend format
-    const user = mapBackendUserToFrontendUser(response.data.detail.userInfo);
-    const token = response.data.detail.token.token;
+    const user = mapBackendUserToFrontendUser(response.data.data.userInfo);
+    const token = response.data.data.token;
 
     return {
       user,

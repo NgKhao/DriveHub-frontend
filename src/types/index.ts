@@ -35,20 +35,19 @@ export interface AuthResponse {
 // Backend API Response Types
 export interface BackendLoginResponse {
   messenger: string;
-  status: number;
-  detail: {
+  status: string;
+  data: {
     userInfo: {
-      fullName: string;
+      id: number;
+      name: string;
       email: string;
-      role: string; // 'SELLER', 'BUYER', 'ADMIN'
-      numberPhone: string;
+      role: 'buyer' | 'seller' | 'admin';
+      phone: string;
+      status: string;
     };
-    token: {
-      type: string; // 'Bearer'
-      token: string;
-    };
+    type: string; // 'Bearer'
+    token: string;
   };
-  instance: string;
 }
 
 export interface BackendLogoutResponse {
@@ -441,22 +440,15 @@ export interface User {
 
 // Helper function to convert backend user to frontend user
 export const mapBackendUserToFrontendUser = (
-  backendUser: BackendLoginResponse['detail']['userInfo']
+  backendUser: BackendLoginResponse['data']['userInfo']
 ): User => {
-  // Map backend role to frontend role
-  const roleMap: Record<string, 'buyer' | 'seller' | 'admin'> = {
-    BUYER: 'buyer',
-    SELLER: 'seller',
-    ADMIN: 'admin',
-  };
-
   return {
     id: backendUser.email, // Use email as ID since backend doesn't provide ID
     email: backendUser.email,
-    name: backendUser.fullName,
-    role: roleMap[backendUser.role] || 'buyer',
-    phone: backendUser.numberPhone,
-    isVerified: true, // Assume verified for now
+    name: backendUser.name,
+    role: backendUser.role,
+    phone: backendUser.phone,
+    isVerified: backendUser.status === 'active',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
