@@ -13,7 +13,6 @@ import type {
 } from '../types';
 import {
   mapBackendUserToFrontendUser,
-  mapFrontendRegisterToBackendRegister,
   mapBackendRegisterResponseToUser,
   mapFrontendUserToBackendUpdate,
   mapBackendUpdateProfileResponseToUser,
@@ -39,17 +38,14 @@ export const authService = {
 
   // Register user
   register: async (userData: RegisterRequest): Promise<User> => {
-    // Transform frontend request to backend format
-    const backendRequest = mapFrontendRegisterToBackendRegister(userData);
-
     const response = await api.post<BackendRegisterResponse>(
       '/auth/register',
-      backendRequest
+      userData
     );
 
     // Transform backend response to frontend user format
     // Note: Register doesn't return token, only user info
-    return mapBackendRegisterResponseToUser(response.data.detail);
+    return mapBackendRegisterResponseToUser(response.data.data.userInfo);
   },
 
   // Get current user profile
@@ -90,11 +86,6 @@ export const authService = {
     return response.data.data;
   },
 
-  // Forgot password
-  forgotPassword: async (email: string): Promise<void> => {
-    await api.post('/auth/forgot-password', { email });
-  },
-
   // Reset password
   resetPassword: async (
     currentPassword: string,
@@ -105,10 +96,5 @@ export const authService = {
       newPassword: newPassword,
     });
     // Response has no meaningful data to return, just success/failure
-  },
-
-  // Verify email
-  verifyEmail: async (token: string): Promise<void> => {
-    await api.post('/auth/verify-email', { token });
   },
 };
