@@ -52,9 +52,7 @@ export interface BackendLoginResponse {
 
 export interface BackendLogoutResponse {
   messenger: string;
-  status: number;
-  detail: null;
-  instance: string;
+  status: string;
 }
 
 export interface BackendRegisterRequest {
