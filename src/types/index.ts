@@ -85,18 +85,17 @@ export interface BackendUpdateProfileRequest {
   numberPhone?: string;
 }
 
-export interface BackendUpdateProfileResponse {
+export interface BackendProfileResponse {
   messenger: string;
-  status: number;
+  status: string;
   detail: {
     id: number;
     email: string;
     fullName: string;
     numberPhone: string;
-    role: string;
-    isActive: boolean;
+    role: 'buyer' | 'seller' | 'admin';
+    status: 'active' | 'inactive';
   };
-  instance: string;
 }
 
 export interface BackendResetPasswordRequest {
@@ -500,21 +499,15 @@ export const mapFrontendUserToBackendUpdate = (userData: {
 
 // Helper function to convert backend profile response to frontend user
 export const mapBackendUpdateProfileResponseToUser = (
-  backendResponse: BackendUpdateProfileResponse['detail']
+  backendResponse: BackendProfileResponse['detail']
 ): User => {
-  const roleMap: Record<string, 'buyer' | 'seller' | 'admin'> = {
-    BUYER: 'buyer',
-    SELLER: 'seller',
-    ADMIN: 'admin',
-  };
-
   return {
     id: backendResponse.id.toString(),
     email: backendResponse.email,
     name: backendResponse.fullName,
-    role: roleMap[backendResponse.role] || 'buyer',
+    role: backendResponse.role || 'buyer',
     phone: backendResponse.numberPhone,
-    isVerified: backendResponse.isActive,
+    isVerified: backendResponse.status === 'active',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

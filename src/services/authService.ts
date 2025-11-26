@@ -8,8 +8,8 @@ import type {
   BackendLoginResponse,
   BackendLogoutResponse,
   BackendRegisterResponse,
-  BackendUpdateProfileResponse,
   BackendResetPasswordResponse,
+  BackendProfileResponse,
 } from '../types';
 import {
   mapBackendUserToFrontendUser,
@@ -50,8 +50,8 @@ export const authService = {
 
   // Get current user profile
   getProfile: async (): Promise<User> => {
-    const response = await api.get<ApiResponse<User>>('/auth/profile');
-    return response.data.data;
+    const response = await api.get<BackendProfileResponse>('/auth/profile');
+    return mapBackendUpdateProfileResponseToUser(response.data.detail);
   },
 
   // Update user profile
@@ -62,8 +62,8 @@ export const authService = {
     // Transform frontend data to backend format
     const backendRequest = mapFrontendUserToBackendUpdate(userData);
 
-    const response = await api.put<BackendUpdateProfileResponse>(
-      '/account/me',
+    const response = await api.put<BackendProfileResponse>(
+      '/user/profile',
       backendRequest
     );
 
