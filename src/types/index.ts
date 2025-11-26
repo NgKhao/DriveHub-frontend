@@ -68,14 +68,19 @@ export interface BackendRegisterRequest {
 
 export interface BackendRegisterResponse {
   messenger: string;
-  status: number;
-  detail: {
-    fullName: string;
-    email: string;
-    role: string; // 'ADMIN', 'SELLER', 'BUYER'
-    numberPhone: string;
+  status: string;
+  data: {
+    userInfo: {
+      id: number;
+      name: string;
+      email: string;
+      phone: string;
+      role: 'buyer' | 'seller';
+      status: 'active' | 'inactive';
+    };
+    token: string;
+    type: string;
   };
-  instance: string;
 }
 
 export interface BackendUpdateProfileRequest {
@@ -478,20 +483,15 @@ export const mapFrontendRegisterToBackendRegister = (
 
 // Helper function to convert backend register response to frontend user
 export const mapBackendRegisterResponseToUser = (
-  backendResponse: BackendRegisterResponse['detail']
+  backendResponse: BackendRegisterResponse['data']['userInfo']
 ): User => {
-  const roleMap: Record<string, 'buyer' | 'seller'> = {
-    BUYER: 'buyer',
-    SELLER: 'seller',
-  };
-
   return {
     id: backendResponse.email,
     email: backendResponse.email,
-    name: backendResponse.fullName,
-    role: roleMap[backendResponse.role] || 'buyer',
-    phone: backendResponse.numberPhone,
-    isVerified: true,
+    name: backendResponse.name,
+    role: backendResponse.role,
+    phone: backendResponse.phone,
+    isVerified: backendResponse.status === 'active',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
