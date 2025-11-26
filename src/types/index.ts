@@ -105,14 +105,12 @@ export interface BackendResetPasswordRequest {
 
 export interface BackendResetPasswordResponse {
   messenger: string;
-  status: number;
-  detail: null;
-  instance: string;
+  status: string;
 }
 
 export interface BackendGetUsersResponse {
   messenger: string;
-  status: number;
+  status: string;
   detail: {
     content: {
       id: number;
