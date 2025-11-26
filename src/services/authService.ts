@@ -91,7 +91,7 @@ export const authService = {
     currentPassword: string,
     newPassword: string
   ): Promise<void> => {
-    await api.patch<BackendResetPasswordResponse>('/reset/password', {
+    await api.put<BackendResetPasswordResponse>('/user/change-password', {
       password: currentPassword,
       newPassword: newPassword,
     });
