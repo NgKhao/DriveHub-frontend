@@ -325,6 +325,26 @@ const UserManagement: React.FC = () => {
       return;
     }
 
+    // Password validation
+    if (!addUserForm.password) {
+      setSnackbarMessage('Vui lòng nhập mật khẩu');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    if (addUserForm.password.length < 6) {
+      setSnackbarMessage('Mật khẩu phải có ít nhất 6 ký tự');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // Confirm password validation
+    if (addUserForm.password !== addUserForm.confirmPassword) {
+      setSnackbarMessage('Mật khẩu xác nhận không khớp');
+      setSnackbarOpen(true);
+      return;
+    }
+
     // Phone validation (optional)
     if (addUserForm.phone && !/^(\+84|0)[3-9]\d{8}$/.test(addUserForm.phone)) {
       setSnackbarMessage('Số điện thoại không hợp lệ');
@@ -338,6 +358,7 @@ const UserManagement: React.FC = () => {
       email: addUserForm.email,
       phone: addUserForm.phone || '',
       role: addUserForm.role,
+      password: addUserForm.password,
     };
 
     createUser(userData, {
@@ -838,6 +859,28 @@ const UserManagement: React.FC = () => {
                 setAddUserForm({ ...addUserForm, phone: e.target.value })
               }
               placeholder='Nhập số điện thoại (tùy chọn)'
+            />
+
+            <TextField
+              fullWidth
+              label='Mật khẩu *'
+              type='password'
+              value={addUserForm.password}
+              onChange={(e) =>
+                setAddUserForm({ ...addUserForm, password: e.target.value })
+              }
+              placeholder='Nhập mật khẩu'
+            />
+
+            <TextField
+              fullWidth
+              label='Xác nhận *'
+              type='password'
+              value={addUserForm.confirmPassword}
+              onChange={(e) =>
+                setAddUserForm({ ...addUserForm, confirmPassword: e.target.value })
+              }
+              placeholder='Xác nhận mật khẩu'
             />
 
             <FormControl fullWidth>

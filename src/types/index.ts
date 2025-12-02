@@ -60,7 +60,7 @@ export interface BackendRegisterRequest {
   password: string;
   fullName: string;
   phone: string;
-  roleName: string; // 'ADMIN', 'SELLER', 'BUYER'
+  roleName: 'buyer' | 'seller' | 'admin';
 }
 
 export interface BackendRegisterResponse {
@@ -117,7 +117,7 @@ export interface BackendGetUsersResponse {
       email: string;
       fullName: string;
       numberPhone: string;
-      role: string;
+      role: 'buyer' | 'seller' | 'admin';
       isActive: boolean;
     }[];
     pageNumber: number;
@@ -133,7 +133,7 @@ export interface BackendGetUsersResponse {
 export interface BackendAdminUpdateUserRequest {
   fullName?: string;
   numberPhone?: string;
-  roleName?: string; // 'BUYER', 'SELLER'
+  roleName?: 'buyer' | 'seller' | 'admin';
   isActive?: boolean;
 }
 
@@ -145,7 +145,7 @@ export interface BackendAdminUpdateUserResponse {
     email: string;
     fullName: string;
     numberPhone: string;
-    role: string; // 'BUYER', 'SELLER', 'ADMIN'
+    role: 'buyer' | 'seller' | 'admin';
     isActive: boolean;
   };
   instance: string;
@@ -155,7 +155,8 @@ export interface BackendCreateUserRequest {
   email: string;
   fullName: string;
   numberPhone: string;
-  role: string; // 'BUYER', 'SELLER'
+  role: 'buyer' | 'seller' | 'admin';
+  password: string;
 }
 
 export interface BackendCreateUserResponse {
@@ -166,7 +167,7 @@ export interface BackendCreateUserResponse {
     email: string;
     fullName: string;
     numberPhone: string;
-    role: string; // 'BUYER', 'SELLER'
+    role: 'buyer' | 'seller' | 'admin';
     isActive: boolean;
   };
   instance: string;
@@ -453,18 +454,12 @@ export const mapBackendUserToFrontendUser = (
 export const mapFrontendRegisterToBackendRegister = (
   registerData: RegisterRequest
 ): BackendRegisterRequest => {
-  // Map frontend role to backend role
-  const roleMap: Record<'buyer' | 'seller', string> = {
-    buyer: 'BUYER',
-    seller: 'SELLER',
-  };
-
   return {
     email: registerData.email,
     password: registerData.password,
     fullName: registerData.name,
     phone: registerData.phone || '',
-    roleName: roleMap[registerData.role],
+    roleName: registerData.role,
   };
 };
 
@@ -515,17 +510,11 @@ export const mapBackendUpdateProfileResponseToUser = (
 export const mapBackendGetUsersResponseToPaginated = (
   backendResponse: BackendGetUsersResponse['detail']
 ): PaginatedResponse<User> => {
-  const roleMap: Record<string, 'buyer' | 'seller' | 'admin'> = {
-    BUYER: 'buyer',
-    SELLER: 'seller',
-    ADMIN: 'admin',
-  };
-
   const users: User[] = backendResponse.content.map((user) => ({
     id: user.id.toString(),
     email: user.email,
     name: user.fullName,
-    role: roleMap[user.role] || 'buyer',
+    role: user.role as 'buyer' | 'seller' | 'admin',
     phone: user.numberPhone,
     isVerified: user.isActive,
     createdAt: new Date().toISOString(),
@@ -545,18 +534,13 @@ export const mapBackendGetUsersResponseToPaginated = (
 export const mapFrontendUserToBackendAdminUpdate = (userData: {
   name?: string;
   phone?: string;
-  role?: 'buyer' | 'seller';
+  role?: 'buyer' | 'seller' | 'admin';
   isVerified?: boolean;
 }): BackendAdminUpdateUserRequest => {
-  const roleMap: Record<'buyer' | 'seller', string> = {
-    buyer: 'BUYER',
-    seller: 'SELLER',
-  };
-
   return {
     fullName: userData.name,
     numberPhone: userData.phone,
-    roleName: userData.role ? roleMap[userData.role] : undefined,
+    roleName: userData.role,
     isActive: userData.isVerified,
   };
 };
@@ -565,17 +549,11 @@ export const mapFrontendUserToBackendAdminUpdate = (userData: {
 export const mapBackendAdminUpdateResponseToUser = (
   backendResponse: BackendAdminUpdateUserResponse['detail']
 ): User => {
-  const roleMap: Record<string, 'buyer' | 'seller' | 'admin'> = {
-    BUYER: 'buyer',
-    SELLER: 'seller',
-    ADMIN: 'admin',
-  };
-
   return {
     id: backendResponse.id.toString(),
     email: backendResponse.email,
     name: backendResponse.fullName,
-    role: roleMap[backendResponse.role] || 'buyer',
+    role: backendResponse.role as 'buyer' | 'seller' | 'admin',
     phone: backendResponse.numberPhone,
     isVerified: backendResponse.isActive,
     createdAt: new Date().toISOString(),
@@ -588,18 +566,15 @@ export const mapFrontendCreateUserToBackend = (userData: {
   name: string;
   email: string;
   phone: string;
-  role: 'buyer' | 'seller';
+  role: 'buyer' | 'seller' | 'admin';
+  password: string;
 }): BackendCreateUserRequest => {
-  const roleMap: Record<'buyer' | 'seller', string> = {
-    buyer: 'BUYER',
-    seller: 'SELLER',
-  };
-
   return {
     email: userData.email,
     fullName: userData.name,
     numberPhone: userData.phone,
-    role: roleMap[userData.role],
+    role: userData.role,
+    password: userData.password,
   };
 };
 
@@ -607,17 +582,11 @@ export const mapFrontendCreateUserToBackend = (userData: {
 export const mapBackendCreateUserResponseToUser = (
   backendResponse: BackendCreateUserResponse['detail']
 ): User => {
-  const roleMap: Record<string, 'buyer' | 'seller' | 'admin'> = {
-    BUYER: 'buyer',
-    SELLER: 'seller',
-    ADMIN: 'admin',
-  };
-
   return {
     id: backendResponse.id.toString(),
     email: backendResponse.email,
     name: backendResponse.fullName,
-    role: roleMap[backendResponse.role] || 'buyer',
+    role: backendResponse.role,
     phone: backendResponse.numberPhone,
     isVerified: backendResponse.isActive,
     createdAt: new Date().toISOString(),
