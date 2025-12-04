@@ -237,35 +237,48 @@ export interface BackendCreatePostResponse {
   instance: string;
 }
 
+// Backend car detail in post response (uses brand instead of make)
+export interface BackendCarDetail {
+  brand: string;
+  model: string;
+  year: number;
+  mileage: number;
+  transmission: string;
+  color: string;
+  condition: string;
+  fuelType: string;
+}
+
 export interface BackendPostItem {
   postId: number;
   title: string;
   description: string;
   price: number;
-  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'BLOCKED' | 'HIDDEN';
+  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden';
   location: string;
   phoneContact: string;
-  sellerType: 'INDIVIDUAL' | 'AGENCY';
+  sellerType?: 'individual' | 'agency'; // Optional - not always returned
   images: string[];
-  carDetailDTO: {
-    make: string;
-    model: string;
-    year: number;
-    mileage: number;
-    fuelType: string;
-    transmission: string;
-    color: string;
-    condition: string;
-  };
+  carDetail: BackendCarDetail;
   createdAt: string;
   updatedAt: string | null;
 }
 
+// Backend pagination response structure
+export interface BackendPagination {
+  currentPage: number;
+  lastPage: number;
+  perPage: number;
+  total: number;
+}
+
 export interface BackendGetPostsResponse {
-  messenger: string;
-  status: number;
-  detail: BackendPostItem[];
-  instance: string;
+  message: string;
+  status: string;
+  detail: {
+    posts: BackendPostItem[];
+    pagination: BackendPagination;
+  };
 }
 
 export interface BackendGetPostDetailResponse {
@@ -897,45 +910,39 @@ export const mapBackendUpdatePostResponseToSellerPost = (
 export const mapBackendPostItemToSellerPost = (
   backendPost: BackendPostItem
 ): SellerPost => {
-  const sellerTypeMap: Record<
-    'INDIVIDUAL' | 'AGENCY',
-    'individual' | 'agency'
-  > = {
-    INDIVIDUAL: 'individual',
-    AGENCY: 'agency',
-  };
+  // Backend now returns lowercase status directly, but handle both cases for compatibility
+  const statusValue = backendPost.status.toLowerCase() as
+    | 'draft'
+    | 'pending'
+    | 'approved'
+    | 'rejected'
+    | 'blocked'
+    | 'hidden';
 
-  const statusMap: Record<
-    string,
-    'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden'
-  > = {
-    DRAFT: 'draft',
-    PENDING: 'pending',
-    APPROVED: 'approved',
-    REJECTED: 'rejected',
-    BLOCKED: 'blocked',
-    HIDDEN: 'hidden',
-  };
+  // Backend now returns lowercase sellerType or may not include it
+  const sellerTypeValue = backendPost.sellerType
+    ? (backendPost.sellerType.toLowerCase() as 'individual' | 'agency')
+    : 'individual'; // Default to individual if not provided
 
   return {
     id: backendPost.postId.toString(),
     title: backendPost.title,
     description: backendPost.description,
     price: backendPost.price,
-    status: statusMap[backendPost.status] || 'draft',
+    status: statusValue,
     location: backendPost.location,
     phoneContact: backendPost.phoneContact,
-    sellerType: sellerTypeMap[backendPost.sellerType],
+    sellerType: sellerTypeValue,
     images: convertImageUrls(backendPost.images), // Convert image URLs
     carDetail: {
-      make: backendPost.carDetailDTO.make,
-      model: backendPost.carDetailDTO.model,
-      year: backendPost.carDetailDTO.year,
-      mileage: backendPost.carDetailDTO.mileage,
-      fuelType: backendPost.carDetailDTO.fuelType,
-      transmission: backendPost.carDetailDTO.transmission,
-      color: backendPost.carDetailDTO.color,
-      condition: backendPost.carDetailDTO.condition,
+      make: backendPost.carDetail.brand, // Backend uses 'brand', frontend uses 'make'
+      model: backendPost.carDetail.model,
+      year: backendPost.carDetail.year,
+      mileage: backendPost.carDetail.mileage,
+      fuelType: backendPost.carDetail.fuelType,
+      transmission: backendPost.carDetail.transmission,
+      color: backendPost.carDetail.color,
+      condition: backendPost.carDetail.condition,
     },
     createdAt: backendPost.createdAt,
     updatedAt: backendPost.updatedAt,
@@ -946,7 +953,7 @@ export const mapBackendPostItemToSellerPost = (
 export const mapBackendGetPostsResponseToSellerPosts = (
   backendResponse: BackendGetPostsResponse['detail']
 ): SellerPost[] => {
-  return backendResponse.map(mapBackendPostItemToSellerPost);
+  return backendResponse.posts.map(mapBackendPostItemToSellerPost);
 };
 
 // Helper function to convert backend get post detail response to seller post
