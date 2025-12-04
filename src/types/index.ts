@@ -282,10 +282,11 @@ export interface BackendGetPostsResponse {
 }
 
 export interface BackendGetPostDetailResponse {
-  messenger: string;
-  status: number;
-  detail: BackendPostItem;
-  instance: string;
+  message: string;
+  status: string;
+  detail: {
+    post: BackendPostItem;
+  };
 }
 
 export interface BackendUpdatePostRequest {
@@ -960,7 +961,7 @@ export const mapBackendGetPostsResponseToSellerPosts = (
 export const mapBackendGetPostDetailResponseToSellerPost = (
   backendResponse: BackendGetPostDetailResponse['detail']
 ): SellerPost => {
-  return mapBackendPostItemToSellerPost(backendResponse);
+  return mapBackendPostItemToSellerPost(backendResponse.post);
 };
 
 // Helper function to convert backend admin get posts response to paginated seller posts
