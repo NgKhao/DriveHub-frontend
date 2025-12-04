@@ -69,7 +69,7 @@ const SellerDashboardPage: React.FC = () => {
 
   // API hooks
   const { data: sellerPosts, isLoading, error, refetch } = useSellerPosts();
-  const { deletePost, updatePost, updatePostError, isUpdatePostLoading } =
+  const { deletePost, updatePost, isUpdatePostLoading } =
     useSeller();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

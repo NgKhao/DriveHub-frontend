@@ -12,7 +12,6 @@ import {
   CardContent,
   CardActions,
   Chip,
-  IconButton,
   Paper,
 } from '@mui/material';
 import {
@@ -23,7 +22,6 @@ import {
   Speed,
   Phone,
   LocationOn,
-  Favorite,
 } from '@mui/icons-material';
 import { formatCurrency } from '../utils/helpers';
 import logo from '../assets/logo.png';
