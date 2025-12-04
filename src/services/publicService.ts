@@ -2,7 +2,7 @@ import axios from 'axios';
 import {
   mapBackendPublicGetPostsResponseToPaginated,
   mapBackendPublicSearchPostsResponseToSellerPosts,
-  mapBackendPublicGetPostDetailResponseToSellerPost,
+  mapBackendPublicPostDetailToSellerPost,
 } from '../types';
 import type {
   BackendPublicGetPostsResponse,
@@ -86,19 +86,18 @@ export const publicService = {
 
   /**
    * Get public post detail by ID (không cần authentication)
+   * GET /posts/{id}
    * @param postId Post ID
    * @returns Promise<SellerPost>
    */
-  getPublicPostDetail: async (postId: string): Promise<SellerPost> => {
+  getPostDetail: async (postId: string): Promise<SellerPost> => {
     try {
       const response = await axios.get<BackendPublicGetPostDetailResponse>(
-        `${API_BASE_URL}/public/posts/${postId}`
+        `${API_BASE_URL}/posts/${postId}`
       );
 
       // Transform backend response to frontend format
-      return mapBackendPublicGetPostDetailResponseToSellerPost(
-        response.data.detail
-      );
+      return mapBackendPublicPostDetailToSellerPost(response.data.detail);
     } catch (error) {
       console.error('Error fetching public post detail:', error);
       throw error;

@@ -363,19 +363,31 @@ export interface BackendPublicSearchPostsResponse {
 }
 
 // Public Get Post Detail API Types
-export interface BackendPublicGetPostDetailResponse {
-  messenger: string;
-  status: number;
-  detail: {
-    post: BackendPostItem;
-    sellerInfo: {
-      sellerId: number;
-      sellerName: string;
-      sellerEmail: string;
-      sellerPhone: string;
-    };
+// GET /posts/{id} - Chi tiết bài đăng public
+export interface BackendPublicPostDetailItem {
+  postId: number;
+  title: string;
+  description: string;
+  price: number;
+  status: string;
+  location: string;
+  phoneContact: string;
+  images: string[];
+  carDetail: BackendCarDetail;
+  seller: {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
   };
-  instance: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackendPublicGetPostDetailResponse {
+  message: string;
+  status: string;
+  detail: BackendPublicPostDetailItem;
 }
 
 // Search parameters interface
@@ -1006,20 +1018,39 @@ export const mapBackendPublicSearchPostsResponseToSellerPosts = (
 };
 
 // Helper function to convert backend public get post detail response to seller post
-export const mapBackendPublicGetPostDetailResponseToSellerPost = (
-  backendResponse: BackendPublicGetPostDetailResponse['detail']
+// Maps BackendPublicPostDetailItem to SellerPost
+export const mapBackendPublicPostDetailToSellerPost = (
+  backendResponse: BackendPublicPostDetailItem
 ): SellerPost => {
-  const sellerPost = mapBackendPostItemToSellerPost(backendResponse.post);
-
-  // Add seller info if available
-  sellerPost.sellerInfo = {
-    sellerId: backendResponse.sellerInfo.sellerId,
-    sellerName: backendResponse.sellerInfo.sellerName,
-    sellerEmail: backendResponse.sellerInfo.sellerEmail,
-    sellerPhone: backendResponse.sellerInfo.sellerPhone,
+  return {
+    id: backendResponse.postId.toString(),
+    title: backendResponse.title,
+    description: backendResponse.description,
+    price: backendResponse.price,
+    status: backendResponse.status.toLowerCase() as 'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden',
+    location: backendResponse.location,
+    phoneContact: backendResponse.phoneContact,
+    images: backendResponse.images || [],
+    carDetail: {
+      make: backendResponse.carDetail.brand,
+      model: backendResponse.carDetail.model,
+      year: backendResponse.carDetail.year,
+      mileage: backendResponse.carDetail.mileage,
+      transmission: backendResponse.carDetail.transmission,
+      color: backendResponse.carDetail.color,
+      condition: backendResponse.carDetail.condition,
+      fuelType: backendResponse.carDetail.fuelType,
+    },
+    sellerInfo: {
+      sellerId: backendResponse.seller.id,
+      sellerName: backendResponse.seller.name,
+      sellerEmail: backendResponse.seller.email,
+      sellerPhone: backendResponse.seller.phone,
+    },
+    sellerType: 'individual', // Default, not provided by this endpoint
+    createdAt: backendResponse.createdAt,
+    updatedAt: backendResponse.updatedAt,
   };
-
-  return sellerPost;
 };
 
 // Helper function to convert frontend filters to backend search params
