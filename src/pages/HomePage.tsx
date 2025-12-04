@@ -72,7 +72,7 @@ const HomePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Get featured cars from public API (first 6 posts)
-  const { data: publicPostsData, isLoading, error } = usePublicPosts(0, 6);
+  const { data: publicPostsData, isLoading, error } = usePublicPosts(1, 6);
 
   // Convert SellerPost to Car format for displaying
   const featuredCars = (publicPostsData?.items || []).map(mapSellerPostToCar);

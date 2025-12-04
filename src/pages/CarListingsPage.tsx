@@ -101,7 +101,7 @@ const CarListingsPage: React.FC = () => {
     data: publicPostsData,
     isLoading: isLoadingPosts,
     error: postsError,
-  } = usePublicPosts(page - 1, carsPerPage);
+  } = usePublicPosts(page, carsPerPage);
 
   // Use search API when filters or search query is present
   const {

@@ -19,21 +19,22 @@ const API_BASE_URL =
 export const publicService = {
   /**
    * Get all public posts (không cần authentication)
-   * @param page Page number (0-based)
-   * @param size Number of items per page
+   * GET /posts
+   * @param page Page number (1-based for backend)
+   * @param perPage Number of items per page
    * @returns Promise<PaginatedResponse<SellerPost>>
    */
-  getAllPublicPosts: async (
-    page: number = 0,
-    size: number = 10
+  getPosts: async (
+    page: number = 1,
+    perPage: number = 10
   ): Promise<PaginatedResponse<SellerPost>> => {
     try {
       const response = await axios.get<BackendPublicGetPostsResponse>(
-        `${API_BASE_URL}/public/posts`,
+        `${API_BASE_URL}/posts`,
         {
           params: {
             page,
-            size,
+            perPage,
           },
         }
       );

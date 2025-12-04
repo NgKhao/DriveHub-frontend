@@ -346,18 +346,12 @@ export interface BackendDeletePostResponse {
 
 // Public Posts API Types
 export interface BackendPublicGetPostsResponse {
-  messenger: string;
-  status: number;
+  message: string;
+  status: string;
   detail: {
-    content: BackendPostItem[];
-    pageNumber: number;
-    pageSize: number;
-    totalElements: number;
-    totalPages: number;
-    first: boolean;
-    last: boolean;
+    posts: BackendPostItem[];
+    pagination: BackendPagination;
   };
-  instance: string;
 }
 
 // Public Search Posts API Types
@@ -996,11 +990,11 @@ export const mapBackendPublicGetPostsResponseToPaginated = (
   backendResponse: BackendPublicGetPostsResponse['detail']
 ): PaginatedResponse<SellerPost> => {
   return {
-    items: backendResponse.content.map(mapBackendPostItemToSellerPost),
-    total: backendResponse.totalElements,
-    page: backendResponse.pageNumber,
-    limit: backendResponse.pageSize,
-    totalPages: backendResponse.totalPages,
+    items: backendResponse.posts.map(mapBackendPostItemToSellerPost),
+    total: backendResponse.pagination.total,
+    page: backendResponse.pagination.currentPage,
+    limit: backendResponse.pagination.perPage,
+    totalPages: backendResponse.pagination.lastPage,
   };
 };
 
