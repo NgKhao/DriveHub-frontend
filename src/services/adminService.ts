@@ -198,12 +198,13 @@ export const adminService = {
   },
 
   // Get all posts for admin management
+  // GET /admin/posts
   getAllPosts: async (
-    page = 0,
-    size = 10
+    page = 1,
+    perPage = 10
   ): Promise<PaginatedResponse<SellerPost>> => {
     const response = await api.get<BackendAdminGetPostsResponse>(
-      `/admin/posts?page=${page}&size=${size}`
+      `/admin/posts?page=${page}&perPage=${perPage}`
     );
 
     // Transform backend response to frontend format

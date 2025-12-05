@@ -404,19 +404,14 @@ export interface PublicSearchParams {
 }
 
 // Admin Posts API Types
+// GET /admin/posts - Danh sách tất cả bài đăng (admin)
 export interface BackendAdminGetPostsResponse {
-  messenger: string;
-  status: number;
+  message: string;
+  status: string;
   detail: {
-    content: BackendPostItem[];
-    pageNumber: number;
-    pageSize: number;
-    totalElements: number;
-    totalPages: number;
-    first: boolean;
-    last: boolean;
+    posts: BackendPostItem[];
+    pagination: BackendPagination;
   };
-  instance: string;
 }
 
 export interface BackendAdminGetPostDetailResponse {
@@ -971,15 +966,16 @@ export const mapBackendGetPostDetailResponseToSellerPost = (
 };
 
 // Helper function to convert backend admin get posts response to paginated seller posts
+// Maps BackendAdminGetPostsResponse to PaginatedResponse<SellerPost>
 export const mapBackendAdminGetPostsResponseToPaginated = (
   backendResponse: BackendAdminGetPostsResponse['detail']
 ): PaginatedResponse<SellerPost> => {
   return {
-    items: backendResponse.content.map(mapBackendPostItemToSellerPost),
-    total: backendResponse.totalElements,
-    page: backendResponse.pageNumber,
-    limit: backendResponse.pageSize,
-    totalPages: backendResponse.totalPages,
+    items: backendResponse.posts.map(mapBackendPostItemToSellerPost),
+    total: backendResponse.pagination.total,
+    page: backendResponse.pagination.currentPage,
+    limit: backendResponse.pagination.perPage,
+    totalPages: backendResponse.pagination.lastPage,
   };
 };
 
