@@ -422,11 +422,13 @@ export interface BackendAdminGetPostDetailResponse {
   detail: BackendPublicPostDetailItem;
 }
 
+// PATCH /admin/posts/{id}/status - Cập nhật trạng thái bài đăng (admin)
+// Request body: { "status": "approved" | "rejected" | "pending" | "draft" }
+// Response structure same as post detail (with seller info)
 export interface BackendAdminUpdatePostStatusResponse {
-  messenger: string;
-  status: number;
-  detail: BackendPostItem;
-  instance: string;
+  message: string;
+  status: string;
+  detail: BackendPublicPostDetailItem;
 }
 
 export interface BackendAdminDeletePostResponse {
@@ -989,10 +991,11 @@ export const mapBackendAdminGetPostDetailResponseToSellerPost = (
 };
 
 // Helper function to convert backend admin update post status response to seller post
+// Uses same mapper as public post detail since response structure is identical
 export const mapBackendAdminUpdatePostStatusResponseToSellerPost = (
   backendResponse: BackendAdminUpdatePostStatusResponse['detail']
 ): SellerPost => {
-  return mapBackendPostItemToSellerPost(backendResponse);
+  return mapBackendPublicPostDetailToSellerPost(backendResponse);
 };
 
 // Helper function to convert backend public get posts response to paginated seller posts

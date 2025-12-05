@@ -209,7 +209,7 @@ export const useToggleUserStatus = () => {
   });
 };
 
-// Hook for updating post status (approve/reject)
+// Hook for updating post status (approve/reject/pending/draft)
 export const useUpdatePostStatus = () => {
   const queryClient = useQueryClient();
 
@@ -219,7 +219,7 @@ export const useUpdatePostStatus = () => {
       status,
     }: {
       id: string;
-      status: 'APPROVED' | 'REJECTED';
+      status: 'approved' | 'rejected' | 'pending' | 'draft';
     }) => {
       return adminService.updatePostStatus(id, status);
     },

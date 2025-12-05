@@ -223,13 +223,15 @@ export const adminService = {
     );
   },
 
-  // Update post status (approve/reject)
+  // Update post status (approve/reject/pending/draft)
+  // PATCH /admin/posts/{id}/status
   updatePostStatus: async (
     id: string,
-    status: 'APPROVED' | 'REJECTED'
+    status: 'approved' | 'rejected' | 'pending' | 'draft'
   ): Promise<SellerPost> => {
     const response = await api.patch<BackendAdminUpdatePostStatusResponse>(
-      `/admin/posts/${id}/status?status=${status}`
+      `/admin/posts/${id}/status`,
+      { status }
     );
 
     // Transform backend response to frontend format

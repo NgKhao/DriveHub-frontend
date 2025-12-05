@@ -131,7 +131,7 @@ const CarManagement: React.FC = () => {
       updatePostStatusMutation.mutate(
         {
           id: selectedListing.id,
-          status: 'APPROVED',
+          status: 'approved',
         },
         {
           onSuccess: () => {
@@ -156,7 +156,7 @@ const CarManagement: React.FC = () => {
       updatePostStatusMutation.mutate(
         {
           id: selectedListing.id,
-          status: 'REJECTED',
+          status: 'rejected',
         },
         {
           onSuccess: () => {
