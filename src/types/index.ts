@@ -761,7 +761,7 @@ export const mapBackendCreatePostResponseToSellerPost = (
     location: backendResponse.location,
     phoneContact: backendResponse.phoneContact,
     sellerType: sellerTypeMap[backendResponse.sellerType],
-    images: backendResponse.images,
+    images: convertImageUrls(backendResponse.images),
     carDetail: {
       make: backendResponse.carDetailDTO.make,
       model: backendResponse.carDetailDTO.model,
@@ -778,9 +778,17 @@ export const mapBackendCreatePostResponseToSellerPost = (
 };
 
 // Helper function to convert image URLs with base URL
+// Handles both relative paths (/storage/...) and already full URLs
 export const convertImageUrls = (images: string[]): string[] => {
-  const baseUrl = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8080';
-  return images.map((imagePath) => `${baseUrl}${imagePath}`);
+  const baseUrl = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8000';
+  return images.map((imagePath) => {
+    // If already a full URL, return as-is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    // Otherwise, prepend base URL
+    return `${baseUrl}${imagePath}`;
+  });
 };
 
 // Helper function to convert frontend create post data to backend update format
@@ -1031,7 +1039,7 @@ export const mapBackendPublicPostDetailToSellerPost = (
     status: backendResponse.status.toLowerCase() as 'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden',
     location: backendResponse.location,
     phoneContact: backendResponse.phoneContact,
-    images: backendResponse.images || [],
+    images: convertImageUrls(backendResponse.images || []),
     carDetail: {
       make: backendResponse.carDetail.brand,
       model: backendResponse.carDetail.model,
@@ -1370,8 +1378,6 @@ export const mapBackendFavoriteItemToSellerPost = (
   backendFavoriteItem: BackendFavoriteItem
 ): SellerPost => {
   const post = backendFavoriteItem.post;
-  const baseImgUrl =
-    import.meta.env.VITE_API_IMG_URL || 'http://localhost:8080';
 
   return {
     id: post.postId.toString(),
@@ -1382,7 +1388,7 @@ export const mapBackendFavoriteItemToSellerPost = (
     location: post.location,
     phoneContact: post.phoneContact,
     sellerType: post.sellerType.toLowerCase() as 'individual' | 'agency',
-    images: post.images.map((img) => `${baseImgUrl}${img}`),
+    images: convertImageUrls(post.images),
     carDetail: {
       make: post.carDetailDTO.make,
       model: post.carDetailDTO.model,
