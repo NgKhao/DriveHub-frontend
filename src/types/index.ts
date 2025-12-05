@@ -414,11 +414,12 @@ export interface BackendAdminGetPostsResponse {
   };
 }
 
+// GET /admin/posts/{id} - Chi tiết bài đăng (admin)
+// Response structure same as public post detail (with seller info)
 export interface BackendAdminGetPostDetailResponse {
-  messenger: string;
-  status: number;
-  detail: BackendPostItem;
-  instance: string;
+  message: string;
+  status: string;
+  detail: BackendPublicPostDetailItem;
 }
 
 export interface BackendAdminUpdatePostStatusResponse {
@@ -980,10 +981,11 @@ export const mapBackendAdminGetPostsResponseToPaginated = (
 };
 
 // Helper function to convert backend admin get post detail response to seller post
+// Uses same mapper as public post detail since response structure is identical
 export const mapBackendAdminGetPostDetailResponseToSellerPost = (
   backendResponse: BackendAdminGetPostDetailResponse['detail']
 ): SellerPost => {
-  return mapBackendPostItemToSellerPost(backendResponse);
+  return mapBackendPublicPostDetailToSellerPost(backendResponse);
 };
 
 // Helper function to convert backend admin update post status response to seller post
