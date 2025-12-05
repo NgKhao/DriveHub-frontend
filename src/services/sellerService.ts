@@ -69,6 +69,7 @@ export const sellerService = {
   },
 
   // Update post with FormData
+  // Laravel expects fields directly in FormData, not as JSON
   updatePost: async (
     postId: string,
     postData: CreatePostData
@@ -77,18 +78,43 @@ export const sellerService = {
       // Convert frontend data to backend format
       const backendPostData = mapFrontendCreatePostToBackendUpdate(postData);
 
-      // Create FormData
+      // Create FormData - Laravel expects fields directly, not as JSON
       const formData = new FormData();
 
-      // Add postDTO as JSON string
-      formData.append('postDTO', JSON.stringify(backendPostData));
+      // Add each field individually to FormData
+      if (backendPostData.title)
+        formData.append('title', backendPostData.title);
+      if (backendPostData.description)
+        formData.append('description', backendPostData.description);
+      if (backendPostData.price !== undefined)
+        formData.append('price', backendPostData.price.toString());
+      if (backendPostData.brand) formData.append('brand', backendPostData.brand);
+      if (backendPostData.model) formData.append('model', backendPostData.model);
+      if (backendPostData.year !== undefined)
+        formData.append('year', backendPostData.year.toString());
+      if (backendPostData.color) formData.append('color', backendPostData.color);
+      if (backendPostData.mileage !== undefined)
+        formData.append('mileage', backendPostData.mileage.toString());
+      if (backendPostData.location)
+        formData.append('location', backendPostData.location);
+      if (backendPostData.phoneContact)
+        formData.append('phoneContact', backendPostData.phoneContact);
+      if (backendPostData.transmission)
+        formData.append('transmission', backendPostData.transmission);
+      if (backendPostData.fuelType)
+        formData.append('fuelType', backendPostData.fuelType);
+      if (backendPostData.condition)
+        formData.append('condition', backendPostData.condition);
 
-      // Add image files
+      // Add image files - Laravel expects 'images[]' for array
       postData.images.forEach((file) => {
-        formData.append('imageFile', file);
+        formData.append('images[]', file);
       });
 
-      const response = await api.put<BackendUpdatePostResponse>(
+      // Use POST with _method=PUT for Laravel to handle FormData properly
+      formData.append('_method', 'PUT');
+
+      const response = await api.post<BackendUpdatePostResponse>(
         `/seller/posts/${postId}`,
         formData,
         {
