@@ -58,7 +58,6 @@ const mapSellerPostToCar = (sellerPost: SellerPost): Car => {
     sellerId: sellerPost.id, // Using post id as seller id for now
     sellerName: 'Seller', // Default name since not available in SellerPost
     sellerPhone: sellerPost.phoneContact,
-    sellerType: sellerPost.sellerType === 'agency' ? 'dealer' : 'individual',
     location: sellerPost.location,
     status:
       sellerPost.status === 'approved'

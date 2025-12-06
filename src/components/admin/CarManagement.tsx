@@ -427,11 +427,6 @@ const CarManagement: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Box>
-                        <Typography variant='body2'>
-                          {listing.sellerType === 'individual'
-                            ? 'Cá nhân'
-                            : 'Đại lý'}
-                        </Typography>
                         <Typography variant='caption' color='text.secondary'>
                           {listing.phoneContact || 'N/A'}
                         </Typography>

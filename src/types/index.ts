@@ -260,7 +260,6 @@ export interface BackendPostItem {
   status: 'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden';
   location: string;
   phoneContact: string;
-  sellerType?: 'individual' | 'agency'; // Optional - not always returned
   images: string[];
   carDetail: BackendCarDetail;
   createdAt: string;
@@ -659,7 +658,6 @@ export interface CreatePostData {
   price: number;
   location: string;
   phoneContact: string;
-  sellerType: 'individual' | 'agency';
   make: string;
   model: string;
   year: number;
@@ -687,7 +685,6 @@ export interface SellerPost {
   status: 'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden';
   location: string;
   phoneContact: string;
-  sellerType: 'individual' | 'agency';
   images: string[];
   carDetail: {
     make: string;
@@ -740,7 +737,6 @@ export const mapBackendCreatePostResponseToSellerPost = (
     status: backendResponse.status, // Already lowercase from backend
     location: backendResponse.location,
     phoneContact: backendResponse.phoneContact,
-    sellerType: 'individual', // Backend doesn't return sellerType in create response, default to individual
     images: convertImageUrls(backendResponse.images),
     carDetail: {
       make: backendResponse.carDetail.brand, // Backend uses 'brand'
@@ -808,7 +804,6 @@ export const mapBackendUpdatePostResponseToSellerPost = (
     status: post.status, // Already lowercase from backend
     location: post.location,
     phoneContact: post.phoneContact,
-    sellerType: 'individual', // Backend doesn't return sellerType in update response, default to individual
     images: convertImageUrls(post.images),
     carDetail: {
       make: post.carDetail.brand, // Backend uses 'brand'
@@ -846,11 +841,6 @@ export const mapBackendPostItemToSellerPost = (
     | 'blocked'
     | 'hidden';
 
-  // Backend now returns lowercase sellerType or may not include it
-  const sellerTypeValue = backendPost.sellerType
-    ? (backendPost.sellerType.toLowerCase() as 'individual' | 'agency')
-    : 'individual'; // Default to individual if not provided
-
   return {
     id: backendPost.postId.toString(),
     title: backendPost.title,
@@ -859,7 +849,6 @@ export const mapBackendPostItemToSellerPost = (
     status: statusValue,
     location: backendPost.location,
     phoneContact: backendPost.phoneContact,
-    sellerType: sellerTypeValue,
     images: convertImageUrls(backendPost.images), // Convert image URLs
     carDetail: {
       make: backendPost.carDetail.brand, // Backend uses 'brand', frontend uses 'make'
@@ -970,7 +959,6 @@ export const mapBackendPublicPostDetailToSellerPost = (
       sellerEmail: backendResponse.seller.email,
       sellerPhone: backendResponse.seller.phone,
     },
-    sellerType: 'individual', // Default, not provided by this endpoint
     createdAt: backendResponse.createdAt,
     updatedAt: backendResponse.updatedAt,
   };
@@ -1027,7 +1015,6 @@ export const mapSellerPostToCar = (sellerPost: SellerPost): Car => {
     sellerId: sellerPost.id, // Using post id as seller id for now
     sellerName: 'Seller', // Default name since not available in SellerPost
     sellerPhone: sellerPost.phoneContact,
-    sellerType: sellerPost.sellerType === 'agency' ? 'dealer' : 'individual',
     location: sellerPost.location,
     status:
       sellerPost.status === 'approved'
@@ -1056,7 +1043,6 @@ export interface Car {
   sellerId: string;
   sellerName: string;
   sellerPhone?: string;
-  sellerType?: 'individual' | 'dealer';
   location: string;
   status: 'active' | 'pending' | 'sold' | 'rejected' | 'approved';
   features?: string[];
@@ -1255,7 +1241,6 @@ export interface BackendFavoriteItem {
     status: string;
     location: string;
     phoneContact: string;
-    sellerType: string;
     images: string[];
     carDetailDTO: {
       make: string;
@@ -1301,7 +1286,6 @@ export const mapBackendFavoriteItemToSellerPost = (
     status: post.status.toLowerCase() as 'approved' | 'pending' | 'rejected',
     location: post.location,
     phoneContact: post.phoneContact,
-    sellerType: post.sellerType.toLowerCase() as 'individual' | 'agency',
     images: convertImageUrls(post.images),
     carDetail: {
       make: post.carDetailDTO.make,

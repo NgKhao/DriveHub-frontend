@@ -53,7 +53,6 @@ const mapSellerPostToCar = (sellerPost: SellerPost): Car => {
     sellerId: sellerPost.id,
     sellerName: 'Seller',
     sellerPhone: sellerPost.phoneContact,
-    sellerType: sellerPost.sellerType === 'agency' ? 'dealer' : 'individual',
     location: sellerPost.location,
     status:
       sellerPost.status === 'approved'

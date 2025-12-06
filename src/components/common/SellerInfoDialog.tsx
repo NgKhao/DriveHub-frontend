@@ -17,7 +17,6 @@ import {
 import {
   Person,
   Phone,
-  Business,
   RateReview,
   Close,
   Email,
@@ -133,25 +132,6 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
                   <Typography variant='h6' gutterBottom>
                     {sellerName}
                   </Typography>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      mb: 1,
-                    }}
-                  >
-                    {sellerPost.sellerType === 'individual' ? (
-                      <Person fontSize='small' color='action' />
-                    ) : (
-                      <Business fontSize='small' color='action' />
-                    )}
-                    <Typography variant='body2' color='text.secondary'>
-                      {sellerPost.sellerType === 'individual'
-                        ? 'Cá nhân'
-                        : 'Đại lý'}
-                    </Typography>
-                  </Box>
                   <Box
                     sx={{
                       display: 'flex',

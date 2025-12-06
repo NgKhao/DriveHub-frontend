@@ -133,7 +133,6 @@ const SellerDashboardPage: React.FC = () => {
     description: '',
     location: '',
     sellerPhone: '',
-    sellerType: 'individual' as 'individual' | 'dealer',
     features: [] as string[],
     images: [] as File[],
   });
@@ -184,8 +183,6 @@ const SellerDashboardPage: React.FC = () => {
         description: selectedListing.description,
         location: selectedListing.location,
         sellerPhone: selectedListing.phoneContact,
-        sellerType:
-          selectedListing.sellerType === 'agency' ? 'dealer' : 'individual', // Map agency to dealer
         features: [], // SellerPost doesn't have features, so empty array
         images: [], // Start with empty for edit (existing images will be shown separately)
       });
@@ -312,7 +309,6 @@ const SellerDashboardPage: React.FC = () => {
       price: parseInt(editForm.price),
       location: editForm.location,
       phoneContact: editForm.sellerPhone,
-      sellerType: editForm.sellerType === 'dealer' ? 'agency' : 'individual',
       make: editForm.brand,
       model: editForm.model,
       year: editForm.year,
@@ -835,22 +831,18 @@ const SellerDashboardPage: React.FC = () => {
                 </Select>
               </FormControl>
 
-              <FormControl fullWidth>
-                <InputLabel>Loại người bán *</InputLabel>
-                <Select
-                  value={editForm.sellerType}
-                  onChange={(e) =>
-                    setEditForm({
-                      ...editForm,
-                      sellerType: e.target.value as 'individual' | 'dealer',
-                    })
-                  }
-                  label='Loại người bán *'
-                >
-                  <MenuItem value='individual'>Cá nhân</MenuItem>
-                  <MenuItem value='dealer'>Đại lý</MenuItem>
-                </Select>
-              </FormControl>
+              
+              <TextField
+                fullWidth
+                label='Số điện thoại liên hệ *'
+                value={editForm.sellerPhone}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, sellerPhone: e.target.value })
+                }
+                error={hasError('sellerPhone')}
+                helperText={getErrorMessage('sellerPhone')}
+                placeholder='VD: 0901234567'
+              />
             </Box>
 
             {/* Row 6: Địa điểm và Số điện thoại */}
@@ -873,17 +865,6 @@ const SellerDashboardPage: React.FC = () => {
                 placeholder='VD: Quận 1, Hồ Chí Minh'
               />
 
-              <TextField
-                fullWidth
-                label='Số điện thoại liên hệ *'
-                value={editForm.sellerPhone}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, sellerPhone: e.target.value })
-                }
-                error={hasError('sellerPhone')}
-                helperText={getErrorMessage('sellerPhone')}
-                placeholder='VD: 0901234567'
-              />
             </Box>
 
             {/* Mô tả */}

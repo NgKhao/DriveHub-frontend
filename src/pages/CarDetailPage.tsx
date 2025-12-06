@@ -458,9 +458,6 @@ const CarDetailPage: React.FC = () => {
               <Typography variant='body1' fontWeight='medium'>
                 {sellerPost.sellerInfo?.sellerName || 'Người bán'}
               </Typography>
-              <Typography variant='body2' color='text.secondary'>
-                {sellerPost.sellerType === 'individual' ? 'Cá nhân' : 'Đại lý'}
-              </Typography>
             </Box>
 
             {/* Contact Buttons */}
