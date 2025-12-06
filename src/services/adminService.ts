@@ -77,7 +77,7 @@ export const adminService = {
     const backendData = mapFrontendUserToBackendAdminUpdate(userData);
 
     const response = await api.put<BackendAdminUpdateUserResponse>(
-      `/admin/account/${id}`,
+      `/admin/users/${id}`,
       backendData
     );
 
@@ -90,7 +90,8 @@ export const adminService = {
     name: string;
     email: string;
     phone: string;
-    role: 'buyer' | 'seller';
+    role: 'buyer' | 'seller' | 'admin';
+    password: string;
   }): Promise<User> => {
     // Convert frontend data to backend format
     const backendData = mapFrontendCreateUserToBackend(userData);
