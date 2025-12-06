@@ -133,6 +133,14 @@ export const sellerService = {
         formData.append('images[]', file);
       });
 
+      // Add existing image URLs to keep (as JSON array)
+      if (postData.existingImageUrls && postData.existingImageUrls.length > 0) {
+        formData.append(
+          'existingImageUrls',
+          JSON.stringify(postData.existingImageUrls)
+        );
+      }
+
       // Use POST with _method=PUT for Laravel to handle FormData properly
       formData.append('_method', 'PUT');
 

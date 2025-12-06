@@ -85,6 +85,7 @@ const SellerDashboardPage: React.FC = () => {
   );
   const [editErrors, setEditErrors] = useState<ValidationError[]>([]);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [existingImagesCount, setExistingImagesCount] = useState(0);
 
   // Check for payment result from VNPay redirect
   // Backend redirects to: /seller/posts?payment=success|failed&message=...
@@ -187,7 +188,9 @@ const SellerDashboardPage: React.FC = () => {
         images: [], // Start with empty for edit (existing images will be shown separately)
       });
       // Initialize preview images from existing images URLs
-      setPreviewImages(selectedListing.images || []);
+      const existingImages = selectedListing.images || [];
+      setPreviewImages(existingImages);
+      setExistingImagesCount(existingImages.length);
       setEditErrors([]); // Clear previous errors
       setEditDialogOpen(true);
     }
@@ -198,8 +201,11 @@ const SellerDashboardPage: React.FC = () => {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
 
-    if (files.length + editForm.images.length + previewImages.length > 10) {
-      setSnackbarMessage('Tối đa 10 hình ảnh');
+    // Calculate current total: existing images + new uploaded images
+    const currentTotal = existingImagesCount + editForm.images.length;
+    
+    if (currentTotal + files.length > 10) {
+      setSnackbarMessage(`Tối đa 10 hình ảnh (hiện có ${currentTotal} ảnh)`);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
@@ -225,25 +231,31 @@ const SellerDashboardPage: React.FC = () => {
       return true;
     });
 
+    if (validFiles.length === 0) {
+      return;
+    }
+
+    // Add new files to editForm.images
     setEditForm((prev) => ({
       ...prev,
       images: [...prev.images, ...validFiles],
     }));
 
-    // Create preview URLs for new files
+    // Create preview URLs for new files and append to existing previews
     const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
     setPreviewImages((prev) => [...prev, ...newPreviews]);
   };
 
   const handleImageRemove = (index: number) => {
-    const isExistingImage = index < (selectedListing?.images?.length || 0);
+    const isExistingImage = index < existingImagesCount;
 
     if (isExistingImage) {
-      // Remove from preview (existing images)
+      // Remove from preview (existing images) and update count
       setPreviewImages((prev) => prev.filter((_, i) => i !== index));
+      setExistingImagesCount((prev) => prev - 1);
     } else {
       // Remove from new uploaded files
-      const newImageIndex = index - (selectedListing?.images?.length || 0);
+      const newImageIndex = index - existingImagesCount;
       setEditForm((prev) => ({
         ...prev,
         images: prev.images.filter((_, i) => i !== newImageIndex),
@@ -281,8 +293,8 @@ const SellerDashboardPage: React.FC = () => {
     }
 
     // Check if we have at least one image (existing or new)
-    const totalImages = previewImages.length;
-    if (totalImages === 0) {
+    // previewImages contains both existing and new images
+    if (previewImages.length === 0) {
       validationErrors.push({
         field: 'images',
         message: 'Cần ít nhất 1 hình ảnh',
@@ -302,6 +314,9 @@ const SellerDashboardPage: React.FC = () => {
 
     if (!selectedListing) return;
 
+    // Get existing image URLs (những ảnh cũ còn giữ lại)
+    const existingImageUrls = previewImages.slice(0, existingImagesCount);
+
     // Map form data to CreatePostData format
     const updateData: CreatePostData = {
       title: editForm.title,
@@ -318,6 +333,7 @@ const SellerDashboardPage: React.FC = () => {
       color: editForm.color,
       condition: editForm.condition,
       images: editForm.images,
+      existingImageUrls: existingImageUrls, // Danh sách URL ảnh cũ cần giữ
     };
 
     // Call the API to update the post
@@ -330,6 +346,8 @@ const SellerDashboardPage: React.FC = () => {
           setSnackbarOpen(true);
           setEditDialogOpen(false);
           setSelectedListing(null);
+          setExistingImagesCount(0);
+          setPreviewImages([]);
           refetch(); // Refresh the posts list
         },
         onError: (error) => {
@@ -605,6 +623,8 @@ const SellerDashboardPage: React.FC = () => {
         onClose={() => {
           setEditDialogOpen(false);
           setSelectedListing(null);
+          setExistingImagesCount(0);
+          setPreviewImages([]);
         }}
         maxWidth='lg'
         fullWidth

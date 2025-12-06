@@ -667,6 +667,7 @@ export interface CreatePostData {
   color: string;
   condition: string;
   images: File[];
+  existingImageUrls?: string[]; // URLs of existing images to keep
 }
 
 // Seller Info interface for public API response
