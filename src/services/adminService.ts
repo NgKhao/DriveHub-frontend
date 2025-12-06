@@ -199,12 +199,13 @@ export const adminService = {
   },
 
   // Get all posts for admin management
+  // GET /admin/posts
   getAllPosts: async (
-    page = 0,
-    size = 10
+    page = 1,
+    perPage = 10
   ): Promise<PaginatedResponse<SellerPost>> => {
     const response = await api.get<BackendAdminGetPostsResponse>(
-      `/admin/posts?page=${page}&size=${size}`
+      `/admin/posts?page=${page}&perPage=${perPage}`
     );
 
     // Transform backend response to frontend format
@@ -223,13 +224,15 @@ export const adminService = {
     );
   },
 
-  // Update post status (approve/reject)
+  // Update post status (approve/reject/pending/draft)
+  // PATCH /admin/posts/{id}/status
   updatePostStatus: async (
     id: string,
-    status: 'APPROVED' | 'REJECTED'
+    status: 'approved' | 'rejected' | 'pending' | 'draft'
   ): Promise<SellerPost> => {
     const response = await api.patch<BackendAdminUpdatePostStatusResponse>(
-      `/admin/posts/${id}/status?status=${status}`
+      `/admin/posts/${id}/status`,
+      { status }
     );
 
     // Transform backend response to frontend format

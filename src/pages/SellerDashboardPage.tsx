@@ -69,7 +69,7 @@ const SellerDashboardPage: React.FC = () => {
 
   // API hooks
   const { data: sellerPosts, isLoading, error, refetch } = useSellerPosts();
-  const { deletePost, updatePost, updatePostError, isUpdatePostLoading } =
+  const { deletePost, updatePost, isUpdatePostLoading } =
     useSeller();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -80,23 +80,44 @@ const SellerDashboardPage: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>(
+    'success'
+  );
   const [editErrors, setEditErrors] = useState<ValidationError[]>([]);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [existingImagesCount, setExistingImagesCount] = useState(0);
 
-  // Check for payment success from VNPay redirect
+  // Check for payment result from VNPay redirect
+  // Backend redirects to: /seller/posts?payment=success|failed&message=...
   useEffect(() => {
     const paymentStatus = searchParams.get('payment');
+    const message = searchParams.get('message');
+
     if (paymentStatus === 'success') {
       setSnackbarMessage(
-        'Thanh toán thành công! Bài đăng của bạn đang chờ quản trị viên duyệt.'
+        message ||
+          'Thanh toán thành công! Bài đăng của bạn đang chờ quản trị viên duyệt.'
       );
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+      // Refetch posts to show updated status
+      refetch();
+
+      // Clean up URL parameters
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    } else if (paymentStatus === 'failed') {
+      setSnackbarMessage(
+        message || 'Thanh toán thất bại. Vui lòng thử lại sau.'
+      );
+      setSnackbarSeverity('error');
       setSnackbarOpen(true);
 
       // Clean up URL parameters
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
-  }, [searchParams]);
+  }, [searchParams, refetch]);
 
   // Form states for editing
   const [editForm, setEditForm] = useState({
@@ -113,7 +134,6 @@ const SellerDashboardPage: React.FC = () => {
     description: '',
     location: '',
     sellerPhone: '',
-    sellerType: 'individual' as 'individual' | 'dealer',
     features: [] as string[],
     images: [] as File[],
   });
@@ -138,6 +158,7 @@ const SellerDashboardPage: React.FC = () => {
         setSnackbarMessage(
           'Bài đăng ở trạng thái APPROVED không thể chỉnh sửa'
         );
+        setSnackbarSeverity('error');
         setSnackbarOpen(true);
         handleMenuClose();
         return;
@@ -163,13 +184,13 @@ const SellerDashboardPage: React.FC = () => {
         description: selectedListing.description,
         location: selectedListing.location,
         sellerPhone: selectedListing.phoneContact,
-        sellerType:
-          selectedListing.sellerType === 'agency' ? 'dealer' : 'individual', // Map agency to dealer
         features: [], // SellerPost doesn't have features, so empty array
         images: [], // Start with empty for edit (existing images will be shown separately)
       });
       // Initialize preview images from existing images URLs
-      setPreviewImages(selectedListing.images || []);
+      const existingImages = selectedListing.images || [];
+      setPreviewImages(existingImages);
+      setExistingImagesCount(existingImages.length);
       setEditErrors([]); // Clear previous errors
       setEditDialogOpen(true);
     }
@@ -180,8 +201,12 @@ const SellerDashboardPage: React.FC = () => {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
 
-    if (files.length + editForm.images.length + previewImages.length > 10) {
-      setSnackbarMessage('Tối đa 10 hình ảnh');
+    // Calculate current total: existing images + new uploaded images
+    const currentTotal = existingImagesCount + editForm.images.length;
+    
+    if (currentTotal + files.length > 10) {
+      setSnackbarMessage(`Tối đa 10 hình ảnh (hiện có ${currentTotal} ảnh)`);
+      setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
@@ -190,6 +215,7 @@ const SellerDashboardPage: React.FC = () => {
     const validFiles = files.filter((file) => {
       if (!file.type.startsWith('image/')) {
         setSnackbarMessage('Chỉ chấp nhận file hình ảnh');
+        setSnackbarSeverity('error');
         setSnackbarOpen(true);
         return false;
       }
@@ -197,6 +223,7 @@ const SellerDashboardPage: React.FC = () => {
       if (file.size > 5 * 1024 * 1024) {
         // 5MB
         setSnackbarMessage('Kích thước file tối đa 5MB');
+        setSnackbarSeverity('error');
         setSnackbarOpen(true);
         return false;
       }
@@ -204,25 +231,31 @@ const SellerDashboardPage: React.FC = () => {
       return true;
     });
 
+    if (validFiles.length === 0) {
+      return;
+    }
+
+    // Add new files to editForm.images
     setEditForm((prev) => ({
       ...prev,
       images: [...prev.images, ...validFiles],
     }));
 
-    // Create preview URLs for new files
+    // Create preview URLs for new files and append to existing previews
     const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
     setPreviewImages((prev) => [...prev, ...newPreviews]);
   };
 
   const handleImageRemove = (index: number) => {
-    const isExistingImage = index < (selectedListing?.images?.length || 0);
+    const isExistingImage = index < existingImagesCount;
 
     if (isExistingImage) {
-      // Remove from preview (existing images)
+      // Remove from preview (existing images) and update count
       setPreviewImages((prev) => prev.filter((_, i) => i !== index));
+      setExistingImagesCount((prev) => prev - 1);
     } else {
       // Remove from new uploaded files
-      const newImageIndex = index - (selectedListing?.images?.length || 0);
+      const newImageIndex = index - existingImagesCount;
       setEditForm((prev) => ({
         ...prev,
         images: prev.images.filter((_, i) => i !== newImageIndex),
@@ -260,8 +293,8 @@ const SellerDashboardPage: React.FC = () => {
     }
 
     // Check if we have at least one image (existing or new)
-    const totalImages = previewImages.length;
-    if (totalImages === 0) {
+    // previewImages contains both existing and new images
+    if (previewImages.length === 0) {
       validationErrors.push({
         field: 'images',
         message: 'Cần ít nhất 1 hình ảnh',
@@ -271,6 +304,7 @@ const SellerDashboardPage: React.FC = () => {
     if (validationErrors.length > 0) {
       setEditErrors(validationErrors);
       setSnackbarMessage('Vui lòng kiểm tra lại thông tin');
+      setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
@@ -280,6 +314,9 @@ const SellerDashboardPage: React.FC = () => {
 
     if (!selectedListing) return;
 
+    // Get existing image URLs (những ảnh cũ còn giữ lại)
+    const existingImageUrls = previewImages.slice(0, existingImagesCount);
+
     // Map form data to CreatePostData format
     const updateData: CreatePostData = {
       title: editForm.title,
@@ -287,7 +324,6 @@ const SellerDashboardPage: React.FC = () => {
       price: parseInt(editForm.price),
       location: editForm.location,
       phoneContact: editForm.sellerPhone,
-      sellerType: editForm.sellerType === 'dealer' ? 'agency' : 'individual',
       make: editForm.brand,
       model: editForm.model,
       year: editForm.year,
@@ -297,6 +333,7 @@ const SellerDashboardPage: React.FC = () => {
       color: editForm.color,
       condition: editForm.condition,
       images: editForm.images,
+      existingImageUrls: existingImageUrls, // Danh sách URL ảnh cũ cần giữ
     };
 
     // Call the API to update the post
@@ -305,9 +342,12 @@ const SellerDashboardPage: React.FC = () => {
       {
         onSuccess: () => {
           setSnackbarMessage('Bài đăng đã được cập nhật thành công!');
+          setSnackbarSeverity('success');
           setSnackbarOpen(true);
           setEditDialogOpen(false);
           setSelectedListing(null);
+          setExistingImagesCount(0);
+          setPreviewImages([]);
           refetch(); // Refresh the posts list
         },
         onError: (error) => {
@@ -322,6 +362,7 @@ const SellerDashboardPage: React.FC = () => {
               error?.message || 'Có lỗi xảy ra khi cập nhật bài đăng'
             );
           }
+          setSnackbarSeverity('error');
           setSnackbarOpen(true);
         },
       }
@@ -346,6 +387,7 @@ const SellerDashboardPage: React.FC = () => {
       deletePost(selectedListing.id, {
         onSuccess: () => {
           setSnackbarMessage('Bài đăng đã được xóa thành công!');
+          setSnackbarSeverity('success');
           setSnackbarOpen(true);
           setDeleteDialogOpen(false);
           setSelectedListing(null);
@@ -355,6 +397,7 @@ const SellerDashboardPage: React.FC = () => {
           setSnackbarMessage(
             error?.message || 'Có lỗi xảy ra khi xóa bài đăng'
           );
+          setSnackbarSeverity('error');
           setSnackbarOpen(true);
         },
       });
@@ -580,6 +623,8 @@ const SellerDashboardPage: React.FC = () => {
         onClose={() => {
           setEditDialogOpen(false);
           setSelectedListing(null);
+          setExistingImagesCount(0);
+          setPreviewImages([]);
         }}
         maxWidth='lg'
         fullWidth
@@ -806,22 +851,18 @@ const SellerDashboardPage: React.FC = () => {
                 </Select>
               </FormControl>
 
-              <FormControl fullWidth>
-                <InputLabel>Loại người bán *</InputLabel>
-                <Select
-                  value={editForm.sellerType}
-                  onChange={(e) =>
-                    setEditForm({
-                      ...editForm,
-                      sellerType: e.target.value as 'individual' | 'dealer',
-                    })
-                  }
-                  label='Loại người bán *'
-                >
-                  <MenuItem value='individual'>Cá nhân</MenuItem>
-                  <MenuItem value='dealer'>Đại lý</MenuItem>
-                </Select>
-              </FormControl>
+              
+              <TextField
+                fullWidth
+                label='Số điện thoại liên hệ *'
+                value={editForm.sellerPhone}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, sellerPhone: e.target.value })
+                }
+                error={hasError('sellerPhone')}
+                helperText={getErrorMessage('sellerPhone')}
+                placeholder='VD: 0901234567'
+              />
             </Box>
 
             {/* Row 6: Địa điểm và Số điện thoại */}
@@ -844,17 +885,6 @@ const SellerDashboardPage: React.FC = () => {
                 placeholder='VD: Quận 1, Hồ Chí Minh'
               />
 
-              <TextField
-                fullWidth
-                label='Số điện thoại liên hệ *'
-                value={editForm.sellerPhone}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, sellerPhone: e.target.value })
-                }
-                error={hasError('sellerPhone')}
-                helperText={getErrorMessage('sellerPhone')}
-                placeholder='VD: 0901234567'
-              />
             </Box>
 
             {/* Mô tả */}
@@ -1019,8 +1049,16 @@ const SellerDashboardPage: React.FC = () => {
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={() => setSnackbarOpen(false)}
-        message={snackbarMessage}
-      />
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

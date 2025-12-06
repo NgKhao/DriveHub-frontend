@@ -181,61 +181,76 @@ export interface BackendDeleteUserResponse {
 }
 
 // Seller Post Types
+// Backend create post request - fields sent directly via FormData (Laravel format)
 export interface BackendCreatePostRequest {
   title: string;
   description: string;
   price: number;
+  brand: string; // Laravel uses 'brand' not 'make'
+  model: string;
+  year: number;
+  color: string;
+  mileage: number;
   location: string;
   phoneContact: string;
-  sellerType: 'INDIVIDUAL' | 'AGENCY';
-  carDetailDTO: {
-    make: string;
-    model: string;
-    year: number;
-    mileage: number;
-    fuelType: string;
-    transmission: string;
-    color: string;
-    condition: string;
-  };
+  transmission: 'manual' | 'automatic';
+  fuelType: 'gasoline' | 'diesel' | 'electric' | 'hybrid';
+  condition: 'new' | 'used';
+  // images are sent as files via FormData
 }
 
+// Backend create post response - uses PostResource format
 export interface BackendCreatePostResponse {
-  messenger: string;
-  status: number;
+  message: string;
+  status: string;
   detail: {
     post: {
       postId: number;
       title: string;
       description: string;
       price: number;
-      status:
-        | 'DRAFT'
-        | 'PENDING'
-        | 'APPROVED'
-        | 'REJECTED'
-        | 'BLOCKED'
-        | 'HIDDEN';
+      status: 'draft' | 'pending' | 'approved' | 'rejected';
       location: string;
       phoneContact: string;
-      sellerType: 'INDIVIDUAL' | 'AGENCY';
       images: string[];
-      carDetailDTO: {
-        make: string;
+      carDetail: {
+        brand: string;
         model: string;
         year: number;
         mileage: number;
-        fuelType: string;
-        transmission: string;
+        transmission: 'manual' | 'automatic';
         color: string;
-        condition: string;
+        condition: 'new' | 'used';
+        fuelType: 'gasoline' | 'diesel' | 'electric' | 'hybrid';
       };
       createdAt: string;
       updatedAt: string | null;
     };
-    vnpayUrl: string;
+    paymentUrl: string; // URL to create payment
   };
-  instance: string;
+}
+
+// Backend payment creation response
+export interface BackendCreatePaymentResponse {
+  message: string;
+  status: string;
+  detail: {
+    payment_id: number;
+    vnpay_url: string;
+    amount: number;
+  };
+}
+
+// Backend car detail in post response (uses brand instead of make)
+export interface BackendCarDetail {
+  brand: string;
+  model: string;
+  year: number;
+  mileage: number;
+  transmission: string;
+  color: string;
+  condition: string;
+  fuelType: string;
 }
 
 export interface BackendPostItem {
@@ -243,85 +258,92 @@ export interface BackendPostItem {
   title: string;
   description: string;
   price: number;
-  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'BLOCKED' | 'HIDDEN';
+  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden';
   location: string;
   phoneContact: string;
-  sellerType: 'INDIVIDUAL' | 'AGENCY';
   images: string[];
-  carDetailDTO: {
-    make: string;
-    model: string;
-    year: number;
-    mileage: number;
-    fuelType: string;
-    transmission: string;
-    color: string;
-    condition: string;
-  };
+  carDetail: BackendCarDetail;
   createdAt: string;
   updatedAt: string | null;
 }
 
+// Backend pagination response structure
+export interface BackendPagination {
+  currentPage: number;
+  lastPage: number;
+  perPage: number;
+  total: number;
+}
+
 export interface BackendGetPostsResponse {
-  messenger: string;
-  status: number;
-  detail: BackendPostItem[];
-  instance: string;
+  message: string;
+  status: string;
+  detail: {
+    posts: BackendPostItem[];
+    pagination: BackendPagination;
+  };
 }
 
 export interface BackendGetPostDetailResponse {
-  messenger: string;
-  status: number;
-  detail: BackendPostItem;
-  instance: string;
-}
-
-export interface BackendUpdatePostRequest {
-  title: string;
-  description: string;
-  price: number;
-  location: string;
-  phoneContact: string;
-  sellerType: 'INDIVIDUAL' | 'AGENCY';
-  carDetailDTO: {
-    make: string;
-    model: string;
-    year: number;
-    mileage: number;
-    fuelType: string;
-    transmission: string;
-    color: string;
-    condition: string;
-  };
-}
-
-export interface BackendUpdatePostResponse {
-  messenger: string;
-  status: number;
+  message: string;
+  status: string;
   detail: {
-    postId: number;
-    title: string;
-    description: string;
-    price: number;
-    status: string;
-    location: string;
-    phoneContact: string;
-    sellerType: string;
-    images: string[];
-    carDetailDTO: {
-      make: string;
-      model: string;
-      year: number;
-      mileage: number;
-      fuelType: string;
-      transmission: string;
-      color: string;
-      condition: string;
-    };
-    createdAt: string;
-    updatedAt: string;
+    post: BackendPostItem;
   };
-  instance: string;
+}
+
+// Backend update post request - fields sent directly via FormData (Laravel format)
+export interface BackendUpdatePostRequest {
+  title?: string;
+  description?: string;
+  price?: number;
+  brand?: string;
+  model?: string;
+  year?: number;
+  color?: string;
+  mileage?: number;
+  location?: string;
+  phoneContact?: string;
+  transmission?: 'manual' | 'automatic';
+  fuelType?: 'gasoline' | 'diesel' | 'electric' | 'hybrid';
+  condition?: 'new' | 'used';
+  // images are sent as files via FormData
+}
+
+// Backend update post response - uses PostResource format (same as show/create)
+export interface BackendUpdatePostResponse {
+  message: string;
+  status: string;
+  detail: {
+    post: {
+      postId: number;
+      title: string;
+      description: string;
+      price: number;
+      status: 'draft' | 'pending' | 'approved' | 'rejected';
+      location: string;
+      phoneContact: string;
+      images: string[];
+      carDetail: {
+        brand: string;
+        model: string;
+        year: number;
+        mileage: number;
+        transmission: 'manual' | 'automatic';
+        color: string;
+        condition: 'new' | 'used';
+        fuelType: 'gasoline' | 'diesel' | 'electric' | 'hybrid';
+      };
+      seller?: {
+        id: number;
+        name: string;
+        email: string;
+        phone: string | null;
+      };
+      createdAt: string;
+      updatedAt: string;
+    };
+  };
 }
 
 export interface BackendDeletePostResponse {
@@ -333,18 +355,12 @@ export interface BackendDeletePostResponse {
 
 // Public Posts API Types
 export interface BackendPublicGetPostsResponse {
-  messenger: string;
-  status: number;
+  message: string;
+  status: string;
   detail: {
-    content: BackendPostItem[];
-    pageNumber: number;
-    pageSize: number;
-    totalElements: number;
-    totalPages: number;
-    first: boolean;
-    last: boolean;
+    posts: BackendPostItem[];
+    pagination: BackendPagination;
   };
-  instance: string;
 }
 
 // Public Search Posts API Types
@@ -356,19 +372,31 @@ export interface BackendPublicSearchPostsResponse {
 }
 
 // Public Get Post Detail API Types
-export interface BackendPublicGetPostDetailResponse {
-  messenger: string;
-  status: number;
-  detail: {
-    post: BackendPostItem;
-    sellerInfo: {
-      sellerId: number;
-      sellerName: string;
-      sellerEmail: string;
-      sellerPhone: string;
-    };
+// GET /posts/{id} - Chi tiết bài đăng public
+export interface BackendPublicPostDetailItem {
+  postId: number;
+  title: string;
+  description: string;
+  price: number;
+  status: string;
+  location: string;
+  phoneContact: string;
+  images: string[];
+  carDetail: BackendCarDetail;
+  seller: {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
   };
-  instance: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackendPublicGetPostDetailResponse {
+  message: string;
+  status: string;
+  detail: BackendPublicPostDetailItem;
 }
 
 // Search parameters interface
@@ -385,33 +413,31 @@ export interface PublicSearchParams {
 }
 
 // Admin Posts API Types
+// GET /admin/posts - Danh sách tất cả bài đăng (admin)
 export interface BackendAdminGetPostsResponse {
-  messenger: string;
-  status: number;
+  message: string;
+  status: string;
   detail: {
-    content: BackendPostItem[];
-    pageNumber: number;
-    pageSize: number;
-    totalElements: number;
-    totalPages: number;
-    first: boolean;
-    last: boolean;
+    posts: BackendPostItem[];
+    pagination: BackendPagination;
   };
-  instance: string;
 }
 
+// GET /admin/posts/{id} - Chi tiết bài đăng (admin)
+// Response structure same as public post detail (with seller info)
 export interface BackendAdminGetPostDetailResponse {
-  messenger: string;
-  status: number;
-  detail: BackendPostItem;
-  instance: string;
+  message: string;
+  status: string;
+  detail: BackendPublicPostDetailItem;
 }
 
+// PATCH /admin/posts/{id}/status - Cập nhật trạng thái bài đăng (admin)
+// Request body: { "status": "approved" | "rejected" | "pending" | "draft" }
+// Response structure same as post detail (with seller info)
 export interface BackendAdminUpdatePostStatusResponse {
-  messenger: string;
-  status: number;
-  detail: BackendPostItem;
-  instance: string;
+  message: string;
+  status: string;
+  detail: BackendPublicPostDetailItem;
 }
 
 export interface BackendAdminDeletePostResponse {
@@ -601,7 +627,6 @@ export interface CreatePostData {
   price: number;
   location: string;
   phoneContact: string;
-  sellerType: 'individual' | 'agency';
   make: string;
   model: string;
   year: number;
@@ -611,6 +636,7 @@ export interface CreatePostData {
   color: string;
   condition: string;
   images: File[];
+  existingImageUrls?: string[]; // URLs of existing images to keep
 }
 
 // Seller Info interface for public API response
@@ -629,7 +655,6 @@ export interface SellerPost {
   status: 'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden';
   location: string;
   phoneContact: string;
-  sellerType: 'individual' | 'agency';
   images: string[];
   carDetail: {
     make: string;
@@ -648,80 +673,50 @@ export interface SellerPost {
 }
 
 // Helper function to convert frontend create post data to backend format
+// Laravel API expects fields directly, not nested in carDetailDTO
 export const mapFrontendCreatePostToBackend = (
   postData: CreatePostData
 ): BackendCreatePostRequest => {
-  const sellerTypeMap: Record<
-    'individual' | 'agency',
-    'INDIVIDUAL' | 'AGENCY'
-  > = {
-    individual: 'INDIVIDUAL',
-    agency: 'AGENCY',
-  };
-
   return {
     title: postData.title,
     description: postData.description,
     price: postData.price,
+    brand: postData.make, // Laravel uses 'brand' not 'make'
+    model: postData.model,
+    year: postData.year,
+    color: postData.color,
+    mileage: postData.mileage,
     location: postData.location,
     phoneContact: postData.phoneContact,
-    sellerType: sellerTypeMap[postData.sellerType],
-    carDetailDTO: {
-      make: postData.make,
-      model: postData.model,
-      year: postData.year,
-      mileage: postData.mileage,
-      fuelType: postData.fuelType,
-      transmission: postData.transmission,
-      color: postData.color,
-      condition: postData.condition,
-    },
+    transmission: postData.transmission as 'manual' | 'automatic',
+    fuelType: postData.fuelType as 'gasoline' | 'diesel' | 'electric' | 'hybrid',
+    condition: postData.condition as 'new' | 'used',
   };
 };
 
 // Helper function to convert backend create post response to frontend format
+// Response uses PostResource format with carDetail (not carDetailDTO)
 export const mapBackendCreatePostResponseToSellerPost = (
   backendResponse: BackendCreatePostResponse['detail']['post']
 ): SellerPost => {
-  const sellerTypeMap: Record<
-    'INDIVIDUAL' | 'AGENCY',
-    'individual' | 'agency'
-  > = {
-    INDIVIDUAL: 'individual',
-    AGENCY: 'agency',
-  };
-
-  const statusMap: Record<
-    string,
-    'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden'
-  > = {
-    DRAFT: 'draft',
-    PENDING: 'pending',
-    APPROVED: 'approved',
-    REJECTED: 'rejected',
-    BLOCKED: 'blocked',
-    HIDDEN: 'hidden',
-  };
-
   return {
     id: backendResponse.postId.toString(),
     title: backendResponse.title,
     description: backendResponse.description,
     price: backendResponse.price,
-    status: statusMap[backendResponse.status] || 'draft',
+    status: backendResponse.status, // Already lowercase from backend
     location: backendResponse.location,
     phoneContact: backendResponse.phoneContact,
-    sellerType: sellerTypeMap[backendResponse.sellerType],
-    images: backendResponse.images,
+    images: convertImageUrls(backendResponse.images),
     carDetail: {
-      make: backendResponse.carDetailDTO.make,
-      model: backendResponse.carDetailDTO.model,
-      year: backendResponse.carDetailDTO.year,
-      mileage: backendResponse.carDetailDTO.mileage,
-      fuelType: backendResponse.carDetailDTO.fuelType,
-      transmission: backendResponse.carDetailDTO.transmission,
-      color: backendResponse.carDetailDTO.color,
-      condition: backendResponse.carDetailDTO.condition,
+      make: backendResponse.carDetail.brand, // Backend uses 'brand'
+      model: backendResponse.carDetail.model,
+      year: backendResponse.carDetail.year,
+      mileage: backendResponse.carDetail.mileage,
+      fuelType: backendResponse.carDetail.fuelType,
+      transmission: backendResponse.carDetail.transmission,
+      color: backendResponse.carDetail.color,
+      condition: backendResponse.carDetail.condition,
     },
     createdAt: backendResponse.createdAt,
     updatedAt: backendResponse.updatedAt,
@@ -729,136 +724,77 @@ export const mapBackendCreatePostResponseToSellerPost = (
 };
 
 // Helper function to convert image URLs with base URL
+// Handles both relative paths (/storage/...) and already full URLs
 export const convertImageUrls = (images: string[]): string[] => {
-  const baseUrl = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8080';
-  return images.map((imagePath) => `${baseUrl}${imagePath}`);
+  const baseUrl = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8000';
+  return images.map((imagePath) => {
+    // If already a full URL, return as-is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    // Otherwise, prepend base URL
+    return `${baseUrl}${imagePath}`;
+  });
 };
 
 // Helper function to convert frontend create post data to backend update format
+// Laravel API expects fields directly, not nested in carDetailDTO
 export const mapFrontendCreatePostToBackendUpdate = (
   postData: CreatePostData
 ): BackendUpdatePostRequest => {
-  const sellerTypeMap: Record<
-    'individual' | 'agency',
-    'INDIVIDUAL' | 'AGENCY'
-  > = {
-    individual: 'INDIVIDUAL',
-    agency: 'AGENCY',
-  };
-
-  const fuelTypeMap: Record<string, string> = {
-    gasoline: 'Xăng',
-    diesel: 'Dầu',
-    hybrid: 'Hybrid',
-    electric: 'Điện',
-  };
-
-  const transmissionMap: Record<string, string> = {
-    manual: 'Số sàn',
-    automatic: 'Số tự động',
-  };
-
-  const conditionMap: Record<string, string> = {
-    new: 'Mới',
-    used: 'Cũ',
-  };
-
   return {
     title: postData.title,
     description: postData.description,
     price: postData.price,
+    brand: postData.make, // Laravel uses 'brand' not 'make'
+    model: postData.model,
+    year: postData.year,
+    color: postData.color,
+    mileage: postData.mileage,
     location: postData.location,
     phoneContact: postData.phoneContact,
-    sellerType: sellerTypeMap[postData.sellerType],
-    carDetailDTO: {
-      make: postData.make,
-      model: postData.model,
-      year: postData.year,
-      mileage: postData.mileage,
-      fuelType: fuelTypeMap[postData.fuelType] || postData.fuelType,
-      transmission:
-        transmissionMap[postData.transmission] || postData.transmission,
-      color: postData.color,
-      condition: conditionMap[postData.condition] || postData.condition,
-    },
+    transmission: postData.transmission as 'manual' | 'automatic',
+    fuelType: postData.fuelType as 'gasoline' | 'diesel' | 'electric' | 'hybrid',
+    condition: postData.condition as 'new' | 'used',
   };
 };
 
 // Helper function to convert backend update post response to frontend format
+// Response uses PostResource format with detail.post (same as show/create)
 export const mapBackendUpdatePostResponseToSellerPost = (
   backendResponse: BackendUpdatePostResponse['detail']
 ): SellerPost => {
-  const sellerTypeMap: Record<
-    'INDIVIDUAL' | 'AGENCY',
-    'individual' | 'agency'
-  > = {
-    INDIVIDUAL: 'individual',
-    AGENCY: 'agency',
-  };
-
-  const statusMap: Record<string, 'approved' | 'pending' | 'rejected'> = {
-    APPROVED: 'approved',
-    PENDING: 'pending',
-    REJECTED: 'rejected',
-    DRAFT: 'pending',
-    BLOCKED: 'rejected',
-    HIDDEN: 'rejected',
-  };
-
-  const fuelTypeMap: Record<
-    string,
-    'gasoline' | 'diesel' | 'hybrid' | 'electric'
-  > = {
-    gasoline: 'gasoline',
-    diesel: 'diesel',
-    hybrid: 'hybrid',
-    electric: 'electric',
-    Xăng: 'gasoline',
-    Dầu: 'diesel',
-    Hybrid: 'hybrid',
-    Điện: 'electric',
-  };
-
-  const transmissionMap: Record<string, 'manual' | 'automatic'> = {
-    automatic: 'automatic',
-    manual: 'manual',
-    'Số tự động': 'automatic',
-    'Số sàn': 'manual',
-  };
-
-  const conditionMap: Record<string, 'new' | 'used'> = {
-    new: 'new',
-    used: 'used',
-    Mới: 'new',
-    Cũ: 'used',
-  };
+  const post = backendResponse.post;
 
   return {
-    id: backendResponse.postId.toString(),
-    title: backendResponse.title,
-    description: backendResponse.description,
-    price: backendResponse.price,
-    status: statusMap[backendResponse.status] || 'pending',
-    location: backendResponse.location,
-    phoneContact: backendResponse.phoneContact,
-    sellerType:
-      sellerTypeMap[backendResponse.sellerType as 'INDIVIDUAL' | 'AGENCY'],
-    images: convertImageUrls(backendResponse.images),
+    id: post.postId.toString(),
+    title: post.title,
+    description: post.description,
+    price: post.price,
+    status: post.status, // Already lowercase from backend
+    location: post.location,
+    phoneContact: post.phoneContact,
+    images: convertImageUrls(post.images),
     carDetail: {
-      make: backendResponse.carDetailDTO.make,
-      model: backendResponse.carDetailDTO.model,
-      year: backendResponse.carDetailDTO.year,
-      mileage: backendResponse.carDetailDTO.mileage,
-      fuelType:
-        fuelTypeMap[backendResponse.carDetailDTO.fuelType] || 'gasoline',
-      transmission:
-        transmissionMap[backendResponse.carDetailDTO.transmission] ||
-        'automatic',
-      color: backendResponse.carDetailDTO.color,
-      condition: conditionMap[backendResponse.carDetailDTO.condition] || 'used',
+      make: post.carDetail.brand, // Backend uses 'brand'
+      model: post.carDetail.model,
+      year: post.carDetail.year,
+      mileage: post.carDetail.mileage,
+      fuelType: post.carDetail.fuelType,
+      transmission: post.carDetail.transmission,
+      color: post.carDetail.color,
+      condition: post.carDetail.condition,
     },
-    createdAt: backendResponse.createdAt,
-    updatedAt: backendResponse.updatedAt,
+    sellerInfo: post.seller
+      ? {
+          sellerId: post.seller.id,
+          sellerName: post.seller.name,
+          sellerEmail: post.seller.email,
+          sellerPhone: post.seller.phone || '',
+        }
+      : undefined,
+    createdAt: post.createdAt,
+    updatedAt: post.updatedAt,
   };
 };
 
@@ -866,45 +802,33 @@ export const mapBackendUpdatePostResponseToSellerPost = (
 export const mapBackendPostItemToSellerPost = (
   backendPost: BackendPostItem
 ): SellerPost => {
-  const sellerTypeMap: Record<
-    'INDIVIDUAL' | 'AGENCY',
-    'individual' | 'agency'
-  > = {
-    INDIVIDUAL: 'individual',
-    AGENCY: 'agency',
-  };
-
-  const statusMap: Record<
-    string,
-    'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden'
-  > = {
-    DRAFT: 'draft',
-    PENDING: 'pending',
-    APPROVED: 'approved',
-    REJECTED: 'rejected',
-    BLOCKED: 'blocked',
-    HIDDEN: 'hidden',
-  };
+  // Backend now returns lowercase status directly, but handle both cases for compatibility
+  const statusValue = backendPost.status.toLowerCase() as
+    | 'draft'
+    | 'pending'
+    | 'approved'
+    | 'rejected'
+    | 'blocked'
+    | 'hidden';
 
   return {
     id: backendPost.postId.toString(),
     title: backendPost.title,
     description: backendPost.description,
     price: backendPost.price,
-    status: statusMap[backendPost.status] || 'draft',
+    status: statusValue,
     location: backendPost.location,
     phoneContact: backendPost.phoneContact,
-    sellerType: sellerTypeMap[backendPost.sellerType],
     images: convertImageUrls(backendPost.images), // Convert image URLs
     carDetail: {
-      make: backendPost.carDetailDTO.make,
-      model: backendPost.carDetailDTO.model,
-      year: backendPost.carDetailDTO.year,
-      mileage: backendPost.carDetailDTO.mileage,
-      fuelType: backendPost.carDetailDTO.fuelType,
-      transmission: backendPost.carDetailDTO.transmission,
-      color: backendPost.carDetailDTO.color,
-      condition: backendPost.carDetailDTO.condition,
+      make: backendPost.carDetail.brand, // Backend uses 'brand', frontend uses 'make'
+      model: backendPost.carDetail.model,
+      year: backendPost.carDetail.year,
+      mileage: backendPost.carDetail.mileage,
+      fuelType: backendPost.carDetail.fuelType,
+      transmission: backendPost.carDetail.transmission,
+      color: backendPost.carDetail.color,
+      condition: backendPost.carDetail.condition,
     },
     createdAt: backendPost.createdAt,
     updatedAt: backendPost.updatedAt,
@@ -915,41 +839,44 @@ export const mapBackendPostItemToSellerPost = (
 export const mapBackendGetPostsResponseToSellerPosts = (
   backendResponse: BackendGetPostsResponse['detail']
 ): SellerPost[] => {
-  return backendResponse.map(mapBackendPostItemToSellerPost);
+  return backendResponse.posts.map(mapBackendPostItemToSellerPost);
 };
 
 // Helper function to convert backend get post detail response to seller post
 export const mapBackendGetPostDetailResponseToSellerPost = (
   backendResponse: BackendGetPostDetailResponse['detail']
 ): SellerPost => {
-  return mapBackendPostItemToSellerPost(backendResponse);
+  return mapBackendPostItemToSellerPost(backendResponse.post);
 };
 
 // Helper function to convert backend admin get posts response to paginated seller posts
+// Maps BackendAdminGetPostsResponse to PaginatedResponse<SellerPost>
 export const mapBackendAdminGetPostsResponseToPaginated = (
   backendResponse: BackendAdminGetPostsResponse['detail']
 ): PaginatedResponse<SellerPost> => {
   return {
-    items: backendResponse.content.map(mapBackendPostItemToSellerPost),
-    total: backendResponse.totalElements,
-    page: backendResponse.pageNumber,
-    limit: backendResponse.pageSize,
-    totalPages: backendResponse.totalPages,
+    items: backendResponse.posts.map(mapBackendPostItemToSellerPost),
+    total: backendResponse.pagination.total,
+    page: backendResponse.pagination.currentPage,
+    limit: backendResponse.pagination.perPage,
+    totalPages: backendResponse.pagination.lastPage,
   };
 };
 
 // Helper function to convert backend admin get post detail response to seller post
+// Uses same mapper as public post detail since response structure is identical
 export const mapBackendAdminGetPostDetailResponseToSellerPost = (
   backendResponse: BackendAdminGetPostDetailResponse['detail']
 ): SellerPost => {
-  return mapBackendPostItemToSellerPost(backendResponse);
+  return mapBackendPublicPostDetailToSellerPost(backendResponse);
 };
 
 // Helper function to convert backend admin update post status response to seller post
+// Uses same mapper as public post detail since response structure is identical
 export const mapBackendAdminUpdatePostStatusResponseToSellerPost = (
   backendResponse: BackendAdminUpdatePostStatusResponse['detail']
 ): SellerPost => {
-  return mapBackendPostItemToSellerPost(backendResponse);
+  return mapBackendPublicPostDetailToSellerPost(backendResponse);
 };
 
 // Helper function to convert backend public get posts response to paginated seller posts
@@ -957,11 +884,11 @@ export const mapBackendPublicGetPostsResponseToPaginated = (
   backendResponse: BackendPublicGetPostsResponse['detail']
 ): PaginatedResponse<SellerPost> => {
   return {
-    items: backendResponse.content.map(mapBackendPostItemToSellerPost),
-    total: backendResponse.totalElements,
-    page: backendResponse.pageNumber,
-    limit: backendResponse.pageSize,
-    totalPages: backendResponse.totalPages,
+    items: backendResponse.posts.map(mapBackendPostItemToSellerPost),
+    total: backendResponse.pagination.total,
+    page: backendResponse.pagination.currentPage,
+    limit: backendResponse.pagination.perPage,
+    totalPages: backendResponse.pagination.lastPage,
   };
 };
 
@@ -973,20 +900,38 @@ export const mapBackendPublicSearchPostsResponseToSellerPosts = (
 };
 
 // Helper function to convert backend public get post detail response to seller post
-export const mapBackendPublicGetPostDetailResponseToSellerPost = (
-  backendResponse: BackendPublicGetPostDetailResponse['detail']
+// Maps BackendPublicPostDetailItem to SellerPost
+export const mapBackendPublicPostDetailToSellerPost = (
+  backendResponse: BackendPublicPostDetailItem
 ): SellerPost => {
-  const sellerPost = mapBackendPostItemToSellerPost(backendResponse.post);
-
-  // Add seller info if available
-  sellerPost.sellerInfo = {
-    sellerId: backendResponse.sellerInfo.sellerId,
-    sellerName: backendResponse.sellerInfo.sellerName,
-    sellerEmail: backendResponse.sellerInfo.sellerEmail,
-    sellerPhone: backendResponse.sellerInfo.sellerPhone,
+  return {
+    id: backendResponse.postId.toString(),
+    title: backendResponse.title,
+    description: backendResponse.description,
+    price: backendResponse.price,
+    status: backendResponse.status.toLowerCase() as 'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden',
+    location: backendResponse.location,
+    phoneContact: backendResponse.phoneContact,
+    images: convertImageUrls(backendResponse.images || []),
+    carDetail: {
+      make: backendResponse.carDetail.brand,
+      model: backendResponse.carDetail.model,
+      year: backendResponse.carDetail.year,
+      mileage: backendResponse.carDetail.mileage,
+      transmission: backendResponse.carDetail.transmission,
+      color: backendResponse.carDetail.color,
+      condition: backendResponse.carDetail.condition,
+      fuelType: backendResponse.carDetail.fuelType,
+    },
+    sellerInfo: {
+      sellerId: backendResponse.seller.id,
+      sellerName: backendResponse.seller.name,
+      sellerEmail: backendResponse.seller.email,
+      sellerPhone: backendResponse.seller.phone,
+    },
+    createdAt: backendResponse.createdAt,
+    updatedAt: backendResponse.updatedAt,
   };
-
-  return sellerPost;
 };
 
 // Helper function to convert frontend filters to backend search params
@@ -1040,7 +985,6 @@ export const mapSellerPostToCar = (sellerPost: SellerPost): Car => {
     sellerId: sellerPost.id, // Using post id as seller id for now
     sellerName: 'Seller', // Default name since not available in SellerPost
     sellerPhone: sellerPost.phoneContact,
-    sellerType: sellerPost.sellerType === 'agency' ? 'dealer' : 'individual',
     location: sellerPost.location,
     status:
       sellerPost.status === 'approved'
@@ -1069,7 +1013,6 @@ export interface Car {
   sellerId: string;
   sellerName: string;
   sellerPhone?: string;
-  sellerType?: 'individual' | 'dealer';
   location: string;
   status: 'active' | 'pending' | 'sold' | 'rejected' | 'approved';
   features?: string[];
@@ -1268,7 +1211,6 @@ export interface BackendFavoriteItem {
     status: string;
     location: string;
     phoneContact: string;
-    sellerType: string;
     images: string[];
     carDetailDTO: {
       make: string;
@@ -1305,8 +1247,6 @@ export const mapBackendFavoriteItemToSellerPost = (
   backendFavoriteItem: BackendFavoriteItem
 ): SellerPost => {
   const post = backendFavoriteItem.post;
-  const baseImgUrl =
-    import.meta.env.VITE_API_IMG_URL || 'http://localhost:8080';
 
   return {
     id: post.postId.toString(),
@@ -1316,8 +1256,7 @@ export const mapBackendFavoriteItemToSellerPost = (
     status: post.status.toLowerCase() as 'approved' | 'pending' | 'rejected',
     location: post.location,
     phoneContact: post.phoneContact,
-    sellerType: post.sellerType.toLowerCase() as 'individual' | 'agency',
-    images: post.images.map((img) => `${baseImgUrl}${img}`),
+    images: convertImageUrls(post.images),
     carDetail: {
       make: post.carDetailDTO.make,
       model: post.carDetailDTO.model,

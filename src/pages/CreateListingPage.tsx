@@ -39,7 +39,6 @@ interface CarFormData {
   description: string;
   location: string;
   sellerPhone: string;
-  sellerType: 'individual' | 'agency'; // Updated to match API
   features: string[];
   images: File[];
 }
@@ -58,7 +57,6 @@ const INITIAL_FORM_DATA: CarFormData = {
   description: '',
   location: '',
   sellerPhone: '',
-  sellerType: 'individual',
   features: [],
   images: [],
 };
@@ -185,7 +183,6 @@ const CreateListingPage: React.FC = () => {
       price: formData.price,
       location: formData.location,
       phoneContact: formData.sellerPhone,
-      sellerType: formData.sellerType,
       make: formData.brand, // Map brand to make
       model: formData.model,
       year: formData.year,
@@ -430,19 +427,17 @@ const CreateListingPage: React.FC = () => {
                 </Select>
               </FormControl>
 
-              <FormControl fullWidth>
-                <InputLabel>Loại người bán *</InputLabel>
-                <Select
-                  value={formData.sellerType}
-                  onChange={(e) =>
-                    handleInputChange('sellerType', e.target.value)
-                  }
-                  label='Loại người bán *'
-                >
-                  <MenuItem value='individual'>Cá nhân</MenuItem>
-                  <MenuItem value='dealer'>Đại lý</MenuItem>
-                </Select>
-              </FormControl>
+              <TextField
+                fullWidth
+                label='Số điện thoại liên hệ *'
+                value={formData.sellerPhone}
+                onChange={(e) =>
+                  handleInputChange('sellerPhone', e.target.value)
+                }
+                error={hasError('sellerPhone')}
+                helperText={getErrorMessage('sellerPhone')}
+                placeholder='VD: 0901234567'
+              />
             </Box>
 
             {/* Row 6: Địa điểm và Số điện thoại */}
@@ -463,17 +458,6 @@ const CreateListingPage: React.FC = () => {
                 placeholder='VD: Quận 1, Hồ Chí Minh'
               />
 
-              <TextField
-                fullWidth
-                label='Số điện thoại liên hệ *'
-                value={formData.sellerPhone}
-                onChange={(e) =>
-                  handleInputChange('sellerPhone', e.target.value)
-                }
-                error={hasError('sellerPhone')}
-                helperText={getErrorMessage('sellerPhone')}
-                placeholder='VD: 0901234567'
-              />
             </Box>
 
             {/* Mô tả */}

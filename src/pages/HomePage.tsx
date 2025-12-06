@@ -12,7 +12,6 @@ import {
   CardContent,
   CardActions,
   Chip,
-  IconButton,
   Paper,
 } from '@mui/material';
 import {
@@ -23,7 +22,6 @@ import {
   Speed,
   Phone,
   LocationOn,
-  Favorite,
 } from '@mui/icons-material';
 import { formatCurrency } from '../utils/helpers';
 import logo from '../assets/logo.png';
@@ -55,7 +53,6 @@ const mapSellerPostToCar = (sellerPost: SellerPost): Car => {
     sellerId: sellerPost.id,
     sellerName: 'Seller',
     sellerPhone: sellerPost.phoneContact,
-    sellerType: sellerPost.sellerType === 'agency' ? 'dealer' : 'individual',
     location: sellerPost.location,
     status:
       sellerPost.status === 'approved'
@@ -74,7 +71,7 @@ const HomePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Get featured cars from public API (first 6 posts)
-  const { data: publicPostsData, isLoading, error } = usePublicPosts(0, 6);
+  const { data: publicPostsData, isLoading, error } = usePublicPosts(1, 6);
 
   // Convert SellerPost to Car format for displaying
   const featuredCars = (publicPostsData?.items || []).map(mapSellerPostToCar);

@@ -8,11 +8,12 @@ import type {
 
 /**
  * Hook để lấy tất cả public posts (không cần authentication)
+ * GET /posts
  */
-export const usePublicPosts = (page: number = 0, size: number = 10) => {
+export const usePublicPosts = (page: number = 1, perPage: number = 10) => {
   return useQuery<PaginatedResponse<SellerPost>, Error>({
-    queryKey: ['publicPosts', page, size],
-    queryFn: () => publicService.getAllPublicPosts(page, size),
+    queryKey: ['publicPosts', page, perPage],
+    queryFn: () => publicService.getPosts(page, perPage),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 3,
@@ -40,6 +41,7 @@ export const usePublicPostsSearch = (
 
 /**
  * Hook để lấy chi tiết public post (không cần authentication)
+ * GET /posts/{id}
  */
 export const usePublicPostDetail = (
   postId: string,
@@ -47,7 +49,7 @@ export const usePublicPostDetail = (
 ) => {
   return useQuery<SellerPost, Error>({
     queryKey: ['publicPostDetail', postId],
-    queryFn: () => publicService.getPublicPostDetail(postId),
+    queryFn: () => publicService.getPostDetail(postId),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 3,

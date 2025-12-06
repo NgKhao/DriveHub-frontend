@@ -16,7 +16,6 @@ export interface Car {
   sellerId: string;
   sellerName: string;
   sellerPhone: string;
-  sellerType: 'individual' | 'dealer';
   location: string;
   status: 'active' | 'pending' | 'sold' | 'rejected';
   createdAt: string;
