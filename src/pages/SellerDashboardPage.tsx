@@ -80,23 +80,43 @@ const SellerDashboardPage: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>(
+    'success'
+  );
   const [editErrors, setEditErrors] = useState<ValidationError[]>([]);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
 
-  // Check for payment success from VNPay redirect
+  // Check for payment result from VNPay redirect
+  // Backend redirects to: /seller/posts?payment=success|failed&message=...
   useEffect(() => {
     const paymentStatus = searchParams.get('payment');
+    const message = searchParams.get('message');
+
     if (paymentStatus === 'success') {
       setSnackbarMessage(
-        'Thanh toán thành công! Bài đăng của bạn đang chờ quản trị viên duyệt.'
+        message ||
+          'Thanh toán thành công! Bài đăng của bạn đang chờ quản trị viên duyệt.'
       );
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+      // Refetch posts to show updated status
+      refetch();
+
+      // Clean up URL parameters
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    } else if (paymentStatus === 'failed') {
+      setSnackbarMessage(
+        message || 'Thanh toán thất bại. Vui lòng thử lại sau.'
+      );
+      setSnackbarSeverity('error');
       setSnackbarOpen(true);
 
       // Clean up URL parameters
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
-  }, [searchParams]);
+  }, [searchParams, refetch]);
 
   // Form states for editing
   const [editForm, setEditForm] = useState({
@@ -138,6 +158,7 @@ const SellerDashboardPage: React.FC = () => {
         setSnackbarMessage(
           'Bài đăng ở trạng thái APPROVED không thể chỉnh sửa'
         );
+        setSnackbarSeverity('error');
         setSnackbarOpen(true);
         handleMenuClose();
         return;
@@ -182,6 +203,7 @@ const SellerDashboardPage: React.FC = () => {
 
     if (files.length + editForm.images.length + previewImages.length > 10) {
       setSnackbarMessage('Tối đa 10 hình ảnh');
+      setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
@@ -190,6 +212,7 @@ const SellerDashboardPage: React.FC = () => {
     const validFiles = files.filter((file) => {
       if (!file.type.startsWith('image/')) {
         setSnackbarMessage('Chỉ chấp nhận file hình ảnh');
+        setSnackbarSeverity('error');
         setSnackbarOpen(true);
         return false;
       }
@@ -197,6 +220,7 @@ const SellerDashboardPage: React.FC = () => {
       if (file.size > 5 * 1024 * 1024) {
         // 5MB
         setSnackbarMessage('Kích thước file tối đa 5MB');
+        setSnackbarSeverity('error');
         setSnackbarOpen(true);
         return false;
       }
@@ -271,6 +295,7 @@ const SellerDashboardPage: React.FC = () => {
     if (validationErrors.length > 0) {
       setEditErrors(validationErrors);
       setSnackbarMessage('Vui lòng kiểm tra lại thông tin');
+      setSnackbarSeverity('error');
       setSnackbarOpen(true);
       return;
     }
@@ -305,6 +330,7 @@ const SellerDashboardPage: React.FC = () => {
       {
         onSuccess: () => {
           setSnackbarMessage('Bài đăng đã được cập nhật thành công!');
+          setSnackbarSeverity('success');
           setSnackbarOpen(true);
           setEditDialogOpen(false);
           setSelectedListing(null);
@@ -322,6 +348,7 @@ const SellerDashboardPage: React.FC = () => {
               error?.message || 'Có lỗi xảy ra khi cập nhật bài đăng'
             );
           }
+          setSnackbarSeverity('error');
           setSnackbarOpen(true);
         },
       }
@@ -346,6 +373,7 @@ const SellerDashboardPage: React.FC = () => {
       deletePost(selectedListing.id, {
         onSuccess: () => {
           setSnackbarMessage('Bài đăng đã được xóa thành công!');
+          setSnackbarSeverity('success');
           setSnackbarOpen(true);
           setDeleteDialogOpen(false);
           setSelectedListing(null);
@@ -355,6 +383,7 @@ const SellerDashboardPage: React.FC = () => {
           setSnackbarMessage(
             error?.message || 'Có lỗi xảy ra khi xóa bài đăng'
           );
+          setSnackbarSeverity('error');
           setSnackbarOpen(true);
         },
       });
@@ -1019,8 +1048,16 @@ const SellerDashboardPage: React.FC = () => {
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={() => setSnackbarOpen(false)}
-        message={snackbarMessage}
-      />
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

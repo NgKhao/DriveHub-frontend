@@ -3,6 +3,7 @@ import type {
   CreatePostData,
   SellerPost,
   BackendCreatePostResponse,
+  BackendCreatePaymentResponse,
   BackendUpdatePostResponse,
   BackendGetPostsResponse,
   BackendGetPostDetailResponse,
@@ -24,22 +25,36 @@ export interface CreatePostResult {
 
 export const sellerService = {
   // Create new post with FormData
+  // Flow: 1. Create post -> 2. Create payment -> 3. Get VNPay URL
   createPost: async (postData: CreatePostData): Promise<CreatePostResult> => {
     // Convert frontend data to backend format
     const backendPostData = mapFrontendCreatePostToBackend(postData);
 
-    // Create FormData
+    // Create FormData - Laravel expects fields directly, not as JSON
     const formData = new FormData();
 
-    // Add postDTO as JSON string
-    formData.append('postDTO', JSON.stringify(backendPostData));
+    // Add each field individually to FormData
+    formData.append('title', backendPostData.title);
+    formData.append('description', backendPostData.description);
+    formData.append('price', backendPostData.price.toString());
+    formData.append('brand', backendPostData.brand);
+    formData.append('model', backendPostData.model);
+    formData.append('year', backendPostData.year.toString());
+    formData.append('color', backendPostData.color);
+    formData.append('mileage', backendPostData.mileage.toString());
+    formData.append('location', backendPostData.location);
+    formData.append('phoneContact', backendPostData.phoneContact);
+    formData.append('transmission', backendPostData.transmission);
+    formData.append('fuelType', backendPostData.fuelType);
+    formData.append('condition', backendPostData.condition);
 
-    // Add image files
+    // Add image files - Laravel expects 'images[]' for array
     postData.images.forEach((file) => {
-      formData.append('imageFile', file);
+      formData.append('images[]', file);
     });
 
-    const response = await api.post<BackendCreatePostResponse>(
+    // Step 1: Create post
+    const createResponse = await api.post<BackendCreatePostResponse>(
       '/seller/posts',
       formData,
       {
@@ -51,12 +66,19 @@ export const sellerService = {
 
     // Transform backend response to frontend format
     const sellerPost = mapBackendCreatePostResponseToSellerPost(
-      response.data.detail.post
+      createResponse.data.detail.post
+    );
+
+    // Step 2: Create payment using post ID
+    // paymentUrl from backend is absolute URL, but we use the post ID to build relative path
+    const postId = createResponse.data.detail.post.postId;
+    const paymentResponse = await api.post<BackendCreatePaymentResponse>(
+      `/seller/payments/create/${postId}`
     );
 
     return {
       post: sellerPost,
-      vnpayUrl: response.data.detail.vnpayUrl,
+      vnpayUrl: paymentResponse.data.detail.vnpay_url,
     };
   },
 

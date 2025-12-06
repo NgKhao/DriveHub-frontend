@@ -113,6 +113,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              {/* Seller posts route - handles VNPay payment callback */}
+              <Route path='seller/posts' element={<SellerDashboardPage />} />
             </Route>
 
             {/* Auth routes without main layout */}

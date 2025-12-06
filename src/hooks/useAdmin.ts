@@ -48,7 +48,7 @@ export const useAdminStats = () => {
 
 // Hook for fetching all posts with pagination
 // GET /admin/posts - page is 1-based
-export const useAdminPosts = (page = 1, perPage = 10) => {
+export const useAdminPosts = (page = 1, perPage = 5) => {
   return useQuery<PaginatedResponse<SellerPost>, AdminError>({
     queryKey: ['admin', 'posts', page, perPage],
     queryFn: () => adminService.getAllPosts(page, perPage),

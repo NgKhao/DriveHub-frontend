@@ -180,61 +180,64 @@ export interface BackendDeleteUserResponse {
 }
 
 // Seller Post Types
+// Backend create post request - fields sent directly via FormData (Laravel format)
 export interface BackendCreatePostRequest {
   title: string;
   description: string;
   price: number;
+  brand: string; // Laravel uses 'brand' not 'make'
+  model: string;
+  year: number;
+  color: string;
+  mileage: number;
   location: string;
   phoneContact: string;
-  sellerType: 'INDIVIDUAL' | 'AGENCY';
-  carDetailDTO: {
-    make: string;
-    model: string;
-    year: number;
-    mileage: number;
-    fuelType: string;
-    transmission: string;
-    color: string;
-    condition: string;
-  };
+  transmission: 'manual' | 'automatic';
+  fuelType: 'gasoline' | 'diesel' | 'electric' | 'hybrid';
+  condition: 'new' | 'used';
+  // images are sent as files via FormData
 }
 
+// Backend create post response - uses PostResource format
 export interface BackendCreatePostResponse {
-  messenger: string;
-  status: number;
+  message: string;
+  status: string;
   detail: {
     post: {
       postId: number;
       title: string;
       description: string;
       price: number;
-      status:
-        | 'DRAFT'
-        | 'PENDING'
-        | 'APPROVED'
-        | 'REJECTED'
-        | 'BLOCKED'
-        | 'HIDDEN';
+      status: 'draft' | 'pending' | 'approved' | 'rejected';
       location: string;
       phoneContact: string;
-      sellerType: 'INDIVIDUAL' | 'AGENCY';
       images: string[];
-      carDetailDTO: {
-        make: string;
+      carDetail: {
+        brand: string;
         model: string;
         year: number;
         mileage: number;
-        fuelType: string;
-        transmission: string;
+        transmission: 'manual' | 'automatic';
         color: string;
-        condition: string;
+        condition: 'new' | 'used';
+        fuelType: 'gasoline' | 'diesel' | 'electric' | 'hybrid';
       };
       createdAt: string;
       updatedAt: string | null;
     };
-    vnpayUrl: string;
+    paymentUrl: string; // URL to create payment
   };
-  instance: string;
+}
+
+// Backend payment creation response
+export interface BackendCreatePaymentResponse {
+  message: string;
+  status: string;
+  detail: {
+    payment_id: number;
+    vnpay_url: string;
+    amount: number;
+  };
 }
 
 // Backend car detail in post response (uses brand instead of make)
@@ -703,80 +706,51 @@ export interface SellerPost {
 }
 
 // Helper function to convert frontend create post data to backend format
+// Laravel API expects fields directly, not nested in carDetailDTO
 export const mapFrontendCreatePostToBackend = (
   postData: CreatePostData
 ): BackendCreatePostRequest => {
-  const sellerTypeMap: Record<
-    'individual' | 'agency',
-    'INDIVIDUAL' | 'AGENCY'
-  > = {
-    individual: 'INDIVIDUAL',
-    agency: 'AGENCY',
-  };
-
   return {
     title: postData.title,
     description: postData.description,
     price: postData.price,
+    brand: postData.make, // Laravel uses 'brand' not 'make'
+    model: postData.model,
+    year: postData.year,
+    color: postData.color,
+    mileage: postData.mileage,
     location: postData.location,
     phoneContact: postData.phoneContact,
-    sellerType: sellerTypeMap[postData.sellerType],
-    carDetailDTO: {
-      make: postData.make,
-      model: postData.model,
-      year: postData.year,
-      mileage: postData.mileage,
-      fuelType: postData.fuelType,
-      transmission: postData.transmission,
-      color: postData.color,
-      condition: postData.condition,
-    },
+    transmission: postData.transmission as 'manual' | 'automatic',
+    fuelType: postData.fuelType as 'gasoline' | 'diesel' | 'electric' | 'hybrid',
+    condition: postData.condition as 'new' | 'used',
   };
 };
 
 // Helper function to convert backend create post response to frontend format
+// Response uses PostResource format with carDetail (not carDetailDTO)
 export const mapBackendCreatePostResponseToSellerPost = (
   backendResponse: BackendCreatePostResponse['detail']['post']
 ): SellerPost => {
-  const sellerTypeMap: Record<
-    'INDIVIDUAL' | 'AGENCY',
-    'individual' | 'agency'
-  > = {
-    INDIVIDUAL: 'individual',
-    AGENCY: 'agency',
-  };
-
-  const statusMap: Record<
-    string,
-    'draft' | 'pending' | 'approved' | 'rejected' | 'blocked' | 'hidden'
-  > = {
-    DRAFT: 'draft',
-    PENDING: 'pending',
-    APPROVED: 'approved',
-    REJECTED: 'rejected',
-    BLOCKED: 'blocked',
-    HIDDEN: 'hidden',
-  };
-
   return {
     id: backendResponse.postId.toString(),
     title: backendResponse.title,
     description: backendResponse.description,
     price: backendResponse.price,
-    status: statusMap[backendResponse.status] || 'draft',
+    status: backendResponse.status, // Already lowercase from backend
     location: backendResponse.location,
     phoneContact: backendResponse.phoneContact,
-    sellerType: sellerTypeMap[backendResponse.sellerType],
+    sellerType: 'individual', // Backend doesn't return sellerType in create response, default to individual
     images: convertImageUrls(backendResponse.images),
     carDetail: {
-      make: backendResponse.carDetailDTO.make,
-      model: backendResponse.carDetailDTO.model,
-      year: backendResponse.carDetailDTO.year,
-      mileage: backendResponse.carDetailDTO.mileage,
-      fuelType: backendResponse.carDetailDTO.fuelType,
-      transmission: backendResponse.carDetailDTO.transmission,
-      color: backendResponse.carDetailDTO.color,
-      condition: backendResponse.carDetailDTO.condition,
+      make: backendResponse.carDetail.brand, // Backend uses 'brand'
+      model: backendResponse.carDetail.model,
+      year: backendResponse.carDetail.year,
+      mileage: backendResponse.carDetail.mileage,
+      fuelType: backendResponse.carDetail.fuelType,
+      transmission: backendResponse.carDetail.transmission,
+      color: backendResponse.carDetail.color,
+      condition: backendResponse.carDetail.condition,
     },
     createdAt: backendResponse.createdAt,
     updatedAt: backendResponse.updatedAt,
