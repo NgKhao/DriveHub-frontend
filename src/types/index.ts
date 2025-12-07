@@ -1589,7 +1589,15 @@ export interface MyReportItem {
 export interface BackendMyReportsResponse {
   message: string;
   status: string;
-  reports: MyReportItem[];
+  detail: {
+    reports: MyReportItem[];
+    pagination: {
+      currentPage: number;
+      lastPage: number;
+      perPage: number;
+      total: number;
+    };
+  };
 }
 
 // Admin Reports API Types

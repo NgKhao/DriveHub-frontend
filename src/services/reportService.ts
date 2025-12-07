@@ -78,7 +78,7 @@ export const reportService = {
       );
 
       // Transform backend response to frontend format
-      return mapBackendMyReportsResponseToReports(response.data.reports);
+      return mapBackendMyReportsResponseToReports(response.data.detail.reports);
     } catch (error) {
       console.error('Error fetching my reports:', error);
       throw error;
