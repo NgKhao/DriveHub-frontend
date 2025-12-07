@@ -199,12 +199,13 @@ export const adminService = {
   },
 
   // Get all posts for admin management
+  // GET /admin/posts
   getAllPosts: async (
-    page = 0,
-    size = 10
+    page = 1,
+    perPage = 10
   ): Promise<PaginatedResponse<SellerPost>> => {
     const response = await api.get<BackendAdminGetPostsResponse>(
-      `/admin/posts?page=${page}&size=${size}`
+      `/admin/posts?page=${page}&perPage=${perPage}`
     );
 
     // Transform backend response to frontend format
@@ -223,13 +224,15 @@ export const adminService = {
     );
   },
 
-  // Update post status (approve/reject)
+  // Update post status (approve/reject/pending/draft)
+  // PATCH /admin/posts/{id}/status
   updatePostStatus: async (
     id: string,
-    status: 'APPROVED' | 'REJECTED'
+    status: 'approved' | 'rejected' | 'pending' | 'draft'
   ): Promise<SellerPost> => {
     const response = await api.patch<BackendAdminUpdatePostStatusResponse>(
-      `/admin/posts/${id}/status?status=${status}`
+      `/admin/posts/${id}/status`,
+      { status }
     );
 
     // Transform backend response to frontend format
@@ -247,20 +250,22 @@ export const adminService = {
   // Get all reports
   getAllReports: async (): Promise<AdminReport[]> => {
     const response = await api.get<BackendAdminGetReportsResponse>(
-      '/admin/reports/all'
+      '/admin/reports'
     );
 
     // Transform backend response to frontend format
-    return mapBackendAdminReportsResponseToAdminReports(response.data.detail);
+    return mapBackendAdminReportsResponseToAdminReports(response.data.detail.reports);
   },
 
-  // Update report status (suspend, ban, reject)
+  // Update report status (pending, reviewed, resolved, dismissed)
+  // PATCH /admin/reports/{id}/status
   updateReportStatus: async (
     id: string,
-    status: 'PENDING' | 'SUSPENDED' | 'BANNED' | 'REJECTED'
+    status: 'pending' | 'reviewed' | 'resolved' | 'dismissed'
   ): Promise<AdminReport> => {
-    const response = await api.put<BackendAdminUpdateReportStatusResponse>(
-      `/admin/reports/${id}/handle?status=${status}`
+    const response = await api.patch<BackendAdminUpdateReportStatusResponse>(
+      `/admin/reports/${id}/status`,
+      { status }
     );
 
     // Transform backend response to frontend format

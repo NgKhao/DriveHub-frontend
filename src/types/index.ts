@@ -673,6 +673,7 @@ export interface SellerPost {
 }
 
 // Helper function to convert frontend create post data to backend format
+// Laravel API expects fields directly, not nested in carDetailDTO
 export const mapFrontendCreatePostToBackend = (
   postData: CreatePostData
 ): BackendCreatePostRequest => {
@@ -737,6 +738,7 @@ export const convertImageUrls = (images: string[]): string[] => {
 };
 
 // Helper function to convert frontend create post data to backend update format
+// Laravel API expects fields directly, not nested in carDetailDTO
 export const mapFrontendCreatePostToBackendUpdate = (
   postData: CreatePostData
 ): BackendUpdatePostRequest => {
@@ -785,11 +787,11 @@ export const mapBackendUpdatePostResponseToSellerPost = (
     },
     sellerInfo: post.seller
       ? {
-        sellerId: post.seller.id,
-        sellerName: post.seller.name,
-        sellerEmail: post.seller.email,
-        sellerPhone: post.seller.phone || '',
-      }
+          sellerId: post.seller.id,
+          sellerName: post.seller.name,
+          sellerEmail: post.seller.email,
+          sellerPhone: post.seller.phone || '',
+        }
       : undefined,
     createdAt: post.createdAt,
     updatedAt: post.updatedAt,
@@ -1050,14 +1052,28 @@ export interface SellerRating {
 }
 
 // Report Types
+export interface ReportUser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: 'buyer' | 'seller' | 'admin';
+}
+
+export interface ReportPost {
+  id: string;
+  title: string;
+  status: string;
+}
+
 export interface Report {
   id: string;
-  reporterId: string; // User who created the report
-  reportedId: string; // User being reported (seller or buyer)
-  reportedType: 'seller' | 'buyer';
   reason: string;
   description: string;
-  status: 'pending' | 'investigating' | 'resolved' | 'dismissed';
+  status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+  reporter: ReportUser;
+  reportedUser: ReportUser;
+  post?: ReportPost; // Optional for seller-to-buyer reports
   createdAt: string;
   updatedAt: string;
 }
@@ -1245,13 +1261,10 @@ export const mapBackendFavoriteItemToSellerPost = (
   backendFavoriteItem: BackendFavoriteItem
 ): SellerPost => {
   const post = backendFavoriteItem.post;
-
-  // Use `carDetail` from backend post (typed to avoid `any`)
   const carDetailSource: Partial<BackendFavoriteItem['post']['carDetail']> =
     post.carDetail || {};
 
   const safeToLower = (v?: string) => (v ? String(v).toLowerCase() : v);
-  // Normalize status and ensure it matches SellerPost.status union
   const rawStatus = safeToLower(post.status);
   const allowedStatuses = [
     'draft',
@@ -1261,7 +1274,8 @@ export const mapBackendFavoriteItemToSellerPost = (
     'blocked',
     'hidden',
   ] as const;
-  const statusValue: SellerPost['status'] = rawStatus && (allowedStatuses as readonly string[]).includes(rawStatus)
+  const statusValue: SellerPost['status'] 
+    = rawStatus && (allowedStatuses as readonly string[]).includes(rawStatus)
     ? (rawStatus as SellerPost['status'])
     : 'pending';
 
@@ -1307,81 +1321,111 @@ export const mapBackendGetFavoritesResponseToSellerPosts = (
 // ============================================================================
 
 // Frontend Review interfaces
+export interface ReviewUser {
+  id: string;
+  name: string;
+}
+
 export interface Review {
   id: string;
   rating: number;
-  comment?: string;
-  reviewerId: string;
-  reviewedId: string;
+  comment: string | null;
+  reviewer: ReviewUser;
+  seller: ReviewUser;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface SellerReviewInfo {
+  id: string;
+  name: string;
+  averageRating: number | null;
+  totalReviews: number;
 }
 
 export interface ReviewSummary {
-  sellerId: string;
-  averageRating: number;
-  totalReviews: number;
+  seller: SellerReviewInfo;
   reviews: Review[];
+  pagination: {
+    currentPage: number;
+    lastPage: number;
+    perPage: number;
+    total: number;
+  };
 }
 
 export interface CreateReviewData {
-  reviewedId: string;
   rating: number;
   comment?: string;
 }
 
 // Backend Review API types
-export interface BackendCreateReviewRequest {
-  reviewedId: number;
-  rating: number;
-  comment?: string;
+export interface BackendUserInfo {
+  id: number;
+  name: string;
 }
 
-export interface BackendCreateReviewResponse {
-  messenger: string;
-  status: number;
-  detail: {
-    id: number;
-    rating: number;
-    comment?: string;
-    reviewerId: number;
-    reviewedId: number;
-    createdAt: string;
-  };
-  instance: string;
+export interface BackendSellerInfo extends BackendUserInfo {
+  averageRating: number | null;
+  totalReviews: number;
 }
 
 export interface BackendReviewItem {
   id: number;
   rating: number;
-  comment?: string;
-  reviewerId: number;
-  reviewedId: number;
+  comment: string | null;
+  reviewer: BackendUserInfo;
+  seller: BackendUserInfo;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackendPagination {
+  currentPage: number;
+  lastPage: number;
+  perPage: number;
+  total: number;
 }
 
 export interface BackendGetSellerReviewsResponse {
-  messenger: string;
-  status: number;
+  message: string;
+  status: string;
   detail: {
-    content: BackendReviewItem[];
-    pageNumber: number;
-    pageSize: number;
-    totalElements: number;
-    totalPages: number;
-    first: boolean;
-    last: boolean;
+    seller: BackendSellerInfo;
+    reviews: BackendReviewItem[];
+    pagination: BackendPagination;
   };
-  instance: string;
+}
+
+export interface BackendCreateReviewRequest {
+  rating: number;
+  comment?: string;
+}
+
+export interface BackendCreateReviewResponse {
+  message: string;
+  status: string;
+  detail: BackendReviewItem;
 }
 
 // Mapping functions
-export const mapFrontendCreateReviewToBackend = (
-  reviewData: CreateReviewData
-): BackendCreateReviewRequest => {
+export const mapBackendUserInfoToReviewUser = (
+  backendUser: BackendUserInfo
+): ReviewUser => {
   return {
-    reviewedId: parseInt(reviewData.reviewedId),
-    rating: reviewData.rating,
-    comment: reviewData.comment,
+    id: backendUser.id.toString(),
+    name: backendUser.name,
+  };
+};
+
+export const mapBackendSellerInfoToSellerReviewInfo = (
+  backendSeller: BackendSellerInfo
+): SellerReviewInfo => {
+  return {
+    id: backendSeller.id.toString(),
+    name: backendSeller.name,
+    averageRating: backendSeller.averageRating,
+    totalReviews: backendSeller.totalReviews,
   };
 };
 
@@ -1392,120 +1436,132 @@ export const mapBackendReviewItemToReview = (
     id: backendReview.id.toString(),
     rating: backendReview.rating,
     comment: backendReview.comment,
-    reviewerId: backendReview.reviewerId.toString(),
-    reviewedId: backendReview.reviewedId.toString(),
+    reviewer: mapBackendUserInfoToReviewUser(backendReview.reviewer),
+    seller: mapBackendUserInfoToReviewUser(backendReview.seller),
     createdAt: backendReview.createdAt,
-  };
-};
-
-export const mapBackendCreateReviewResponseToReview = (
-  backendResponse: BackendCreateReviewResponse['detail']
-): Review => {
-  return {
-    id: backendResponse.id.toString(),
-    rating: backendResponse.rating,
-    comment: backendResponse.comment,
-    reviewerId: backendResponse.reviewerId.toString(),
-    reviewedId: backendResponse.reviewedId.toString(),
-    createdAt: backendResponse.createdAt,
+    updatedAt: backendReview.updatedAt,
   };
 };
 
 export const mapBackendGetSellerReviewsResponseToReviewSummary = (
-  backendResponse: BackendGetSellerReviewsResponse['detail'],
-  sellerId: string
+  backendResponse: BackendGetSellerReviewsResponse
 ): ReviewSummary => {
-  const reviews = backendResponse.content.map(mapBackendReviewItemToReview);
-
-  const averageRating =
-    reviews.length > 0
-      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-      : 0;
-
   return {
-    sellerId,
-    averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
-    totalReviews: backendResponse.totalElements,
-    reviews,
+    seller: mapBackendSellerInfoToSellerReviewInfo(backendResponse.detail.seller),
+    reviews: backendResponse.detail.reviews.map(mapBackendReviewItemToReview),
+    pagination: backendResponse.detail.pagination,
   };
 };
 
-// Report API Types - Updated for new phone/email based API
+export const mapFrontendCreateReviewToBackend = (
+  reviewData: CreateReviewData
+): BackendCreateReviewRequest => {
+  return {
+    rating: reviewData.rating,
+    comment: reviewData.comment,
+  };
+};
+
+// Report API Types
 export interface CreateReportData {
-  reportedUserphone?: string;
-  reportedUserEmail?: string;
+  postId?: string; // For buyer reporting seller via post
+  reportedUserphone?: string; // For seller reporting buyer
+  reportedUserEmail?: string; // For seller reporting buyer
   reason: string;
   description: string;
 }
 
 // Backend Report API Types
-export interface BackendCreateReportRequest {
-  reportedUserphone?: string;
-  reportedUserEmail?: string;
+export interface BackendReportUser {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+}
+
+export interface BackendReportPost {
+  id: number;
+  title: string;
+  status: string;
+}
+
+export interface BackendReportItem {
+  id: number;
   reason: string;
   description: string;
+  status: string;
+  reporter: BackendReportUser;
+  reportedUser: BackendReportUser;
+  post?: BackendReportPost;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackendCreateReportRequest {
+  reason: string;
+  description: string;
+  buyer_identifier?: string; // For report-buyer API (email or phone)
 }
 
 export interface BackendCreateReportResponse {
-  messenger: string;
-  status: number;
-  detail: {
-    id: number;
-    reporterId: number;
-    reporterName: string;
-    reportedUserId: number;
-    reportedUserName: string;
-    reason: string;
-    description: string;
-    status: 'PENDING' | 'RESOLVED' | 'REJECTED';
-    createdAt: string;
-    handledAt: string | null;
-    handledBy: number | null;
-    handledByName: string | null;
-  };
-  instance: string;
+  message: string;
+  status: string;
+  reportId: BackendReportItem;
 }
 
 // Report mapping functions
+export const mapBackendReportUserToReportUser = (
+  backendUser: BackendReportUser
+): ReportUser => {
+  return {
+    id: backendUser.id.toString(),
+    name: backendUser.name,
+    email: backendUser.email,
+    phone: backendUser.phone,
+    role: backendUser.role as 'buyer' | 'seller' | 'admin',
+  };
+};
+
+export const mapBackendReportPostToReportPost = (
+  backendPost: BackendReportPost
+): ReportPost => {
+  return {
+    id: backendPost.id.toString(),
+    title: backendPost.title,
+    status: backendPost.status,
+  };
+};
+
+export const mapBackendReportItemToReport = (
+  backendReport: BackendReportItem
+): Report => {
+  return {
+    id: backendReport.id.toString(),
+    reason: backendReport.reason,
+    description: backendReport.description,
+    status: backendReport.status as 'pending' | 'reviewed' | 'resolved' | 'dismissed',
+    reporter: mapBackendReportUserToReportUser(backendReport.reporter),
+    reportedUser: mapBackendReportUserToReportUser(backendReport.reportedUser),
+    post: backendReport.post ? mapBackendReportPostToReportPost(backendReport.post) : undefined,
+    createdAt: backendReport.createdAt,
+    updatedAt: backendReport.updatedAt,
+  };
+};
+
 export const mapFrontendCreateReportToBackend = (
   reportData: CreateReportData
 ): BackendCreateReportRequest => {
   return {
-    reportedUserphone: reportData.reportedUserphone,
-    reportedUserEmail: reportData.reportedUserEmail,
     reason: reportData.reason,
     description: reportData.description,
   };
 };
 
 export const mapBackendCreateReportResponseToReport = (
-  backendResponse: BackendCreateReportResponse['detail']
+  backendResponse: BackendCreateReportResponse
 ): Report => {
-  // Map backend status to frontend status
-  const mapStatus = (backendStatus: string): Report['status'] => {
-    switch (backendStatus) {
-      case 'PENDING':
-        return 'pending';
-      case 'RESOLVED':
-        return 'resolved';
-      case 'REJECTED':
-        return 'dismissed';
-      default:
-        return 'pending';
-    }
-  };
-
-  return {
-    id: backendResponse.id.toString(),
-    reporterId: backendResponse.reporterId.toString(),
-    reportedId: backendResponse.reportedUserId.toString(),
-    reportedType: 'seller', // Assuming we're reporting sellers from this context
-    reason: backendResponse.reason,
-    description: backendResponse.description,
-    status: mapStatus(backendResponse.status),
-    createdAt: backendResponse.createdAt,
-    updatedAt: backendResponse.createdAt, // Use createdAt as updatedAt initially
-  };
+  return mapBackendReportItemToReport(backendResponse.reportId);
 };
 
 // VNPay Payment Response Types
@@ -1537,55 +1593,62 @@ export interface PaymentResult {
 // My Reports API Types
 export interface MyReportItem {
   id: number;
-  reporterId: number;
-  reporterName: string;
-  reportedUserId: number;
-  reportedUserName: string;
   reason: string;
   description: string;
-  status: 'PENDING' | 'SUSPENDED' | 'BANNED' | 'REJECTED';
+  status: string;
+  reporter: BackendReportUser;
+  reportedUser: BackendReportUser;
+  post?: BackendReportPost;
   createdAt: string;
-  handledAt: string | null;
-  handledBy: number | null;
-  handledByName: string | null;
+  updatedAt: string;
 }
 
 export interface BackendMyReportsResponse {
-  messenger: string;
-  status: number;
-  detail: MyReportItem[];
-  instance: string;
+  message: string;
+  status: string;
+  detail: {
+    reports: MyReportItem[];
+    pagination: {
+      currentPage: number;
+      lastPage: number;
+      perPage: number;
+      total: number;
+    };
+  };
 }
 
 // Admin Reports API Types
 export interface AdminReportItem {
   id: number;
-  reporterId: number;
-  reporterName: string;
-  reportedUserId: number;
-  reportedUserName: string;
   reason: string;
   description: string;
-  status: 'PENDING' | 'SUSPENDED' | 'BANNED' | 'REJECTED';
+  status: string;
+  reporter: BackendReportUser;
+  reportedUser: BackendReportUser;
+  post?: BackendReportPost;
   createdAt: string;
-  handledAt: string | null;
-  handledBy: number | null;
-  handledByName: string | null;
+  updatedAt: string;
 }
 
 export interface BackendAdminGetReportsResponse {
-  messenger: string;
-  status: number;
-  detail: AdminReportItem[];
-  instance: string;
+  message: string;
+  status: string;
+  detail: {
+    reports: AdminReportItem[];
+    pagination: {
+      currentPage: number;
+      lastPage: number;
+      perPage: number;
+      total: number;
+    };
+  };
 }
 
 // Admin Update Report Status API Types
 export interface BackendAdminUpdateReportStatusResponse {
-  messenger: string;
-  status: number;
+  message: string;
+  status: string;
   detail: AdminReportItem;
-  instance: string;
 }
 
 // Frontend Admin Report interface for UI
@@ -1594,100 +1657,68 @@ export interface AdminReport {
   reporter: {
     id: string;
     name: string;
+    email: string;
+    phone: string;
+    role: string;
   };
   reported: {
     id: string;
     name: string;
+    email: string;
+    phone: string;
+    role: string;
+  };
+  post?: {
+    id: string;
+    title: string;
+    status: string;
   };
   reason: string;
   description: string;
-  status: 'pending' | 'suspended' | 'banned' | 'rejected';
+  status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
   createdAt: string;
-  handledAt: string | null;
-  handledBy?: {
-    id: string;
-    name: string;
-  };
+  updatedAt: string;
 }
 
 // Mapping function for my reports response
 export const mapBackendMyReportsResponseToReports = (
-  backendResponse: BackendMyReportsResponse['detail']
+  backendResponse: MyReportItem[]
 ): Report[] => {
-  return backendResponse.map((item) => {
-    // Map backend status to frontend status
-    const mapStatus = (backendStatus: string): Report['status'] => {
-      switch (backendStatus) {
-        case 'PENDING':
-          return 'pending';
-        case 'SUSPENDED':
-          return 'investigating'; // Use investigating for suspended accounts
-        case 'BANNED':
-          return 'resolved'; // Use resolved for banned (final action taken)
-        case 'REJECTED':
-          return 'dismissed';
-        default:
-          return 'pending';
-      }
-    };
-
-    return {
-      id: item.id.toString(),
-      reporterId: item.reporterId.toString(),
-      reportedId: item.reportedUserId.toString(),
-      reportedType: 'buyer', // Since sellers report buyers in my-reports context
-      reason: item.reason,
-      description: item.description,
-      status: mapStatus(item.status),
-      createdAt: item.createdAt,
-      updatedAt: item.handledAt || item.createdAt,
-    };
-  });
+  return backendResponse.map((item) => mapBackendReportItemToReport(item));
 };
 
 // Mapping function for admin reports response
 export const mapBackendAdminReportsResponseToAdminReports = (
-  backendResponse: BackendAdminGetReportsResponse['detail']
+  backendResponse: AdminReportItem[]
 ): AdminReport[] => {
   return backendResponse.map((item) => {
-    // Map backend status to frontend status
-    const mapStatus = (backendStatus: string): AdminReport['status'] => {
-      switch (backendStatus) {
-        case 'PENDING':
-          return 'pending';
-        case 'SUSPENDED':
-          return 'suspended';
-        case 'BANNED':
-          return 'banned';
-        case 'REJECTED':
-          return 'rejected';
-        default:
-          return 'pending';
-      }
-    };
-
+    const report = mapBackendReportItemToReport(item);
     return {
-      id: item.id.toString(),
+      id: report.id,
       reporter: {
-        id: item.reporterId.toString(),
-        name: item.reporterName,
+        id: report.reporter.id,
+        name: report.reporter.name,
+        email: report.reporter.email,
+        phone: report.reporter.phone,
+        role: report.reporter.role,
       },
       reported: {
-        id: item.reportedUserId.toString(),
-        name: item.reportedUserName,
+        id: report.reportedUser.id,
+        name: report.reportedUser.name,
+        email: report.reportedUser.email,
+        phone: report.reportedUser.phone,
+        role: report.reportedUser.role,
       },
-      reason: item.reason,
-      description: item.description,
-      status: mapStatus(item.status),
-      createdAt: item.createdAt,
-      handledAt: item.handledAt,
-      handledBy:
-        item.handledBy && item.handledByName
-          ? {
-            id: item.handledBy.toString(),
-            name: item.handledByName,
-          }
-          : undefined,
+      post: report.post ? {
+        id: report.post.id,
+        title: report.post.title,
+        status: report.post.status,
+      } : undefined,
+      reason: report.reason,
+      description: report.description,
+      status: report.status,
+      createdAt: report.createdAt,
+      updatedAt: report.updatedAt,
     };
   });
 };
@@ -1696,43 +1727,32 @@ export const mapBackendAdminReportsResponseToAdminReports = (
 export const mapBackendAdminUpdateReportStatusResponseToAdminReport = (
   backendResponse: BackendAdminUpdateReportStatusResponse['detail']
 ): AdminReport => {
-  // Map backend status to frontend status
-  const mapStatus = (backendStatus: string): AdminReport['status'] => {
-    switch (backendStatus) {
-      case 'PENDING':
-        return 'pending';
-      case 'SUSPENDED':
-        return 'suspended';
-      case 'BANNED':
-        return 'banned';
-      case 'REJECTED':
-        return 'rejected';
-      default:
-        return 'pending';
-    }
-  };
-
+  const report = mapBackendReportItemToReport(backendResponse);
   return {
-    id: backendResponse.id.toString(),
+    id: report.id,
     reporter: {
-      id: backendResponse.reporterId.toString(),
-      name: backendResponse.reporterName,
+      id: report.reporter.id,
+      name: report.reporter.name,
+      email: report.reporter.email,
+      phone: report.reporter.phone,
+      role: report.reporter.role,
     },
     reported: {
-      id: backendResponse.reportedUserId.toString(),
-      name: backendResponse.reportedUserName,
+      id: report.reportedUser.id,
+      name: report.reportedUser.name,
+      email: report.reportedUser.email,
+      phone: report.reportedUser.phone,
+      role: report.reportedUser.role,
     },
-    reason: backendResponse.reason,
-    description: backendResponse.description,
-    status: mapStatus(backendResponse.status),
-    createdAt: backendResponse.createdAt,
-    handledAt: backendResponse.handledAt,
-    handledBy:
-      backendResponse.handledBy && backendResponse.handledByName
-        ? {
-          id: backendResponse.handledBy.toString(),
-          name: backendResponse.handledByName,
-        }
-        : undefined,
+    post: report.post ? {
+      id: report.post.id,
+      title: report.post.title,
+      status: report.post.status,
+    } : undefined,
+    reason: report.reason,
+    description: report.description,
+    status: report.status,
+    createdAt: report.createdAt,
+    updatedAt: report.updatedAt,
   };
 };

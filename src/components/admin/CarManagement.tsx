@@ -53,16 +53,16 @@ const CarManagement: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(0); // MUI TablePagination uses 0-based
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // API data
+  // API data - pass page + 1 because backend uses 1-based pagination
   const {
     data: postsData,
     isLoading,
     error,
     refetch,
-  } = useAdminPosts(page, rowsPerPage);
+  } = useAdminPosts(page + 1, rowsPerPage);
 
   // Update post status mutation
   const updatePostStatusMutation = useUpdatePostStatus();
@@ -131,7 +131,7 @@ const CarManagement: React.FC = () => {
       updatePostStatusMutation.mutate(
         {
           id: selectedListing.id,
-          status: 'APPROVED',
+          status: 'approved',
         },
         {
           onSuccess: () => {
@@ -156,7 +156,7 @@ const CarManagement: React.FC = () => {
       updatePostStatusMutation.mutate(
         {
           id: selectedListing.id,
-          status: 'REJECTED',
+          status: 'rejected',
         },
         {
           onSuccess: () => {
@@ -427,11 +427,6 @@ const CarManagement: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Box>
-                        <Typography variant='body2'>
-                          {listing.sellerType === 'individual'
-                            ? 'Cá nhân'
-                            : 'Đại lý'}
-                        </Typography>
                         <Typography variant='caption' color='text.secondary'>
                           {listing.phoneContact || 'N/A'}
                         </Typography>

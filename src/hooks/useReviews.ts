@@ -12,7 +12,7 @@ const getErrorMessage = (error: ReviewError): string => {
   if (error.response?.status === 401) {
     return 'Vui lòng đăng nhập để đánh giá';
   } else if (error.response?.status === 403) {
-    return 'Không có quyền truy cập';
+    return 'Bạn không có quyền thực hiện thao tác này';
   } else if (error.response?.status === 404) {
     return 'Không tìm thấy người bán';
   } else if (error.response?.status === 400) {
@@ -25,17 +25,17 @@ const getErrorMessage = (error: ReviewError): string => {
 };
 
 /**
- * Hook để lấy tất cả reviews của seller
+ * Hook để lấy reviews của seller với pagination
  */
-export const useSellerReviews = (sellerId: string, enabled: boolean = true) => {
+export const useSellerReviews = (sellerId: string, page: number = 1, enabled: boolean = true) => {
   return useQuery<ReviewSummary, ReviewError>({
-    queryKey: ['sellerReviews', sellerId],
-    queryFn: () => reviewService.getAllSellerReviews(sellerId),
+    queryKey: ['sellerReviews', sellerId, page],
+    queryFn: () => reviewService.getSellerReviews(sellerId, page),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 1,
     refetchOnWindowFocus: false,
-    enabled: !!sellerId && enabled, // Only run if sellerId is provided and explicitly enabled
+    enabled: !!sellerId && enabled,
   });
 };
 
@@ -45,14 +45,14 @@ export const useSellerReviews = (sellerId: string, enabled: boolean = true) => {
 export const useCreateReview = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<Review, ReviewError, CreateReviewData>({
-    mutationFn: (reviewData: CreateReviewData) => {
-      return reviewService.createReview(reviewData);
+  return useMutation<Review, ReviewError, { sellerId: string; reviewData: CreateReviewData }>({
+    mutationFn: ({ sellerId, reviewData }) => {
+      return reviewService.createReview(sellerId, reviewData);
     },
-    onSuccess: (newReview) => {
-      // Invalidate and refetch seller reviews query
+    onSuccess: (_, variables) => {
+      // Invalidate all pages of seller reviews
       queryClient.invalidateQueries({
-        queryKey: ['sellerReviews', newReview.reviewedId],
+        queryKey: ['sellerReviews', variables.sellerId],
       });
     },
     onError: (error: ReviewError) => {
@@ -89,10 +89,10 @@ export const useUserReviewForSeller = (
   userId: string | undefined,
   enabled: boolean = true
 ) => {
-  const { data: reviewSummary, ...rest } = useSellerReviews(sellerId, enabled);
+  const { data: reviewSummary, ...rest } = useSellerReviews(sellerId, 1, enabled);
 
   const userReview = reviewSummary?.reviews?.find(
-    (review) => review.reviewerId === userId
+    (review) => review.reviewer.id === userId
   );
 
   return {

@@ -47,10 +47,11 @@ export const useAdminStats = () => {
 };
 
 // Hook for fetching all posts with pagination
-export const useAdminPosts = (page = 0, size = 10) => {
+// GET /admin/posts - page is 1-based
+export const useAdminPosts = (page = 1, perPage = 5) => {
   return useQuery<PaginatedResponse<SellerPost>, AdminError>({
-    queryKey: ['admin', 'posts', page, size],
-    queryFn: () => adminService.getAllPosts(page, size),
+    queryKey: ['admin', 'posts', page, perPage],
+    queryFn: () => adminService.getAllPosts(page, perPage),
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
   });
@@ -78,7 +79,7 @@ export const useAdminReports = () => {
   });
 };
 
-// Hook for updating report status (suspend/ban/reject)
+// Hook for updating report status (reviewed/resolved/dismissed)
 export const useUpdateReportStatus = () => {
   const queryClient = useQueryClient();
 
@@ -88,7 +89,7 @@ export const useUpdateReportStatus = () => {
       status,
     }: {
       id: string;
-      status: 'PENDING' | 'SUSPENDED' | 'BANNED' | 'REJECTED';
+      status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
     }) => {
       return adminService.updateReportStatus(id, status);
     },
@@ -208,7 +209,7 @@ export const useToggleUserStatus = () => {
   });
 };
 
-// Hook for updating post status (approve/reject)
+// Hook for updating post status (approve/reject/pending/draft)
 export const useUpdatePostStatus = () => {
   const queryClient = useQueryClient();
 
@@ -218,7 +219,7 @@ export const useUpdatePostStatus = () => {
       status,
     }: {
       id: string;
-      status: 'APPROVED' | 'REJECTED';
+      status: 'approved' | 'rejected' | 'pending' | 'draft';
     }) => {
       return adminService.updatePostStatus(id, status);
     },

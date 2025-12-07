@@ -26,6 +26,7 @@ interface ReportDialogProps {
   reportedId: string;
   reportedName: string;
   reportedType: 'seller' | 'buyer';
+  postId?: string; // Optional: Required when reporting seller via post
 }
 
 const ReportDialog: React.FC<ReportDialogProps> = ({
@@ -34,15 +35,21 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
   reportedId,
   reportedName,
   reportedType,
+  postId,
 }) => {
   const { user } = useAuthStore();
   const { getReportReasons } = useReportStore();
   const {
-    createReportAsync,
-    isCreatingReport,
-    createReportError,
-    isCreateReportSuccess,
-    resetCreateReportError,
+    reportPostAsync,
+    isReportingPost,
+    reportPostError,
+    isReportPostSuccess,
+    reportBuyerAsync,
+    isReportingBuyer,
+    reportBuyerError,
+    isReportBuyerSuccess,
+    resetReportPost,
+    resetReportBuyer,
   } = useReportManager();
 
   const [selectedReason, setSelectedReason] = useState('');
@@ -53,10 +60,12 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
   });
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // Use hook states
-  const isSubmitting = isCreatingReport;
-  const error = createReportError || localError;
-  const success = isCreateReportSuccess;
+  // Use hook states based on report type
+  const isSubmitting = reportedType === 'seller' ? isReportingPost : isReportingBuyer;
+  const error = reportedType === 'seller' 
+    ? (reportPostError || localError)
+    : (reportBuyerError || localError);
+  const success = reportedType === 'seller' ? isReportPostSuccess : isReportBuyerSuccess;
 
   const allReportReasons = getReportReasons();
 
@@ -88,7 +97,13 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
       return;
     }
 
-    // Kiểm tra thông tin người bị báo cáo cho trường hợp manual input
+    // Kiểm tra postId cho trường hợp báo cáo seller
+    if (reportedType === 'seller' && !postId) {
+      setLocalError('Không tìm thấy bài đăng để báo cáo');
+      return;
+    }
+
+    // Kiểm tra thông tin người bị báo cáo cho trường hợp manual input (buyer)
     if (reportedType === 'buyer' && !reportedId) {
       if (!buyerInfo.email.trim() && !buyerInfo.phone.trim()) {
         setLocalError('Vui lòng nhập email hoặc số điện thoại người mua');
@@ -107,7 +122,8 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
     }
 
     setLocalError(null);
-    resetCreateReportError();
+    resetReportPost();
+    resetReportBuyer();
 
     try {
       const baseReportData = {
@@ -115,34 +131,34 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
         description: description.trim(),
       };
 
-      if (reportedType === 'seller' && reportedId) {
-        // For seller reports, reportedId should contain phone number
-        await createReportAsync({
-          ...baseReportData,
-          reportedUserphone: reportedId,
+      if (reportedType === 'seller' && postId) {
+        // Buyer reporting seller via post
+        await reportPostAsync({
+          postId,
+          reportData: baseReportData,
         });
-      } else if (reportedType === 'buyer' && !reportedId) {
-        // For buyer reports, use manual input
+      } else if (reportedType === 'buyer') {
+        // Seller reporting buyer via email or phone
         if (buyerInfo.email.trim()) {
-          await createReportAsync({
+          await reportBuyerAsync({
             ...baseReportData,
             reportedUserEmail: buyerInfo.email.trim(),
           });
         } else if (buyerInfo.phone.trim()) {
-          await createReportAsync({
+          await reportBuyerAsync({
             ...baseReportData,
             reportedUserphone: buyerInfo.phone.trim(),
           });
         }
       }
 
-      // Auto close after success - success state will be managed by the hook
+      // Auto close after success
       setTimeout(() => {
         handleClose();
       }, 2000);
     } catch (err) {
       console.error('Report error:', err);
-      // Error is handled by the hook, but we can set additional local error if needed
+      // Error is handled by the hook
     }
   };
 
@@ -151,7 +167,8 @@ const ReportDialog: React.FC<ReportDialogProps> = ({
     setDescription('');
     setBuyerInfo({ phone: '', email: '' });
     setLocalError(null);
-    resetCreateReportError();
+    resetReportPost();
+    resetReportBuyer();
     onClose();
   };
 

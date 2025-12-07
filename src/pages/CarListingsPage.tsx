@@ -58,7 +58,6 @@ const mapSellerPostToCar = (sellerPost: SellerPost): Car => {
     sellerId: sellerPost.id, // Using post id as seller id for now
     sellerName: 'Seller', // Default name since not available in SellerPost
     sellerPhone: sellerPost.phoneContact,
-    sellerType: sellerPost.sellerType === 'agency' ? 'dealer' : 'individual',
     location: sellerPost.location,
     status:
       sellerPost.status === 'approved'
@@ -101,7 +100,7 @@ const CarListingsPage: React.FC = () => {
     data: publicPostsData,
     isLoading: isLoadingPosts,
     error: postsError,
-  } = usePublicPosts(page - 1, carsPerPage);
+  } = usePublicPosts(page, carsPerPage);
 
   // Use search API when filters or search query is present
   const {

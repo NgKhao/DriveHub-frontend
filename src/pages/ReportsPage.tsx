@@ -249,9 +249,10 @@ const ReportsPage: React.FC = () => {
                           >
                             <Typography variant='subtitle2'>
                               Báo cáo{' '}
-                              {report.reportedType === 'buyer'
+                              {report.reportedUser.role === 'buyer'
                                 ? 'người mua'
                                 : 'người bán'}
+                              : {report.reportedUser.name}
                             </Typography>
                             <Chip
                               label={getStatusText(report.status)}
@@ -307,7 +308,7 @@ const ReportsPage: React.FC = () => {
                     >
                       <Typography variant='h6'>
                         Báo cáo{' '}
-                        {selectedReport.reportedType === 'buyer'
+                        {selectedReport.reportedUser.role === 'buyer'
                           ? 'người mua'
                           : 'người bán'}
                       </Typography>
@@ -323,8 +324,8 @@ const ReportsPage: React.FC = () => {
                       color='text.secondary'
                       gutterBottom
                     >
-                      <strong>Lý do:</strong>{' '}
-                      {getReasonLabel(selectedReport.reason)}
+                      <strong>Người bị báo cáo:</strong>{' '}
+                      {selectedReport.reportedUser.name} ({selectedReport.reportedUser.email})
                     </Typography>
 
                     <Typography
