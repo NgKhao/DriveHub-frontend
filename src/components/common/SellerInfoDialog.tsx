@@ -25,6 +25,7 @@ import StarRating from './StarRating';
 import RatingDialog from './RatingDialog';
 import { useUserReviewForSeller } from '../../hooks/useReviews';
 import { useAuthStore } from '../../store/authStore';
+import { formatRelativeTime } from '../../utils/helpers';
 import type { SellerPost } from '../../types';
 
 interface SellerInfoDialogProps {
@@ -55,25 +56,6 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
     user?.id,
     open
   );
-
-  // No need for useEffect anymore - data is loaded by the hook
-
-  const formatTimeAgo = (dateString: string): string => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return 'vừa xong';
-    if (diffInSeconds < 3600)
-      return `${Math.floor(diffInSeconds / 60)} phút trước`;
-    if (diffInSeconds < 86400)
-      return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
-    if (diffInSeconds < 2592000)
-      return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
-    if (diffInSeconds < 31536000)
-      return `${Math.floor(diffInSeconds / 2592000)} tháng trước`;
-    return `${Math.floor(diffInSeconds / 31536000)} năm trước`;
-  };
 
   const getRatingStats = () => {
     if (!reviewSummary) return null;
@@ -291,7 +273,7 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
                                     variant='caption'
                                     color='text.secondary'
                                   >
-                                    {formatTimeAgo(review.createdAt)}
+                                    {formatRelativeTime(review.createdAt)}
                                   </Typography>
                                   {review.reviewer.id === user?.id && (
                                     <Chip
