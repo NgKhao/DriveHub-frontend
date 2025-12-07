@@ -258,11 +258,12 @@ export const adminService = {
   },
 
   // Update report status (pending, reviewed, resolved, dismissed)
+  // PATCH /admin/reports/{id}/status
   updateReportStatus: async (
     id: string,
     status: 'pending' | 'reviewed' | 'resolved' | 'dismissed'
   ): Promise<AdminReport> => {
-    const response = await api.put<BackendAdminUpdateReportStatusResponse>(
+    const response = await api.patch<BackendAdminUpdateReportStatusResponse>(
       `/admin/reports/${id}/status`,
       { status }
     );
