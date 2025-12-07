@@ -13,23 +13,50 @@ import type {
 
 export const reportService = {
   /**
-   * Create a new report against a user
-   * @param reportData Report data to create
+   * Create a report for a post (buyer reports seller)
+   * @param postId Post ID to report
+   * @param reportData Report data (reason, description)
    * @returns Promise<Report>
    */
-  createReport: async (reportData: CreateReportData): Promise<Report> => {
+  reportPost: async (postId: string, reportData: Omit<CreateReportData, 'postId'>): Promise<Report> => {
     try {
       const backendRequest = mapFrontendCreateReportToBackend(reportData);
 
       const response = await api.post<BackendCreateReportResponse>(
-        '/reports/create',
+        `/posts/${postId}/report`,
         backendRequest
       );
 
       // Transform backend response to frontend format
-      return mapBackendCreateReportResponseToReport(response.data.detail);
+      return mapBackendCreateReportResponseToReport(response.data);
     } catch (error) {
-      console.error('Error creating report:', error);
+      console.error('Error reporting post:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Create a report for a buyer (seller reports buyer)
+   * @param reportData Report data including buyer email/phone
+   * @returns Promise<Report>
+   */
+  reportBuyer: async (reportData: CreateReportData): Promise<Report> => {
+    try {
+      const backendRequest = {
+        ...mapFrontendCreateReportToBackend(reportData),
+        reportedUserphone: reportData.reportedUserphone,
+        reportedUserEmail: reportData.reportedUserEmail,
+      };
+
+      const response = await api.post<BackendCreateReportResponse>(
+        '/reports/report-buyer',
+        backendRequest
+      );
+
+      // Transform backend response to frontend format
+      return mapBackendCreateReportResponseToReport(response.data);
+    } catch (error) {
+      console.error('Error reporting buyer:', error);
       throw error;
     }
   },

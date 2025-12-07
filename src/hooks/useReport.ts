@@ -14,11 +14,11 @@ const getErrorMessage = (error: ReportError): string => {
   } else if (error.response?.status === 403) {
     return 'Không có quyền truy cập';
   } else if (error.response?.status === 404) {
-    return 'Không tìm thấy người dùng được báo cáo';
+    return 'Không tìm thấy bài đăng hoặc người dùng';
   } else if (error.response?.status === 400) {
     return 'Dữ liệu báo cáo không hợp lệ';
   } else if (error.response?.status === 409) {
-    return 'Bạn đã báo cáo người dùng này rồi';
+    return 'Bạn đã báo cáo rồi';
   } else if (error.message?.includes('Network')) {
     return 'Không thể kết nối đến server';
   } else {
@@ -27,23 +27,43 @@ const getErrorMessage = (error: ReportError): string => {
 };
 
 /**
- * Hook để tạo báo cáo mới
+ * Hook để báo cáo post (buyer report seller)
  */
-export const useCreateReport = () => {
+export const useReportPost = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<Report, ReportError, CreateReportData>({
-    mutationFn: (reportData: CreateReportData) => {
-      return reportService.createReport(reportData);
+  return useMutation<Report, ReportError, { postId: string; reportData: Omit<CreateReportData, 'postId'> }>({
+    mutationFn: ({ postId, reportData }) => {
+      return reportService.reportPost(postId, reportData);
     },
     onSuccess: () => {
-      // Invalidate report-related queries after creating a new report
       queryClient.invalidateQueries({
         queryKey: ['reports'],
       });
     },
     onError: (error: ReportError) => {
-      console.error('Create report error:', error);
+      console.error('Report post error:', error);
+    },
+  });
+};
+
+/**
+ * Hook để báo cáo buyer (seller report buyer)
+ */
+export const useReportBuyer = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<Report, ReportError, CreateReportData>({
+    mutationFn: (reportData: CreateReportData) => {
+      return reportService.reportBuyer(reportData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['reports'],
+      });
+    },
+    onError: (error: ReportError) => {
+      console.error('Report buyer error:', error);
     },
   });
 };
@@ -59,7 +79,7 @@ export const useMyReports = (enabled: boolean = true) => {
     gcTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
     refetchOnWindowFocus: false,
-    enabled, // Only run if explicitly enabled
+    enabled,
   });
 };
 
@@ -67,19 +87,30 @@ export const useMyReports = (enabled: boolean = true) => {
  * Main report management hook
  */
 export const useReportManager = () => {
-  const createReportMutation = useCreateReport();
+  const reportPostMutation = useReportPost();
+  const reportBuyerMutation = useReportBuyer();
 
   return {
-    // Create report
-    createReport: createReportMutation.mutate,
-    createReportAsync: createReportMutation.mutateAsync,
-    isCreatingReport: createReportMutation.isPending,
-    createReportError: createReportMutation.error
-      ? getErrorMessage(createReportMutation.error)
+    // Report post (buyer → seller)
+    reportPost: reportPostMutation.mutate,
+    reportPostAsync: reportPostMutation.mutateAsync,
+    isReportingPost: reportPostMutation.isPending,
+    reportPostError: reportPostMutation.error
+      ? getErrorMessage(reportPostMutation.error)
       : null,
-    isCreateReportSuccess: createReportMutation.isSuccess,
+    isReportPostSuccess: reportPostMutation.isSuccess,
+
+    // Report buyer (seller → buyer)
+    reportBuyer: reportBuyerMutation.mutate,
+    reportBuyerAsync: reportBuyerMutation.mutateAsync,
+    isReportingBuyer: reportBuyerMutation.isPending,
+    reportBuyerError: reportBuyerMutation.error
+      ? getErrorMessage(reportBuyerMutation.error)
+      : null,
+    isReportBuyerSuccess: reportBuyerMutation.isSuccess,
 
     // Reset mutations
-    resetCreateReportError: createReportMutation.reset,
+    resetReportPost: reportPostMutation.reset,
+    resetReportBuyer: reportBuyerMutation.reset,
   };
 };
