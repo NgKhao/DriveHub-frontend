@@ -46,12 +46,12 @@ const ReportsPage: React.FC = () => {
     switch (status) {
       case 'pending':
         return 'warning';
-      case 'investigating':
+      case 'reviewed':
         return 'info';
       case 'resolved':
         return 'success';
       case 'dismissed':
-        return 'error';
+        return 'default';
       default:
         return 'default';
     }
@@ -61,12 +61,12 @@ const ReportsPage: React.FC = () => {
     switch (status) {
       case 'pending':
         return 'Chờ xử lý';
-      case 'investigating':
-        return 'Tạm khóa tài khoản'; // SUSPENDED status
+      case 'reviewed':
+        return 'Đang xem xét';
       case 'resolved':
-        return 'Cấm vĩnh viễn'; // BANNED status
+        return 'Đã giải quyết';
       case 'dismissed':
-        return 'Báo cáo bị từ chối'; // REJECTED status
+        return 'Đã bỏ qua';
       default:
         return 'Không xác định';
     }
