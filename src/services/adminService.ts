@@ -250,20 +250,22 @@ export const adminService = {
   // Get all reports
   getAllReports: async (): Promise<AdminReport[]> => {
     const response = await api.get<BackendAdminGetReportsResponse>(
-      '/admin/reports/all'
+      '/admin/reports'
     );
 
     // Transform backend response to frontend format
-    return mapBackendAdminReportsResponseToAdminReports(response.data.detail);
+    return mapBackendAdminReportsResponseToAdminReports(response.data.detail.reports);
   },
 
-  // Update report status (suspend, ban, reject)
+  // Update report status (pending, reviewed, resolved, dismissed)
+  // PATCH /admin/reports/{id}/status
   updateReportStatus: async (
     id: string,
-    status: 'PENDING' | 'SUSPENDED' | 'BANNED' | 'REJECTED'
+    status: 'pending' | 'reviewed' | 'resolved' | 'dismissed'
   ): Promise<AdminReport> => {
-    const response = await api.put<BackendAdminUpdateReportStatusResponse>(
-      `/admin/reports/${id}/handle?status=${status}`
+    const response = await api.patch<BackendAdminUpdateReportStatusResponse>(
+      `/admin/reports/${id}/status`,
+      { status }
     );
 
     // Transform backend response to frontend format

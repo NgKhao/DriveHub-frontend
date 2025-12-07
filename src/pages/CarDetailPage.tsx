@@ -570,6 +570,7 @@ const CarDetailPage: React.FC = () => {
         }
         reportedName={sellerPost.sellerInfo?.sellerName || 'Người bán'}
         reportedType='seller'
+        postId={id}
       />
     </Container>
   );

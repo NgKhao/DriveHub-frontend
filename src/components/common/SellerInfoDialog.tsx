@@ -25,6 +25,7 @@ import StarRating from './StarRating';
 import RatingDialog from './RatingDialog';
 import { useUserReviewForSeller } from '../../hooks/useReviews';
 import { useAuthStore } from '../../store/authStore';
+import { formatRelativeTime } from '../../utils/helpers';
 import type { SellerPost } from '../../types';
 
 interface SellerInfoDialogProps {
@@ -56,25 +57,6 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
     open
   );
 
-  // No need for useEffect anymore - data is loaded by the hook
-
-  const formatTimeAgo = (dateString: string): string => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return 'vừa xong';
-    if (diffInSeconds < 3600)
-      return `${Math.floor(diffInSeconds / 60)} phút trước`;
-    if (diffInSeconds < 86400)
-      return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
-    if (diffInSeconds < 2592000)
-      return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
-    if (diffInSeconds < 31536000)
-      return `${Math.floor(diffInSeconds / 2592000)} tháng trước`;
-    return `${Math.floor(diffInSeconds / 31536000)} năm trước`;
-  };
-
   const getRatingStats = () => {
     if (!reviewSummary) return null;
 
@@ -82,10 +64,9 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
       const count = reviewSummary.reviews.filter(
         (r) => Math.floor(r.rating) === star
       ).length;
+      const totalReviews = reviewSummary.seller.totalReviews;
       const percentage =
-        reviewSummary.totalReviews > 0
-          ? Math.round((count / reviewSummary.totalReviews) * 100)
-          : 0;
+        totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
       return { star, count, percentage };
     });
 
@@ -196,14 +177,15 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
                         component='div'
                         sx={{ fontWeight: 'bold' }}
                       >
-                        {reviewSummary.averageRating.toFixed(1)}
+                        {reviewSummary.seller.averageRating?.toFixed(1) || 'N/A'}
                       </Typography>
                       <StarRating
-                        value={reviewSummary.averageRating}
+                        value={reviewSummary.seller.averageRating || 0}
                         readOnly
+                        size='medium'
                       />
                       <Typography variant='body2' color='text.secondary'>
-                        {reviewSummary.totalReviews} đánh giá
+                        Dựa trên {reviewSummary.seller.totalReviews} đánh giá
                       </Typography>
                     </Box>
 
@@ -280,7 +262,7 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
                                   }}
                                 >
                                   <Typography variant='subtitle2'>
-                                    Khách hàng #{review.reviewerId.slice(-4)}
+                                    {review.reviewer.name}
                                   </Typography>
                                   <StarRating
                                     value={review.rating}
@@ -291,9 +273,9 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
                                     variant='caption'
                                     color='text.secondary'
                                   >
-                                    {formatTimeAgo(review.createdAt)}
+                                    {formatRelativeTime(review.createdAt)}
                                   </Typography>
-                                  {review.reviewerId === user?.id && (
+                                  {review.reviewer.id === user?.id && (
                                     <Chip
                                       label='Đánh giá của bạn'
                                       size='small'
@@ -352,7 +334,7 @@ const SellerInfoDialog: React.FC<SellerInfoDialogProps> = ({
             ? {
                 id: userReview.id,
                 rating: userReview.rating,
-                review: userReview.comment,
+                review: userReview.comment || undefined,
               }
             : undefined
         }
