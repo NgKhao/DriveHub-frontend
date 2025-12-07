@@ -20,7 +20,8 @@ export const favoriteService = {
   addToFavorites: async (postId: string): Promise<FavoriteItem> => {
     try {
       const response = await api.post<BackendAddFavoriteResponse>(
-        `/favorites/add/${postId}`
+        '/favorites',
+        { postId}
       );
 
       // Transform backend response to frontend format
@@ -38,9 +39,8 @@ export const favoriteService = {
    */
   removeFromFavorites: async (postId: string): Promise<void> => {
     try {
-      await api.delete<BackendRemoveFavoriteResponse>(
-        `/favorites/remove/${postId}`
-      );
+      // Backend defines DELETE /favorites/{postId} (apiResource with postId parameter)
+      await api.delete<BackendRemoveFavoriteResponse>(`/favorites/${postId}`);
     } catch (error) {
       console.error('Error removing from favorites:', error);
       throw error;
