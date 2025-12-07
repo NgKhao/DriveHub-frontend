@@ -1290,81 +1290,111 @@ export const mapBackendGetFavoritesResponseToSellerPosts = (
 // ============================================================================
 
 // Frontend Review interfaces
+export interface ReviewUser {
+  id: string;
+  name: string;
+}
+
 export interface Review {
   id: string;
   rating: number;
-  comment?: string;
-  reviewerId: string;
-  reviewedId: string;
+  comment: string | null;
+  reviewer: ReviewUser;
+  seller: ReviewUser;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface SellerReviewInfo {
+  id: string;
+  name: string;
+  averageRating: number | null;
+  totalReviews: number;
 }
 
 export interface ReviewSummary {
-  sellerId: string;
-  averageRating: number;
-  totalReviews: number;
+  seller: SellerReviewInfo;
   reviews: Review[];
+  pagination: {
+    currentPage: number;
+    lastPage: number;
+    perPage: number;
+    total: number;
+  };
 }
 
 export interface CreateReviewData {
-  reviewedId: string;
   rating: number;
   comment?: string;
 }
 
 // Backend Review API types
-export interface BackendCreateReviewRequest {
-  reviewedId: number;
-  rating: number;
-  comment?: string;
+export interface BackendUserInfo {
+  id: number;
+  name: string;
 }
 
-export interface BackendCreateReviewResponse {
-  messenger: string;
-  status: number;
-  detail: {
-    id: number;
-    rating: number;
-    comment?: string;
-    reviewerId: number;
-    reviewedId: number;
-    createdAt: string;
-  };
-  instance: string;
+export interface BackendSellerInfo extends BackendUserInfo {
+  averageRating: number | null;
+  totalReviews: number;
 }
 
 export interface BackendReviewItem {
   id: number;
   rating: number;
-  comment?: string;
-  reviewerId: number;
-  reviewedId: number;
+  comment: string | null;
+  reviewer: BackendUserInfo;
+  seller: BackendUserInfo;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackendPagination {
+  currentPage: number;
+  lastPage: number;
+  perPage: number;
+  total: number;
 }
 
 export interface BackendGetSellerReviewsResponse {
-  messenger: string;
-  status: number;
+  message: string;
+  status: string;
   detail: {
-    content: BackendReviewItem[];
-    pageNumber: number;
-    pageSize: number;
-    totalElements: number;
-    totalPages: number;
-    first: boolean;
-    last: boolean;
+    seller: BackendSellerInfo;
+    reviews: BackendReviewItem[];
+    pagination: BackendPagination;
   };
-  instance: string;
+}
+
+export interface BackendCreateReviewRequest {
+  rating: number;
+  comment?: string;
+}
+
+export interface BackendCreateReviewResponse {
+  message: string;
+  status: string;
+  detail: BackendReviewItem;
 }
 
 // Mapping functions
-export const mapFrontendCreateReviewToBackend = (
-  reviewData: CreateReviewData
-): BackendCreateReviewRequest => {
+export const mapBackendUserInfoToReviewUser = (
+  backendUser: BackendUserInfo
+): ReviewUser => {
   return {
-    reviewedId: parseInt(reviewData.reviewedId),
-    rating: reviewData.rating,
-    comment: reviewData.comment,
+    id: backendUser.id.toString(),
+    name: backendUser.name,
+  };
+};
+
+export const mapBackendSellerInfoToSellerReviewInfo = (
+  backendSeller: BackendSellerInfo
+): SellerReviewInfo => {
+  return {
+    id: backendSeller.id.toString(),
+    name: backendSeller.name,
+    averageRating: backendSeller.averageRating,
+    totalReviews: backendSeller.totalReviews,
   };
 };
 
@@ -1375,41 +1405,29 @@ export const mapBackendReviewItemToReview = (
     id: backendReview.id.toString(),
     rating: backendReview.rating,
     comment: backendReview.comment,
-    reviewerId: backendReview.reviewerId.toString(),
-    reviewedId: backendReview.reviewedId.toString(),
+    reviewer: mapBackendUserInfoToReviewUser(backendReview.reviewer),
+    seller: mapBackendUserInfoToReviewUser(backendReview.seller),
     createdAt: backendReview.createdAt,
-  };
-};
-
-export const mapBackendCreateReviewResponseToReview = (
-  backendResponse: BackendCreateReviewResponse['detail']
-): Review => {
-  return {
-    id: backendResponse.id.toString(),
-    rating: backendResponse.rating,
-    comment: backendResponse.comment,
-    reviewerId: backendResponse.reviewerId.toString(),
-    reviewedId: backendResponse.reviewedId.toString(),
-    createdAt: backendResponse.createdAt,
+    updatedAt: backendReview.updatedAt,
   };
 };
 
 export const mapBackendGetSellerReviewsResponseToReviewSummary = (
-  backendResponse: BackendGetSellerReviewsResponse['detail'],
-  sellerId: string
+  backendResponse: BackendGetSellerReviewsResponse
 ): ReviewSummary => {
-  const reviews = backendResponse.content.map(mapBackendReviewItemToReview);
-
-  const averageRating =
-    reviews.length > 0
-      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-      : 0;
-
   return {
-    sellerId,
-    averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
-    totalReviews: backendResponse.totalElements,
-    reviews,
+    seller: mapBackendSellerInfoToSellerReviewInfo(backendResponse.detail.seller),
+    reviews: backendResponse.detail.reviews.map(mapBackendReviewItemToReview),
+    pagination: backendResponse.detail.pagination,
+  };
+};
+
+export const mapFrontendCreateReviewToBackend = (
+  reviewData: CreateReviewData
+): BackendCreateReviewRequest => {
+  return {
+    rating: reviewData.rating,
+    comment: reviewData.comment,
   };
 };
 

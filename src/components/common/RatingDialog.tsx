@@ -13,7 +13,7 @@ import {
 import StarRating from './StarRating';
 import ReportDialog from './ReportDialog';
 import { useAuthStore } from '../../store/authStore';
-import { useCreateReview } from '../../hooks/useReviews';
+import { useReviewsManager } from '../../hooks/useReviews';
 
 interface RatingDialogProps {
   open: boolean;
@@ -35,11 +35,10 @@ const RatingDialog: React.FC<RatingDialogProps> = ({
   existingRating,
 }) => {
   const { user } = useAuthStore();
-  const createReviewMutation = useCreateReview();
+  const { createReview, isCreatingReview, createReviewError, resetCreateReviewError } = useReviewsManager();
 
   const [rating, setRating] = useState(existingRating?.rating || 0);
   const [review, setReview] = useState(existingRating?.review || '');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [wantToReport, setWantToReport] = useState(false);
@@ -61,36 +60,42 @@ const RatingDialog: React.FC<RatingDialogProps> = ({
       return;
     }
 
-    setIsSubmitting(true);
     setError(null);
 
     try {
       // For now, we only support creating new reviews
       // Update functionality can be added later
       if (!existingRating) {
-        await createReviewMutation.mutateAsync({
-          reviewedId: sellerId,
-          rating,
-          comment: review,
-        });
+        createReview(
+          {
+            sellerId,
+            reviewData: {
+              rating,
+              comment: review || undefined,
+            },
+          },
+          {
+            onSuccess: () => {
+              // If user wants to report after rating, show report dialog
+              if (wantToReport && rating <= 2) {
+                handleClose();
+                setShowReportDialog(true);
+              } else {
+                handleClose();
+              }
+            },
+            onError: () => {
+              setError(createReviewError || 'Có lỗi xảy ra khi gửi đánh giá');
+            },
+          }
+        );
       } else {
         // TODO: Implement update review API
         setError('Chức năng cập nhật đánh giá sẽ được bổ sung sau');
-        return;
-      }
-
-      // If user wants to report after rating, show report dialog
-      if (wantToReport && rating <= 2) {
-        handleClose();
-        setShowReportDialog(true);
-      } else {
-        handleClose();
       }
     } catch (err) {
       setError('Có lỗi xảy ra khi gửi đánh giá');
       console.error('Rating error:', err);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -99,6 +104,7 @@ const RatingDialog: React.FC<RatingDialogProps> = ({
     setReview(existingRating?.review || '');
     setWantToReport(false);
     setError(null);
+    resetCreateReviewError();
     onClose();
   };
 
@@ -153,9 +159,9 @@ const RatingDialog: React.FC<RatingDialogProps> = ({
           <Button
             onClick={handleSubmit}
             variant='contained'
-            disabled={isSubmitting || rating === 0}
+            disabled={isCreatingReview || rating === 0}
           >
-            {isSubmitting
+            {isCreatingReview
               ? 'Đang gửi...'
               : existingRating
               ? 'Cập nhật'
