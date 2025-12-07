@@ -1484,6 +1484,7 @@ export interface BackendReportItem {
 export interface BackendCreateReportRequest {
   reason: string;
   description: string;
+  buyer_identifier?: string; // For report-buyer API (email or phone)
 }
 
 export interface BackendCreateReportResponse {
@@ -1575,24 +1576,20 @@ export interface PaymentResult {
 // My Reports API Types
 export interface MyReportItem {
   id: number;
-  reporterId: number;
-  reporterName: string;
-  reportedUserId: number;
-  reportedUserName: string;
   reason: string;
   description: string;
-  status: 'PENDING' | 'SUSPENDED' | 'BANNED' | 'REJECTED';
+  status: string;
+  reporter: BackendReportUser;
+  reportedUser: BackendReportUser;
+  post?: BackendReportPost;
   createdAt: string;
-  handledAt: string | null;
-  handledBy: number | null;
-  handledByName: string | null;
+  updatedAt: string;
 }
 
 export interface BackendMyReportsResponse {
-  messenger: string;
-  status: number;
-  detail: MyReportItem[];
-  instance: string;
+  message: string;
+  status: string;
+  reports: MyReportItem[];
 }
 
 // Admin Reports API Types
@@ -1650,37 +1647,9 @@ export interface AdminReport {
 
 // Mapping function for my reports response
 export const mapBackendMyReportsResponseToReports = (
-  backendResponse: BackendMyReportsResponse['detail']
+  backendResponse: MyReportItem[]
 ): Report[] => {
-  return backendResponse.map((item) => {
-    // Map backend status to frontend status
-    const mapStatus = (backendStatus: string): Report['status'] => {
-      switch (backendStatus) {
-        case 'PENDING':
-          return 'pending';
-        case 'SUSPENDED':
-          return 'investigating'; // Use investigating for suspended accounts
-        case 'BANNED':
-          return 'resolved'; // Use resolved for banned (final action taken)
-        case 'REJECTED':
-          return 'dismissed';
-        default:
-          return 'pending';
-      }
-    };
-
-    return {
-      id: item.id.toString(),
-      reporterId: item.reporterId.toString(),
-      reportedId: item.reportedUserId.toString(),
-      reportedType: 'buyer', // Since sellers report buyers in my-reports context
-      reason: item.reason,
-      description: item.description,
-      status: mapStatus(item.status),
-      createdAt: item.createdAt,
-      updatedAt: item.handledAt || item.createdAt,
-    };
-  });
+  return backendResponse.map((item) => mapBackendReportItemToReport(item));
 };
 
 // Mapping function for admin reports response

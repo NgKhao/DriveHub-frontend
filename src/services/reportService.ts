@@ -42,10 +42,16 @@ export const reportService = {
    */
   reportBuyer: async (reportData: CreateReportData): Promise<Report> => {
     try {
+      // Backend expects buyer_identifier (email or phone)
+      const buyer_identifier = reportData.reportedUserEmail || reportData.reportedUserphone;
+      
+      if (!buyer_identifier) {
+        throw new Error('buyer_identifier (email or phone) is required');
+      }
+
       const backendRequest = {
         ...mapFrontendCreateReportToBackend(reportData),
-        reportedUserphone: reportData.reportedUserphone,
-        reportedUserEmail: reportData.reportedUserEmail,
+        buyer_identifier,
       };
 
       const response = await api.post<BackendCreateReportResponse>(
@@ -72,7 +78,7 @@ export const reportService = {
       );
 
       // Transform backend response to frontend format
-      return mapBackendMyReportsResponseToReports(response.data.detail);
+      return mapBackendMyReportsResponseToReports(response.data.reports);
     } catch (error) {
       console.error('Error fetching my reports:', error);
       throw error;
