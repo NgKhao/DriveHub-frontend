@@ -1226,7 +1226,7 @@ export interface BackendFavoriteItem {
     location: string;
     phoneContact: string;
     images: string[];
-    carDetailDTO: {
+    carDetail: {
       make: string;
       model: string;
       year: number;
@@ -1261,34 +1261,51 @@ export const mapBackendFavoriteItemToSellerPost = (
   backendFavoriteItem: BackendFavoriteItem
 ): SellerPost => {
   const post = backendFavoriteItem.post;
+  const carDetailSource: Partial<BackendFavoriteItem['post']['carDetail']> =
+    post.carDetail || {};
+
+  const safeToLower = (v?: string) => (v ? String(v).toLowerCase() : v);
+  const rawStatus = safeToLower(post.status);
+  const allowedStatuses = [
+    'draft',
+    'pending',
+    'approved',
+    'rejected',
+    'blocked',
+    'hidden',
+  ] as const;
+  const statusValue: SellerPost['status'] 
+    = rawStatus && (allowedStatuses as readonly string[]).includes(rawStatus)
+    ? (rawStatus as SellerPost['status'])
+    : 'pending';
 
   return {
-    id: post.postId.toString(),
-    title: post.title,
-    description: post.description,
-    price: post.price,
-    status: post.status.toLowerCase() as 'approved' | 'pending' | 'rejected',
-    location: post.location,
-    phoneContact: post.phoneContact,
-    images: convertImageUrls(post.images),
+    id: String(post.postId),
+    title: post.title || '',
+    description: post.description || '',
+    price: post.price || 0,
+    status: statusValue,
+    location: post.location || '',
+    phoneContact: post.phoneContact || '',
+    images: convertImageUrls(post.images || []),
     carDetail: {
-      make: post.carDetailDTO.make,
-      model: post.carDetailDTO.model,
-      year: post.carDetailDTO.year,
-      mileage: post.carDetailDTO.mileage,
-      fuelType: post.carDetailDTO.fuelType.toLowerCase() as
+      make: carDetailSource.make || '',
+      model: carDetailSource.model || '',
+      year: carDetailSource.year || 0,
+      mileage: carDetailSource.mileage || 0,
+      fuelType: (safeToLower(carDetailSource.fuelType) as
         | 'gasoline'
         | 'diesel'
         | 'hybrid'
-        | 'electric',
-      transmission: post.carDetailDTO.transmission.toLowerCase() as
+        | 'electric') || 'gasoline',
+      transmission: (safeToLower(carDetailSource.transmission) as
         | 'manual'
-        | 'automatic',
-      color: post.carDetailDTO.color,
-      condition: post.carDetailDTO.condition.toLowerCase() as 'new' | 'used',
+        | 'automatic') || 'manual',
+      color: carDetailSource.color || '',
+      condition: (safeToLower(carDetailSource.condition) as 'new' | 'used') || 'used',
     },
-    createdAt: post.createdAt,
-    updatedAt: post.updatedAt,
+    createdAt: post.createdAt || new Date().toISOString(),
+    updatedAt: post.updatedAt || null,
   };
 };
 
