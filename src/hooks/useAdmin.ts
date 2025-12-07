@@ -79,7 +79,7 @@ export const useAdminReports = () => {
   });
 };
 
-// Hook for updating report status (suspend/ban/reject)
+// Hook for updating report status (reviewed/resolved/dismissed)
 export const useUpdateReportStatus = () => {
   const queryClient = useQueryClient();
 
@@ -89,7 +89,7 @@ export const useUpdateReportStatus = () => {
       status,
     }: {
       id: string;
-      status: 'PENDING' | 'SUSPENDED' | 'BANNED' | 'REJECTED';
+      status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
     }) => {
       return adminService.updateReportStatus(id, status);
     },

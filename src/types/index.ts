@@ -1603,32 +1603,35 @@ export interface BackendMyReportsResponse {
 // Admin Reports API Types
 export interface AdminReportItem {
   id: number;
-  reporterId: number;
-  reporterName: string;
-  reportedUserId: number;
-  reportedUserName: string;
   reason: string;
   description: string;
-  status: 'PENDING' | 'SUSPENDED' | 'BANNED' | 'REJECTED';
+  status: string;
+  reporter: BackendReportUser;
+  reportedUser: BackendReportUser;
+  post?: BackendReportPost;
   createdAt: string;
-  handledAt: string | null;
-  handledBy: number | null;
-  handledByName: string | null;
+  updatedAt: string;
 }
 
 export interface BackendAdminGetReportsResponse {
-  messenger: string;
-  status: number;
-  detail: AdminReportItem[];
-  instance: string;
+  message: string;
+  status: string;
+  detail: {
+    reports: AdminReportItem[];
+    pagination: {
+      currentPage: number;
+      lastPage: number;
+      perPage: number;
+      total: number;
+    };
+  };
 }
 
 // Admin Update Report Status API Types
 export interface BackendAdminUpdateReportStatusResponse {
-  messenger: string;
-  status: number;
+  message: string;
+  status: string;
   detail: AdminReportItem;
-  instance: string;
 }
 
 // Frontend Admin Report interface for UI
@@ -1637,20 +1640,27 @@ export interface AdminReport {
   reporter: {
     id: string;
     name: string;
+    email: string;
+    phone: string;
+    role: string;
   };
   reported: {
     id: string;
     name: string;
+    email: string;
+    phone: string;
+    role: string;
+  };
+  post?: {
+    id: string;
+    title: string;
+    status: string;
   };
   reason: string;
   description: string;
-  status: 'pending' | 'suspended' | 'banned' | 'rejected';
+  status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
   createdAt: string;
-  handledAt: string | null;
-  handledBy?: {
-    id: string;
-    name: string;
-  };
+  updatedAt: string;
 }
 
 // Mapping function for my reports response
@@ -1662,47 +1672,36 @@ export const mapBackendMyReportsResponseToReports = (
 
 // Mapping function for admin reports response
 export const mapBackendAdminReportsResponseToAdminReports = (
-  backendResponse: BackendAdminGetReportsResponse['detail']
+  backendResponse: AdminReportItem[]
 ): AdminReport[] => {
   return backendResponse.map((item) => {
-    // Map backend status to frontend status
-    const mapStatus = (backendStatus: string): AdminReport['status'] => {
-      switch (backendStatus) {
-        case 'PENDING':
-          return 'pending';
-        case 'SUSPENDED':
-          return 'suspended';
-        case 'BANNED':
-          return 'banned';
-        case 'REJECTED':
-          return 'rejected';
-        default:
-          return 'pending';
-      }
-    };
-
+    const report = mapBackendReportItemToReport(item);
     return {
-      id: item.id.toString(),
+      id: report.id,
       reporter: {
-        id: item.reporterId.toString(),
-        name: item.reporterName,
+        id: report.reporter.id,
+        name: report.reporter.name,
+        email: report.reporter.email,
+        phone: report.reporter.phone,
+        role: report.reporter.role,
       },
       reported: {
-        id: item.reportedUserId.toString(),
-        name: item.reportedUserName,
+        id: report.reportedUser.id,
+        name: report.reportedUser.name,
+        email: report.reportedUser.email,
+        phone: report.reportedUser.phone,
+        role: report.reportedUser.role,
       },
-      reason: item.reason,
-      description: item.description,
-      status: mapStatus(item.status),
-      createdAt: item.createdAt,
-      handledAt: item.handledAt,
-      handledBy:
-        item.handledBy && item.handledByName
-          ? {
-              id: item.handledBy.toString(),
-              name: item.handledByName,
-            }
-          : undefined,
+      post: report.post ? {
+        id: report.post.id,
+        title: report.post.title,
+        status: report.post.status,
+      } : undefined,
+      reason: report.reason,
+      description: report.description,
+      status: report.status,
+      createdAt: report.createdAt,
+      updatedAt: report.updatedAt,
     };
   });
 };
@@ -1711,43 +1710,32 @@ export const mapBackendAdminReportsResponseToAdminReports = (
 export const mapBackendAdminUpdateReportStatusResponseToAdminReport = (
   backendResponse: BackendAdminUpdateReportStatusResponse['detail']
 ): AdminReport => {
-  // Map backend status to frontend status
-  const mapStatus = (backendStatus: string): AdminReport['status'] => {
-    switch (backendStatus) {
-      case 'PENDING':
-        return 'pending';
-      case 'SUSPENDED':
-        return 'suspended';
-      case 'BANNED':
-        return 'banned';
-      case 'REJECTED':
-        return 'rejected';
-      default:
-        return 'pending';
-    }
-  };
-
+  const report = mapBackendReportItemToReport(backendResponse);
   return {
-    id: backendResponse.id.toString(),
+    id: report.id,
     reporter: {
-      id: backendResponse.reporterId.toString(),
-      name: backendResponse.reporterName,
+      id: report.reporter.id,
+      name: report.reporter.name,
+      email: report.reporter.email,
+      phone: report.reporter.phone,
+      role: report.reporter.role,
     },
     reported: {
-      id: backendResponse.reportedUserId.toString(),
-      name: backendResponse.reportedUserName,
+      id: report.reportedUser.id,
+      name: report.reportedUser.name,
+      email: report.reportedUser.email,
+      phone: report.reportedUser.phone,
+      role: report.reportedUser.role,
     },
-    reason: backendResponse.reason,
-    description: backendResponse.description,
-    status: mapStatus(backendResponse.status),
-    createdAt: backendResponse.createdAt,
-    handledAt: backendResponse.handledAt,
-    handledBy:
-      backendResponse.handledBy && backendResponse.handledByName
-        ? {
-            id: backendResponse.handledBy.toString(),
-            name: backendResponse.handledByName,
-          }
-        : undefined,
+    post: report.post ? {
+      id: report.post.id,
+      title: report.post.title,
+      status: report.post.status,
+    } : undefined,
+    reason: report.reason,
+    description: report.description,
+    status: report.status,
+    createdAt: report.createdAt,
+    updatedAt: report.updatedAt,
   };
 };
