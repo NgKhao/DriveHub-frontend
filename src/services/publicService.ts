@@ -1,7 +1,6 @@
 import axios from 'axios';
 import {
   mapBackendPublicGetPostsResponseToPaginated,
-  mapBackendPublicSearchPostsResponseToSellerPosts,
   mapBackendPublicPostDetailToSellerPost,
 } from '../types';
 import type {
@@ -52,9 +51,9 @@ export const publicService = {
    * @param searchParams Search parameters object
    * @returns Promise<SellerPost[]>
    */
-  searchPublicPosts: async (
+ searchPublicPosts: async (
     searchParams: PublicSearchParams
-  ): Promise<SellerPost[]> => {
+  ): Promise<PaginatedResponse<SellerPost>> => {
     try {
       // Remove empty/undefined values from params
       const cleanParams = Object.entries(searchParams).reduce(
@@ -68,14 +67,14 @@ export const publicService = {
       );
 
       const response = await axios.get<BackendPublicSearchPostsResponse>(
-        `${API_BASE_URL}/public/posts/search`,
+        `${API_BASE_URL}/posts/search`,
         {
           params: cleanParams,
         }
       );
 
       // Transform backend response to frontend format
-      return mapBackendPublicSearchPostsResponseToSellerPosts(
+      return mapBackendPublicGetPostsResponseToPaginated(
         response.data.detail
       );
     } catch (error) {
