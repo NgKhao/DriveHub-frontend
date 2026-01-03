@@ -23,12 +23,13 @@ export const usePublicPosts = (page: number = 1, perPage: number = 10) => {
 
 /**
  * Hook để search public posts với filters (không cần authentication)
+ * GET /posts/search - Backend trả về pagination giống /posts
  */
 export const usePublicPostsSearch = (
   searchParams: PublicSearchParams,
   enabled: boolean = true
 ) => {
-  return useQuery<SellerPost[], Error>({
+  return useQuery<PaginatedResponse<SellerPost>, Error>({
     queryKey: ['publicPostsSearch', searchParams],
     queryFn: () => publicService.searchPublicPosts(searchParams),
     staleTime: 2 * 60 * 1000, // 2 minutes (shorter for search results)

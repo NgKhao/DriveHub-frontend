@@ -9,7 +9,7 @@ export interface PaginatedResponse<T> {
   items: T[];
   total: number;
   page: number;
-  limit: number;
+  perPage: number;
   totalPages: number;
 }
 
@@ -365,10 +365,12 @@ export interface BackendPublicGetPostsResponse {
 
 // Public Search Posts API Types
 export interface BackendPublicSearchPostsResponse {
-  messenger: string;
-  status: number;
-  detail: BackendPostItem[];
-  instance: string;
+  message: string;
+  status: string;
+  detail: {
+    posts: BackendPostItem[];
+    pagination: BackendPagination;
+  };
 }
 
 // Public Get Post Detail API Types
@@ -401,16 +403,22 @@ export interface BackendPublicGetPostDetailResponse {
 
 // Search parameters interface
 export interface PublicSearchParams {
-  make?: string;
+  keyword?: string;
+  brand?: string;
   model?: string;
   minPrice?: number;
   maxPrice?: number;
   condition?: string;
-  color?: string;
-  fuelType?: string;
   transmission?: string;
+  fuelType?: string;
+  minYear?: number;
+  maxYear?: number;
   location?: string;
+  sortBy?: string;
+  page?: number;
+  perPage?: number;
 }
+
 
 // Admin Posts API Types
 // GET /admin/posts - Danh sách tất cả bài đăng (admin)
@@ -551,7 +559,7 @@ export const mapBackendGetUsersResponseToPaginated = (
     items: users,
     total: backendResponse.totalElements,
     page: backendResponse.pageNumber + 1, // Backend uses 0-based, frontend uses 1-based
-    limit: backendResponse.pageSize,
+    perPage: backendResponse.pageSize,
     totalPages: backendResponse.totalPages,
   };
 };
@@ -858,7 +866,7 @@ export const mapBackendAdminGetPostsResponseToPaginated = (
     items: backendResponse.posts.map(mapBackendPostItemToSellerPost),
     total: backendResponse.pagination.total,
     page: backendResponse.pagination.currentPage,
-    limit: backendResponse.pagination.perPage,
+    perPage: backendResponse.pagination.perPage,
     totalPages: backendResponse.pagination.lastPage,
   };
 };
@@ -887,19 +895,19 @@ export const mapBackendPublicGetPostsResponseToPaginated = (
     items: backendResponse.posts.map(mapBackendPostItemToSellerPost),
     total: backendResponse.pagination.total,
     page: backendResponse.pagination.currentPage,
-    limit: backendResponse.pagination.perPage,
+    perPage: backendResponse.pagination.perPage,
     totalPages: backendResponse.pagination.lastPage,
   };
 };
 
 // Helper function to convert backend public search posts response to seller posts array
+// This is deprecated - use mapBackendPublicGetPostsResponseToPaginated instead
+// since search API now returns same structure as /posts
 export const mapBackendPublicSearchPostsResponseToSellerPosts = (
   backendResponse: BackendPublicSearchPostsResponse['detail']
 ): SellerPost[] => {
-  return backendResponse.map(mapBackendPostItemToSellerPost);
+  return backendResponse.posts.map(mapBackendPostItemToSellerPost);
 };
-
-// Helper function to convert backend public get post detail response to seller post
 // Maps BackendPublicPostDetailItem to SellerPost
 export const mapBackendPublicPostDetailToSellerPost = (
   backendResponse: BackendPublicPostDetailItem
@@ -942,7 +950,7 @@ export const mapFrontendFiltersToBackendSearchParams = (
   const params: PublicSearchParams = {};
 
   // Map CarFilters to backend search params
-  if (filters.brand) params.make = filters.brand;
+  if (filters.brand) params.brand = filters.brand;
   if (filters.model) params.model = filters.model;
   if (filters.minPrice) params.minPrice = filters.minPrice;
   if (filters.maxPrice) params.maxPrice = filters.maxPrice;
@@ -951,11 +959,9 @@ export const mapFrontendFiltersToBackendSearchParams = (
   if (filters.transmission) params.transmission = filters.transmission;
   if (filters.location) params.location = filters.location;
 
-  // Handle search query (could be for color or general search)
+  // Handle search query as keyword for backend
   if (searchQuery && searchQuery.trim()) {
-    // Assume search query is for color for now
-    // You can extend this logic based on your requirements
-    params.color = searchQuery.trim();
+    params.keyword = searchQuery.trim();
   }
 
   return params;

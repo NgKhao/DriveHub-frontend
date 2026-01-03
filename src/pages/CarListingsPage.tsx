@@ -30,7 +30,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import { useCarStore } from '../store/carStore';
 import { formatCurrency } from '../utils/helpers';
 import { CAR_BRANDS } from '../types';
-import type { CarFilters, SellerPost, Car } from '../types';
+import type { CarFilters, SellerPost, Car, PublicSearchParams } from '../types';
 import { usePublicPosts, usePublicPostsSearch } from '../hooks/usePublic';
 import { mapFrontendFiltersToBackendSearchParams } from '../types';
 
@@ -81,19 +81,26 @@ const CarListingsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState(
     urlSearchParams.get('search') || ''
   );
+  // Separate state for applied search query (only updates on button click)
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState(
+    urlSearchParams.get('search') || ''
+  );
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [page, setPage] = useState(1);
   const carsPerPage = 12;
 
   // Determine if we should use search API or regular API
+  // Only use appliedSearchQuery (not searchQuery) to prevent auto-search while typing
   const hasFiltersOrSearch =
-    Object.keys(filters).length > 0 || searchQuery.trim() !== '';
+    Object.keys(filters).length > 0 || appliedSearchQuery.trim() !== '';
 
-  // Convert frontend filters to backend search params
-  const backendSearchParams = mapFrontendFiltersToBackendSearchParams(
-    filters as CarFilters,
-    searchQuery
-  );
+  // Convert frontend filters to backend search params (include pagination)
+  // Use appliedSearchQuery instead of searchQuery
+  const backendSearchParams: PublicSearchParams = {
+    ...mapFrontendFiltersToBackendSearchParams(filters as CarFilters, appliedSearchQuery),
+    page,
+    perPage: carsPerPage,
+  };
 
   // Use public posts API (regular pagination)
   const {
@@ -125,17 +132,29 @@ const CarListingsPage: React.FC = () => {
       initialFilters.minPrice = Number(urlSearchParams.get('minPrice'));
     if (urlSearchParams.get('maxPrice'))
       initialFilters.maxPrice = Number(urlSearchParams.get('maxPrice'));
+    if (urlSearchParams.get('condition'))
+      initialFilters.condition = urlSearchParams.get('condition') as 'new' | 'used';
+
+    // Initialize price range from URL
+    if (initialFilters.minPrice || initialFilters.maxPrice) {
+      setPriceRange([
+        initialFilters.minPrice || 0,
+        initialFilters.maxPrice || 5000000000,
+      ]);
+    }
 
     setLocalFilters(initialFilters);
     setFilters(initialFilters);
+    
+    // Also set applied search query from URL
+    const searchFromUrl = urlSearchParams.get('search') || '';
+    setAppliedSearchQuery(searchFromUrl);
   }, [urlSearchParams, setFilters]);
 
   const handleSearch = () => {
-    const newFilters = { ...localFilters };
-    if (searchQuery.trim()) {
-      // Add search logic here
-    }
-    applyFilters(newFilters);
+    // Update applied search query when button is clicked
+    setAppliedSearchQuery(searchQuery.trim());
+    applyFilters(localFilters);
   };
 
   const applyFilters = (newFilters: CarFilters) => {
@@ -164,6 +183,7 @@ const CarListingsPage: React.FC = () => {
   const handleClearFilters = () => {
     setLocalFilters({});
     setSearchQuery('');
+    setAppliedSearchQuery('');
     setPriceRange([0, 5000000000]);
     clearFilters();
     setUrlSearchParams({});
@@ -286,27 +306,13 @@ const CarListingsPage: React.FC = () => {
     </Box>
   );
 
-  // Calculate pagination from API data - use search results if searching, otherwise use regular posts
-  const totalCars = hasFiltersOrSearch
-    ? searchResults?.length || 0
-    : publicPostsData?.total || 0;
-  const totalPages = hasFiltersOrSearch
-    ? Math.ceil((searchResults?.length || 0) / carsPerPage)
-    : publicPostsData?.totalPages || 0;
+  // Calculate pagination from API data - both APIs now return PaginatedResponse
+  const currentData = hasFiltersOrSearch ? searchResults : publicPostsData;
+  const totalCars = currentData?.total || 0;
+  const totalPages = currentData?.totalPages || 0;
 
-  // Get displayed cars based on search or regular pagination
-  const allCars = hasFiltersOrSearch
-    ? searchResults || []
-    : publicPostsData?.items || [];
-
-  // For search results, handle manual pagination since API returns all results
-  const startIndex = hasFiltersOrSearch ? (page - 1) * carsPerPage : 0;
-  const endIndex = hasFiltersOrSearch
-    ? startIndex + carsPerPage
-    : allCars.length;
-  const displayedCars = allCars
-    .slice(startIndex, endIndex)
-    .map(mapSellerPostToCar);
+  // Get displayed cars from paginated response
+  const displayedCars = (currentData?.items || []).map(mapSellerPostToCar);
 
   return (
     <Container maxWidth='xl' sx={{ py: 4 }}>
