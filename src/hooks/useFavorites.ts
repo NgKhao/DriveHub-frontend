@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { favoriteService } from '../services/favoriteService';
 import type { FavoriteItem, SellerPost } from '../types';
+import { useAuthStore } from '../store/authStore';
 
 interface FavoriteError {
   response?: { status: number };
@@ -28,6 +29,9 @@ const getErrorMessage = (error: FavoriteError): string => {
  * Hook để lấy danh sách favorite posts của user
  */
 export const useFavorites = () => {
+  const { user } = useAuthStore();
+  const isBuyer = user?.role === 'buyer';
+
   return useQuery<SellerPost[], FavoriteError>({
     queryKey: ['favorites'],
     queryFn: () => favoriteService.getFavorites(),
@@ -35,6 +39,7 @@ export const useFavorites = () => {
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 1,
     refetchOnWindowFocus: false,
+    enabled: !!user && isBuyer,  // Chỉ fetch khi user đã login và là buyer
   });
 };
 
