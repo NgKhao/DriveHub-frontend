@@ -20,6 +20,7 @@ import {
 import { formatCurrency } from '../../utils/helpers';
 import { useAuthStore } from '../../store/authStore';
 import { useFavoritesManager } from '../../hooks/useFavorites';
+import { toast } from 'react-toastify';
 import type { Car } from '../../types';
 
 interface CarCardProps {
@@ -30,11 +31,18 @@ interface CarCardProps {
 const CarCard: React.FC<CarCardProps> = ({ car, showFavorite = true }) => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthStore();
-  const { isFavorite, toggleFavorite, isTogglingFavorite } =
-    useFavoritesManager();
+  
+  // Chỉ khởi tạo favorites manager khi user là buyer
+  const isBuyer = user?.role === 'buyer';
+  const shouldShowFavorite = showFavorite && isAuthenticated && isBuyer;
+  
+  const { 
+    isFavorite, 
+    toggleFavorite, 
+    isTogglingFavorite 
+  } = useFavoritesManager();
 
-  const isCarFavorite =
-    isAuthenticated && user?.role === 'buyer' ? isFavorite(car.id) : false;
+  const isCarFavorite = shouldShowFavorite ? isFavorite(car.id) : false;
 
   const handleCardClick = () => {
     navigate(`/cars/${car.id}`);
@@ -42,26 +50,34 @@ const CarCard: React.FC<CarCardProps> = ({ car, showFavorite = true }) => {
 
   const handleContactClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // TODO: Implement contact functionality
-    console.log('Contact seller:', car.sellerId);
+    toast.info(`Liên hệ: ${car.sellerPhone}`);
   };
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
+    // Check if user is logged in
     if (!isAuthenticated) {
+      toast.info('Vui lòng đăng nhập để sử dụng tính năng yêu thích');
       navigate('/login');
       return;
     }
 
-    // Only buyers can add to favorites
-    if (user?.role !== 'buyer') {
+    // Check if user is buyer
+    if (!isBuyer) {
+      toast.warning('Chỉ người mua mới có thể lưu xe yêu thích');
       return;
     }
 
     try {
       await toggleFavorite(car.id, isCarFavorite);
+      toast.success(
+        isCarFavorite 
+          ? 'Đã xóa khỏi danh sách yêu thích' 
+          : 'Đã thêm vào danh sách yêu thích'
+      );
     } catch (error) {
+      toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
       console.error('Error toggling favorite:', error);
     }
   };
@@ -102,8 +118,8 @@ const CarCard: React.FC<CarCardProps> = ({ car, showFavorite = true }) => {
           }}
         />
 
-        {/* Favorite Button - Only show for buyers */}
-        {showFavorite && isAuthenticated && user?.role === 'buyer' && (
+        {/* Favorite Button - Only show for authenticated buyers */}
+        {shouldShowFavorite && (
           <IconButton
             sx={{
               position: 'absolute',
