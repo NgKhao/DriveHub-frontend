@@ -1,8 +1,7 @@
 import axios from 'axios';
 import {
   mapBackendPublicGetPostsResponseToPaginated,
-  mapBackendPublicSearchPostsResponseToSellerPosts,
-  mapBackendPublicGetPostDetailResponseToSellerPost,
+  mapBackendPublicPostDetailToSellerPost,
 } from '../types';
 import type {
   BackendPublicGetPostsResponse,
@@ -19,21 +18,22 @@ const API_BASE_URL =
 export const publicService = {
   /**
    * Get all public posts (không cần authentication)
-   * @param page Page number (0-based)
-   * @param size Number of items per page
+   * GET /posts
+   * @param page Page number (1-based for backend)
+   * @param perPage Number of items per page
    * @returns Promise<PaginatedResponse<SellerPost>>
    */
-  getAllPublicPosts: async (
-    page: number = 0,
-    size: number = 10
+  getPosts: async (
+    page: number = 1,
+    perPage: number = 10
   ): Promise<PaginatedResponse<SellerPost>> => {
     try {
       const response = await axios.get<BackendPublicGetPostsResponse>(
-        `${API_BASE_URL}/public/posts`,
+        `${API_BASE_URL}/posts`,
         {
           params: {
             page,
-            size,
+            perPage,
           },
         }
       );
@@ -51,9 +51,9 @@ export const publicService = {
    * @param searchParams Search parameters object
    * @returns Promise<SellerPost[]>
    */
-  searchPublicPosts: async (
+ searchPublicPosts: async (
     searchParams: PublicSearchParams
-  ): Promise<SellerPost[]> => {
+  ): Promise<PaginatedResponse<SellerPost>> => {
     try {
       // Remove empty/undefined values from params
       const cleanParams = Object.entries(searchParams).reduce(
@@ -67,14 +67,14 @@ export const publicService = {
       );
 
       const response = await axios.get<BackendPublicSearchPostsResponse>(
-        `${API_BASE_URL}/public/posts/search`,
+        `${API_BASE_URL}/posts/search`,
         {
           params: cleanParams,
         }
       );
 
       // Transform backend response to frontend format
-      return mapBackendPublicSearchPostsResponseToSellerPosts(
+      return mapBackendPublicGetPostsResponseToPaginated(
         response.data.detail
       );
     } catch (error) {
@@ -85,19 +85,18 @@ export const publicService = {
 
   /**
    * Get public post detail by ID (không cần authentication)
+   * GET /posts/{id}
    * @param postId Post ID
    * @returns Promise<SellerPost>
    */
-  getPublicPostDetail: async (postId: string): Promise<SellerPost> => {
+  getPostDetail: async (postId: string): Promise<SellerPost> => {
     try {
       const response = await axios.get<BackendPublicGetPostDetailResponse>(
-        `${API_BASE_URL}/public/posts/${postId}`
+        `${API_BASE_URL}/posts/${postId}`
       );
 
       // Transform backend response to frontend format
-      return mapBackendPublicGetPostDetailResponseToSellerPost(
-        response.data.detail
-      );
+      return mapBackendPublicPostDetailToSellerPost(response.data.detail);
     } catch (error) {
       console.error('Error fetching public post detail:', error);
       throw error;

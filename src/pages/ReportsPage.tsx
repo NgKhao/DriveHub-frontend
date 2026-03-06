@@ -46,12 +46,12 @@ const ReportsPage: React.FC = () => {
     switch (status) {
       case 'pending':
         return 'warning';
-      case 'investigating':
+      case 'reviewed':
         return 'info';
       case 'resolved':
         return 'success';
       case 'dismissed':
-        return 'error';
+        return 'default';
       default:
         return 'default';
     }
@@ -61,12 +61,12 @@ const ReportsPage: React.FC = () => {
     switch (status) {
       case 'pending':
         return 'Chờ xử lý';
-      case 'investigating':
-        return 'Tạm khóa tài khoản'; // SUSPENDED status
+      case 'reviewed':
+        return 'Đang xem xét';
       case 'resolved':
-        return 'Cấm vĩnh viễn'; // BANNED status
+        return 'Đã giải quyết';
       case 'dismissed':
-        return 'Báo cáo bị từ chối'; // REJECTED status
+        return 'Đã bỏ qua';
       default:
         return 'Không xác định';
     }
@@ -249,9 +249,10 @@ const ReportsPage: React.FC = () => {
                           >
                             <Typography variant='subtitle2'>
                               Báo cáo{' '}
-                              {report.reportedType === 'buyer'
+                              {report.reportedUser.role === 'buyer'
                                 ? 'người mua'
                                 : 'người bán'}
+                              : {report.reportedUser.name}
                             </Typography>
                             <Chip
                               label={getStatusText(report.status)}
@@ -307,7 +308,7 @@ const ReportsPage: React.FC = () => {
                     >
                       <Typography variant='h6'>
                         Báo cáo{' '}
-                        {selectedReport.reportedType === 'buyer'
+                        {selectedReport.reportedUser.role === 'buyer'
                           ? 'người mua'
                           : 'người bán'}
                       </Typography>
@@ -323,8 +324,8 @@ const ReportsPage: React.FC = () => {
                       color='text.secondary'
                       gutterBottom
                     >
-                      <strong>Lý do:</strong>{' '}
-                      {getReasonLabel(selectedReport.reason)}
+                      <strong>Người bị báo cáo:</strong>{' '}
+                      {selectedReport.reportedUser.name} ({selectedReport.reportedUser.email})
                     </Typography>
 
                     <Typography

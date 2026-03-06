@@ -31,13 +31,11 @@ import {
   CircularProgress,
 } from '@mui/material';
 import {
-  Cancel,
   Search,
   Refresh,
   MoreVert,
   Visibility,
   Close,
-  Block,
   AssignmentInd,
   PersonOutline,
   GpsFixed,
@@ -136,20 +134,20 @@ const ReportManagement: React.FC = () => {
     handleMenuClose();
   };
 
-  const handleSuspend = () => {
+  const handleReview = () => {
     if (selectedReport && !isUpdating) {
       updateReportStatus(
-        { id: selectedReport.id, status: 'SUSPENDED' },
+        { id: selectedReport.id, status: 'reviewed' },
         {
           onSuccess: () => {
-            setSnackbarMessage('Đã tạm khóa tài khoản thành công');
-            setSnackbarSeverity('success');
+            setSnackbarMessage('Đã đánh dấu báo cáo đang xem xét');
+            setSnackbarSeverity('info');
             setSnackbarOpen(true);
-            setDetailDialogOpen(false); // Close dialog
-            refetch(); // Refresh the reports list
+            setDetailDialogOpen(false);
+            refetch();
           },
           onError: (error) => {
-            setSnackbarMessage(`Lỗi khi tạm khóa tài khoản: ${error.message}`);
+            setSnackbarMessage(`Lỗi khi cập nhật trạng thái: ${error.message}`);
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
           },
@@ -159,20 +157,20 @@ const ReportManagement: React.FC = () => {
     handleMenuClose();
   };
 
-  const handleBan = () => {
+  const handleResolve = () => {
     if (selectedReport && !isUpdating) {
       updateReportStatus(
-        { id: selectedReport.id, status: 'BANNED' },
+        { id: selectedReport.id, status: 'resolved' },
         {
           onSuccess: () => {
-            setSnackbarMessage('Đã cấm tài khoản vĩnh viễn thành công');
+            setSnackbarMessage('Đã giải quyết báo cáo thành công');
             setSnackbarSeverity('success');
             setSnackbarOpen(true);
-            setDetailDialogOpen(false); // Close dialog
-            refetch(); // Refresh the reports list
+            setDetailDialogOpen(false);
+            refetch();
           },
           onError: (error) => {
-            setSnackbarMessage(`Lỗi khi cấm tài khoản: ${error.message}`);
+            setSnackbarMessage(`Lỗi khi giải quyết báo cáo: ${error.message}`);
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
           },
@@ -182,20 +180,20 @@ const ReportManagement: React.FC = () => {
     handleMenuClose();
   };
 
-  const handleReject = () => {
+  const handleDismiss = () => {
     if (selectedReport && !isUpdating) {
       updateReportStatus(
-        { id: selectedReport.id, status: 'REJECTED' },
+        { id: selectedReport.id, status: 'dismissed' },
         {
           onSuccess: () => {
-            setSnackbarMessage('Đã từ chối báo cáo thành công');
-            setSnackbarSeverity('success');
+            setSnackbarMessage('Đã bỏ qua báo cáo');
+            setSnackbarSeverity('info');
             setSnackbarOpen(true);
-            setDetailDialogOpen(false); // Close dialog
-            refetch(); // Refresh the reports list
+            setDetailDialogOpen(false);
+            refetch();
           },
           onError: (error) => {
-            setSnackbarMessage(`Lỗi khi từ chối báo cáo: ${error.message}`);
+            setSnackbarMessage(`Lỗi khi bỏ qua báo cáo: ${error.message}`);
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
           },
@@ -219,12 +217,12 @@ const ReportManagement: React.FC = () => {
     switch (status) {
       case 'pending':
         return <Chip label='Chờ xử lý' color='warning' size='small' />;
-      case 'suspended':
-        return <Chip label='Tạm khóa' color='error' size='small' />;
-      case 'banned':
-        return <Chip label='Cấm vĩnh viễn' color='error' size='small' />;
-      case 'rejected':
-        return <Chip label='Từ chối' color='default' size='small' />;
+      case 'reviewed':
+        return <Chip label='Đang xem xét' color='info' size='small' />;
+      case 'resolved':
+        return <Chip label='Đã giải quyết' color='success' size='small' />;
+      case 'dismissed':
+        return <Chip label='Đã bỏ qua' color='default' size='small' />;
       default:
         return <Chip label={status} color='default' size='small' />;
     }
@@ -252,12 +250,12 @@ const ReportManagement: React.FC = () => {
   const pendingReports = apiReports.filter(
     (r) => r.status === 'pending'
   ).length;
-  const suspendedReports = apiReports.filter(
-    (r) => r.status === 'suspended'
+  const reviewedReports = apiReports.filter(
+    (r) => r.status === 'reviewed'
   ).length;
-  const bannedReports = apiReports.filter((r) => r.status === 'banned').length;
-  const rejectedReports = apiReports.filter(
-    (r) => r.status === 'rejected'
+  const resolvedReports = apiReports.filter((r) => r.status === 'resolved').length;
+  const dismissedReports = apiReports.filter(
+    (r) => r.status === 'dismissed'
   ).length;
 
   return (
@@ -288,22 +286,22 @@ const ReportManagement: React.FC = () => {
 
         <Card sx={{ minWidth: 200, flex: 1 }}>
           <CardContent sx={{ textAlign: 'center' }}>
-            <Typography variant='h4' color='error.main' fontWeight='bold'>
-              {suspendedReports}
+            <Typography variant='h4' color='info.main' fontWeight='bold'>
+              {reviewedReports}
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              Tạm khóa
+              Đang xem xét
             </Typography>
           </CardContent>
         </Card>
 
         <Card sx={{ minWidth: 200, flex: 1 }}>
           <CardContent sx={{ textAlign: 'center' }}>
-            <Typography variant='h4' color='error.main' fontWeight='bold'>
-              {bannedReports}
+            <Typography variant='h4' color='success.main' fontWeight='bold'>
+              {resolvedReports}
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              Cấm vĩnh viễn
+              Đã giải quyết
             </Typography>
           </CardContent>
         </Card>
@@ -311,10 +309,10 @@ const ReportManagement: React.FC = () => {
         <Card sx={{ minWidth: 200, flex: 1 }}>
           <CardContent sx={{ textAlign: 'center' }}>
             <Typography variant='h4' color='default' fontWeight='bold'>
-              {rejectedReports}
+              {dismissedReports}
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              Từ chối
+              Đã bỏ qua
             </Typography>
           </CardContent>
         </Card>
@@ -366,9 +364,9 @@ const ReportManagement: React.FC = () => {
             >
               <MenuItem value='all'>Tất cả</MenuItem>
               <MenuItem value='pending'>Chờ xử lý</MenuItem>
-              <MenuItem value='suspended'>Tạm khóa</MenuItem>
-              <MenuItem value='banned'>Cấm vĩnh viễn</MenuItem>
-              <MenuItem value='rejected'>Từ chối</MenuItem>
+              <MenuItem value='reviewed'>Đang xem xét</MenuItem>
+              <MenuItem value='resolved'>Đã giải quyết</MenuItem>
+              <MenuItem value='dismissed'>Đã bỏ qua</MenuItem>
             </Select>
           </FormControl>
 
@@ -503,28 +501,28 @@ const ReportManagement: React.FC = () => {
         </MenuItem>
         {selectedReport?.status === 'pending' && (
           <MenuItem
-            onClick={handleSuspend}
+            onClick={handleReview}
             disabled={isUpdating}
-            sx={{ color: 'warning.main' }}
+            sx={{ color: 'info.main' }}
           >
-            <Block sx={{ mr: 1 }} />
-            Tạm khóa tài khoản
+            <AssignmentInd sx={{ mr: 1 }} />
+            Đánh dấu đang xem xét
           </MenuItem>
         )}
-        {selectedReport?.status === 'pending' && (
+        {(selectedReport?.status === 'pending' || selectedReport?.status === 'reviewed') && (
           <MenuItem
-            onClick={handleBan}
+            onClick={handleResolve}
             disabled={isUpdating}
-            sx={{ color: 'error.main' }}
+            sx={{ color: 'success.main' }}
           >
-            <Cancel sx={{ mr: 1 }} />
-            Cấm vĩnh viễn
+            <GpsFixed sx={{ mr: 1 }} />
+            Giải quyết báo cáo
           </MenuItem>
         )}
         {selectedReport?.status === 'pending' && (
-          <MenuItem onClick={handleReject} disabled={isUpdating}>
+          <MenuItem onClick={handleDismiss} disabled={isUpdating}>
             <Close sx={{ mr: 1 }} />
-            Từ chối báo cáo
+            Bỏ qua báo cáo
           </MenuItem>
         )}
       </Menu>
@@ -747,57 +745,6 @@ const ReportManagement: React.FC = () => {
                 </CardContent>
               </Card>
 
-              {/* Thông tin xử lý */}
-              {selectedReport.handledBy && (
-                <Card variant='outlined'>
-                  <CardContent>
-                    <Typography
-                      variant='subtitle1'
-                      fontWeight='bold'
-                      gutterBottom
-                      color='success.main'
-                      sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                    >
-                      <AssignmentInd /> Thông tin xử lý
-                    </Typography>
-                    <Box
-                      sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
-                    >
-                      <Box
-                        sx={{ display: 'flex', gap: 2, alignItems: 'center' }}
-                      >
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                          sx={{ minWidth: 120, fontWeight: 'medium' }}
-                        >
-                          Người xử lý:
-                        </Typography>
-                        <Typography variant='body2' fontWeight='medium'>
-                          {selectedReport.handledBy.name}
-                        </Typography>
-                      </Box>
-                      <Box
-                        sx={{ display: 'flex', gap: 2, alignItems: 'center' }}
-                      >
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                          sx={{ minWidth: 120, fontWeight: 'medium' }}
-                        >
-                          Thời gian xử lý:
-                        </Typography>
-                        <Typography variant='body2'>
-                          {selectedReport.handledAt
-                            ? formatDate(selectedReport.handledAt)
-                            : 'Chưa xử lý'}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              )}
-
               {/* Thời gian */}
               <Card variant='outlined'>
                 <CardContent>
@@ -829,20 +776,18 @@ const ReportManagement: React.FC = () => {
                         {formatDate(selectedReport.createdAt)}
                       </Typography>
                     </Box>
-                    {selectedReport.handledAt && (
-                      <Box sx={{ flex: 1 }}>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                          gutterBottom
-                        >
-                          Thời gian xử lý
-                        </Typography>
-                        <Typography variant='body1' fontWeight='medium'>
-                          {formatDate(selectedReport.handledAt)}
-                        </Typography>
-                      </Box>
-                    )}
+                    <Box sx={{ flex: 1 }}>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                        gutterBottom
+                      >
+                        Cập nhật lần cuối
+                      </Typography>
+                      <Typography variant='body1' fontWeight='medium'>
+                        {formatDate(selectedReport.updatedAt)}
+                      </Typography>
+                    </Box>
                   </Box>
                 </CardContent>
               </Card>
@@ -882,32 +827,43 @@ const ReportManagement: React.FC = () => {
             <>
               <Button
                 variant='outlined'
-                color='warning'
-                onClick={handleSuspend}
+                color='info'
+                onClick={handleReview}
                 disabled={isUpdating}
-                startIcon={<Block />}
+                startIcon={<AssignmentInd />}
               >
-                Tạm khóa
+                Đang xem xét
               </Button>
               <Button
                 variant='outlined'
-                color='error'
-                onClick={handleBan}
+                color='success'
+                onClick={handleResolve}
                 disabled={isUpdating}
-                startIcon={<Cancel />}
+                startIcon={<GpsFixed />}
               >
-                Cấm vĩnh viễn
+                Giải quyết
               </Button>
               <Button
                 variant='outlined'
                 color='inherit'
-                onClick={handleReject}
+                onClick={handleDismiss}
                 disabled={isUpdating}
                 startIcon={<Close />}
               >
-                Từ chối
+                Bỏ qua
               </Button>
             </>
+          )}
+          {selectedReport?.status === 'reviewed' && (
+            <Button
+              variant='outlined'
+              color='success'
+              onClick={handleResolve}
+              disabled={isUpdating}
+              startIcon={<GpsFixed />}
+            >
+              Giải quyết
+            </Button>
           )}
         </DialogActions>
       </Dialog>
